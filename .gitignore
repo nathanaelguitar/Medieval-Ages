@@ -4,3 +4,7 @@ build*/
 xcuserdata/
 __pycache__/
 *.pyc
+# Blender working files produced by scripts/blender_character_setup.py. They embed a copy of the
+# 0 A.D. mesh, so they are generated locally rather than committed.
+*.blend
+*.blend1

@@ -79,6 +79,8 @@ index.html                        scales each sprite so its footprint maps onto 
                                   vector art per element until an image decodes
 ```
 
+Characters are the one part of that chain that cannot go straight from mesh to sprite if they are ever to look animated. The bundled character meshes are already rigged and skinned — a 24-bone biped using 0 A.D.'s standard `Biped_*` bone names — but they ship with **no animation clips**, so a direct bake freezes them in bind pose. `scripts/blender_character_setup.py` bridges that gap: it converts a character to glTF via assimp (Blender 5.2 no longer bundles a COLLADA importer) and re-attaches the base colour map (the 0 A.D. materials point at an unresolvable absolute Windows path), producing a `.blend` that is ready to animate. Extending the bake to sample an animated `.glb` across N frames is the remaining step.
+
 Two details in that pipeline are load-bearing. The up-axis is decided **once per composite** from the mesh with the most vertices, because it is not consistent across this asset set (units are Z-up, the oak is Y-up, and small flat props guess wrong). And the vertical projection must subtract the model's lowest point as well as centring it horizontally, or every sprite is drawn partly below its own canvas and the front of the building is silently clipped.
 
 ## Important design choices
