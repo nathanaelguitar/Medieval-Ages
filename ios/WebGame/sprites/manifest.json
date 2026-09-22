@@ -133,5 +133,163 @@
   "fp_w": 34.22,
   "h": 72,
   "w": 72
+ },
+ "unit_vill_idle": {
+  "clip": "idle",
+  "duration": 2.5,
+  "files": [
+   "unit_vill_idle_0.png",
+   "unit_vill_idle_1.png",
+   "unit_vill_idle_2.png",
+   "unit_vill_idle_3.png",
+   "unit_vill_idle_4.png",
+   "unit_vill_idle_5.png"
+  ],
+  "fps": 2.4,
+  "frames": 6,
+  "group": "animation"
+ },
+ "unit_vill_idle_0": {
+  "file": "unit_vill_idle_0.png",
+  "fill": 0.1514,
+  "fp_cx": 36.01,
+  "fp_cy": 66.34,
+  "fp_w": 26.28,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_idle_1": {
+  "file": "unit_vill_idle_1.png",
+  "fill": 0.1518,
+  "fp_cx": 36.01,
+  "fp_cy": 66.34,
+  "fp_w": 26.32,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_idle_2": {
+  "file": "unit_vill_idle_2.png",
+  "fill": 0.1528,
+  "fp_cx": 36.02,
+  "fp_cy": 66.36,
+  "fp_w": 26.42,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_idle_3": {
+  "file": "unit_vill_idle_3.png",
+  "fill": 0.1534,
+  "fp_cx": 36.02,
+  "fp_cy": 66.37,
+  "fp_w": 26.49,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_idle_4": {
+  "file": "unit_vill_idle_4.png",
+  "fill": 0.1534,
+  "fp_cx": 36.02,
+  "fp_cy": 66.37,
+  "fp_w": 26.48,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_idle_5": {
+  "file": "unit_vill_idle_5.png",
+  "fill": 0.1518,
+  "fp_cx": 36.02,
+  "fp_cy": 66.35,
+  "fp_w": 26.35,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk": {
+  "clip": "walk",
+  "duration": 1.0,
+  "files": [
+   "unit_vill_walk_0.png",
+   "unit_vill_walk_1.png",
+   "unit_vill_walk_2.png",
+   "unit_vill_walk_3.png",
+   "unit_vill_walk_4.png",
+   "unit_vill_walk_5.png",
+   "unit_vill_walk_6.png",
+   "unit_vill_walk_7.png"
+  ],
+  "fps": 8.0,
+  "frames": 8,
+  "group": "animation"
+ },
+ "unit_vill_walk_0": {
+  "file": "unit_vill_walk_0.png",
+  "fill": 0.1827,
+  "fp_cx": 35.37,
+  "fp_cy": 65.83,
+  "fp_w": 42.41,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_1": {
+  "file": "unit_vill_walk_1.png",
+  "fill": 0.1478,
+  "fp_cx": 36.84,
+  "fp_cy": 68.04,
+  "fp_w": 31.03,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_2": {
+  "file": "unit_vill_walk_2.png",
+  "fill": 0.1557,
+  "fp_cx": 37.85,
+  "fp_cy": 65.52,
+  "fp_w": 35.74,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_3": {
+  "file": "unit_vill_walk_3.png",
+  "fill": 0.1705,
+  "fp_cx": 36.43,
+  "fp_cy": 64.9,
+  "fp_w": 43.86,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_4": {
+  "file": "unit_vill_walk_4.png",
+  "fill": 0.1667,
+  "fp_cx": 34.14,
+  "fp_cy": 63.54,
+  "fp_w": 42.37,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_5": {
+  "file": "unit_vill_walk_5.png",
+  "fill": 0.179,
+  "fp_cx": 35.87,
+  "fp_cy": 68.47,
+  "fp_w": 30.87,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_6": {
+  "file": "unit_vill_walk_6.png",
+  "fill": 0.2188,
+  "fp_cx": 33.82,
+  "fp_cy": 68.95,
+  "fp_w": 42.98,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill_walk_7": {
+  "file": "unit_vill_walk_7.png",
+  "fill": 0.2054,
+  "fp_cx": 34.36,
+  "fp_cy": 68.92,
+  "fp_w": 46.54,
+  "h": 72,
+  "w": 72
  }
 }

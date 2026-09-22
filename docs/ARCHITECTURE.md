@@ -79,7 +79,34 @@ index.html                        scales each sprite so its footprint maps onto 
                                   vector art per element until an image decodes
 ```
 
-Characters are the one part of that chain that cannot go straight from mesh to sprite if they are ever to look animated. The bundled character meshes are already rigged and skinned — a 24-bone biped using 0 A.D.'s standard `Biped_*` bone names — but they ship with **no animation clips**, so a direct bake freezes them in bind pose. `scripts/blender_character_setup.py` bridges that gap: it converts a character to glTF via assimp (Blender 5.2 no longer bundles a COLLADA importer) and re-attaches the base colour map (the 0 A.D. materials point at an unresolvable absolute Windows path), producing a `.blend` that is ready to animate. Extending the bake to sample an animated `.glb` across N frames is the remaining step.
+Characters need a detour, because the bundled meshes are rigged and skinned — a 24-bone biped using 0 A.D.'s standard `Biped_*` bone names — but ship with **no animation clips**. The fix is to borrow 0 A.D.'s own: the clips under `ios/ZeroADArt/animations/` come from the same project and drive 102 of the 103 channel targets on these rigs exactly, so they are not retargeted so much as reapplied.
+
+```text
+ios/ZeroADArt/animations/biped/citizen/*.dae    0 A.D. walk + idle clips (CC BY-SA 3.0)
+ios/ZeroADArt/meshes/skeletal/new/*.dae         rigged character
+        |
+        v
+scripts/blender_bake_animation.py               Blender applies the clip and exports the
+        |                                       DEFORMED mesh per frame as OBJ
+        v
+frame_000.obj ... frame_00N.obj                 linear blend skinning, done by Blender
+        |
+        v
+bake_zeroad_art.py --with-animation             rasterises each frame with the same renderer
+        |                                       as the buildings, so lighting matches
+        v
+ios/WebGame/sprites/unit_vill_walk_*.png        + a group record giving the playback rate
+```
+
+Splitting it this way avoids writing a second renderer: applying a skin to an animated skeleton is linear blend skinning, which Blender does well, and re-implementing glTF animation sampling in the bake tool would produce a worse version of something that already exists. Blender exports geometry; the existing rasteriser keeps units lit and projected exactly like everything else.
+
+Three details here are load-bearing and were each found by testing rather than reading:
+
+* **Blender 5.2 has no COLLADA importer.** The legacy importers left core, so `bpy.ops.wm.collada_import` does not exist on a stock install. Both the mesh and the clip arrive via assimp → glTF.
+* **An action alone does not animate a rig in 4.4+.** Actions became slotted, and assigning `animation_data.action` without also binding `action_slot` leaves the rig static. That failure is silent: every sampled frame comes out identical and the bake produces a flawless sheet of one frozen pose. `blender_bake_animation.py` binds the slot and then measures actual vertex movement across the cycle, refusing to write frames if nothing moved.
+* **The 0 A.D. materials point at an unresolvable absolute Windows path** (`C:/Users/micha/...`), so assimp drops the texture. It is re-attached from the bundled texture set.
+
+`scripts/blender_character_setup.py` produces a plain `.blend` of the same character for hand-animating in the Blender UI, which is the route to clips that do not exist upstream.
 
 Two details in that pipeline are load-bearing. The up-axis is decided **once per composite** from the mesh with the most vertices, because it is not consistent across this asset set (units are Z-up, the oak is Y-up, and small flat props guess wrong). And the vertical projection must subtract the model's lowest point as well as centring it horizontally, or every sprite is drawn partly below its own canvas and the front of the building is silently clipped.
 

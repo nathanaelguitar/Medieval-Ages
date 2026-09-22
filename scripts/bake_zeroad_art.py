@@ -29,6 +29,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -513,6 +514,48 @@ def bake_ground(out_dir):
     print(f"  -> ground.png  {GROUND_SIZE}x{GROUND_SIZE}  {os.path.getsize(fn) // 1024}K")
 
 
+# Animated characters. The bundled rigs ship with no clips of their own, so these apply 0 A.D.'s
+# own animation files (same project, same `Biped_*` bone names) via Blender, which handles the
+# skinning, and then rasterise the deformed result here so units stay lit and projected exactly
+# like the buildings. Requires Blender; skipped unless --with-animation is passed.
+ANIMATED_UNITS = [
+    # sprite name, character, clip, frames sampled across the cycle, sprite size
+    ("unit_vill_walk", "villager", "walk", 8, 72),
+    ("unit_vill_idle", "villager", "idle", 6, 72),
+]
+BLENDER_SCRIPT = os.path.join(HERE, "blender_bake_animation.py")
+
+# Base colour map per character, relative to textures/skins. Kept in step with the same table in
+# blender_bake_animation.py, which is what actually attaches it during the Blender pass.
+CHARACTER_SKINS = {
+    "villager": "skeletal/hele/dress_female_01.png",
+    "soldier": "skeletal/athen/linothorax_lamellar_01_03.png",
+}
+
+
+def blender_frame_cache(character, clip, frames, cache_root):
+    """Run Blender to write deformed per-frame OBJs, and return the cache directory."""
+    out = os.path.join(cache_root, f"{character}_{clip}")
+    meta = os.path.join(out, "meta.json")
+    if os.path.exists(meta):
+        return out
+    blender = shutil.which("blender")
+    if not blender:
+        print("    blender not found on PATH -- skipping animated units "
+              "(install it with: brew install --cask blender)")
+        return None
+    print(f"    running blender for {character}/{clip} ({frames} frames)...")
+    r = subprocess.run([blender, "--background", "--python", BLENDER_SCRIPT, "--",
+                        "--character", character, "--clip", clip,
+                        "--frames", str(frames), "--out", out],
+                       capture_output=True, text=True, check=False)
+    if not os.path.exists(meta):
+        tail = "\n".join(r.stdout.splitlines()[-12:])
+        print(f"    blender failed for {character}/{clip}:\n{tail}\n{r.stderr[-600:]}")
+        return None
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -521,6 +564,8 @@ def main():
     # this if the renderer ever gains a real direction vector.
     ap.add_argument("--facings", type=int, default=1, help="unit facings (default 1)")
     ap.add_argument("--out", default=OUT_DIR)
+    ap.add_argument("--with-animation", action="store_true",
+                    help="also bake the animated character cycles (needs Blender on PATH)")
     args = ap.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -565,6 +610,50 @@ def main():
             suffix = f"_{i}" if args.facings > 1 else ""
             bake_one(f"{name}{suffix}", actor, None, size,
                      yaw=ISOMETRIC_YAW + i * (360.0 / args.facings))
+
+    if args.with_animation:
+        print("\n== animated units ==")
+        cache_root = os.path.join(tempfile.gettempdir(), "zeroad_anim_cache")
+        for name, character, clip, nframes, size in ANIMATED_UNITS:
+            if not wanted(name):
+                continue
+            print(f"  [{name}] {character} / {clip}")
+            cache = blender_frame_cache(character, clip, nframes, cache_root)
+            if cache is None:
+                continue
+            tex = skin_path(CHARACTER_SKINS[character])
+            files = []
+            for i in range(nframes):
+                obj = os.path.join(cache, f"frame_{i:03d}.obj")
+                if not os.path.exists(obj):
+                    print(f"    missing {obj}")
+                    continue
+                verts, uvs, faces = load_obj(obj)
+                if not verts or not faces:
+                    continue
+                # one axis decision per frame; a skinned character bakes consistently
+                up = detect_up_axis(verts)
+                piece = Piece([reorder(v, up) for v in verts], uvs, faces, tex)
+                img, meta = render([piece], size)
+                fn = f"{name}_{i}.png"
+                img.save(os.path.join(args.out, fn))
+                opaque = sum(1 for v in img.split()[3].get_flattened_data() if v > 128)
+                manifest[f"{name}_{i}"] = {"file": fn, "w": size, "h": size,
+                                           "fill": round(opaque / (size * size), 4), **meta}
+                files.append(fn)
+            if files:
+                # Playback rate, not the source framerate: N frames sampled across `duration`
+                # seconds must advance at N/duration per second to run at the clip's real speed.
+                try:
+                    with open(os.path.join(cache, "meta.json")) as fh:
+                        duration = json.load(fh).get("duration") or 1.0
+                except Exception:
+                    duration = 1.0
+                manifest[name] = {"group": "animation", "frames": len(files), "files": files,
+                                  "clip": clip, "duration": duration,
+                                  "fps": round(len(files) / duration, 3)}
+                print(f"    -> {len(files)} frames over {duration}s "
+                      f"(plays at {len(files) / duration:.2f} fps)")
 
     print("\n== ground ==")
     bake_ground(args.out)
