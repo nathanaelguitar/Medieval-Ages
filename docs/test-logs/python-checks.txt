@@ -1,0 +1,17 @@
+test_app_icons_match_catalog (__main__.PreparationTests.test_app_icons_match_catalog) ... ok
+test_blob_matches_git (__main__.PreparationTests.test_blob_matches_git) ... ok
+test_comparator_and_count_fixes (__main__.PreparationTests.test_comparator_and_count_fixes) ... ok
+test_function_nested_body (__main__.PreparationTests.test_function_nested_body) ... ok
+test_header_normalization (__main__.PreparationTests.test_header_normalization) ... ok
+test_native_text_has_no_font_dependency (__main__.PreparationTests.test_native_text_has_no_font_dependency) ... ok
+test_no_distributed_fonts_or_game_data (__main__.PreparationTests.test_no_distributed_fonts_or_game_data) ... ok
+test_plists_and_landscape (__main__.PreparationTests.test_plists_and_landscape) ... ok
+test_refuses_unknown_baseline (__main__.PreparationTests.test_refuses_unknown_baseline) ... ok
+test_refuses_writing_into_upstream (__main__.PreparationTests.test_refuses_writing_into_upstream) ... ok
+test_single_anchor (__main__.PreparationTests.test_single_anchor) ... ok
+test_table_boundary_fixes (__main__.PreparationTests.test_table_boundary_fixes) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.009s
+
+OK

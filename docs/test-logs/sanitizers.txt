@@ -1,0 +1,1 @@
+PASS: 46 portable assertions

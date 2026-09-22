@@ -1,0 +1,14 @@
+-- Configuring done (4.9s)
+-- Generating done (0.0s)
+-- Build files have been written to: /mnt/data/OpenEmpire-iOS/build-tests
+[100%] Built target oe_portable_tests
+Internal ctest changing into directory: /mnt/data/OpenEmpire-iOS/build-tests
+Test project /mnt/data/OpenEmpire-iOS/build-tests
+    Start 1: portable_input_clock_assets
+1/2 Test #1: portable_input_clock_assets ......   Passed    0.01 sec
+    Start 2: patch_preparation
+2/2 Test #2: patch_preparation ................   Passed    0.80 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.81 sec

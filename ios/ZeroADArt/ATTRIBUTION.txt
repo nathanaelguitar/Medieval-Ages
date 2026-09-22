@@ -1,0 +1,8 @@
+Original artwork: Wildfire Games and contributors.
+https://www.wildfiregames.com/
+https://play0ad.com/
+Creative Commons Attribution-ShareAlike 3.0:
+https://creativecommons.org/licenses/by-sa/3.0/
+Unmodified source files, selected from the 2024 GitHub mirror.
+Not Release 28, not an official mobile edition, and not a playable game.
+Retain original art/LICENSE.txt and any nested license notices.

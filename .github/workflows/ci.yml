@@ -1,0 +1,49 @@
+name: Port validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Portable C and Python regression checks
+        run: ./scripts/test.sh
+      - name: Address and undefined-behavior sanitizers
+        run: |
+          clang -std=c11 -Wall -Wextra -Wpedantic -Werror \
+            -fsanitize=address,undefined -fno-omit-frame-pointer -g \
+            -Iportable portable/OETouch.c portable/OEClock.c portable/OEAssets.c \
+            tests/test_portable.c -lm -o /tmp/oe-sanitizer-tests
+          /tmp/oe-sanitizer-tests
+  simulator-build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Report toolchain
+        run: |
+          xcodebuild -version
+          cmake --version
+          python3 --version
+      - name: Generate iOS Simulator project
+        run: |
+          cmake -S . -B build-simulator -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphonesimulator \
+            -DCMAKE_OSX_ARCHITECTURES="$(uname -m)" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
+      - name: Compile without signing
+        run: |
+          xcodebuild -project build-simulator/OpenEmpire.xcodeproj \
+            -scheme OpenEmpire -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Upload build diagnostic logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-configuration-logs
+          path: build-simulator/CMakeFiles/CMakeConfigureLog.yaml
