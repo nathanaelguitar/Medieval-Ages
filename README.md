@@ -56,14 +56,16 @@ The game starts Blue and Red settlements, each with a town center, starting vill
 | --- | --- |
 | Tap a friendly unit or building | Select it. |
 | Double-tap a friendly unit | Select all friendly units of that type. |
-| Tap a tree, berry patch, gold mine, or stone mine with villagers selected | Start gathering. Resources return to the Town Center, Wood Yard, or Mining Camp. |
+| Tap a tree, berry patch, gold mine, stone mine, boar, or sheep with villagers selected | Start gathering or hunting. Resources return to the Town Center, Wood Yard, or Mining Camp. Wounded game bolts, so the villager has to chase it down and the animal drops to a carcass as it is used up. |
 | Drag one finger on the map | Pan the camera. |
 | Pinch | Zoom in/out. |
 | Bottom-right stick | Directly move the selected units. |
 | Tap an enemy or the sword button | Attack the target/nearest enemy with selected military units. |
 | Tap your Town Center with villagers selected | Garrison them for protection; the Town Center fires stronger/faster arrows. |
 | Select your Town Center | Use **Unload** to release garrisoned villagers. |
-| Build actions | Place Houses, Barracks, Wood Yards, Mining Camps, Markets, Farms, Wood Palisades, Stone Walls, and Guard Towers. |
+| Build actions | Place Houses, Barracks, Wood Yards, Mining Camps, Markets, Farms, Wood Palisades, Stone Walls, Gates, and Guard Towers. Each button shows a one-word caption as well as its icon. |
+| Build a Gate | Gates sit in a wall line and are owned by whoever built them: your units walk straight through, enemy units are blocked. The portcullis lifts on its own while one of your units is in the opening. |
+| Tap the Idle pill | Selects every idle villager and pans to them if they are off screen. The pill highlights while any villager is idle. |
 | Select a completed Market | Trade 100 wood for 125 food, or 100 food for wood, gold, or stone. |
 | Top HUD | Population is shown beside the current idle-villager count. |
 
@@ -71,7 +73,9 @@ A basic acceptance sequence is: select a villager, tap a tree, verify wood incre
 
 ## What this version does and does not add
 
-Implemented in source: native `WKWebView` launcher; a self-contained two-settlement offline skirmish; tap/double-tap selection; one-finger camera pan; pinch zoom; unit joystick movement; resource gathering and drop-offs; Wood Yards, Mining Camps, and Markets; resource trading; an idle-villager HUD counter; Houses, Barracks, Farms, Wood Palisades, Stone Walls, and Guard Towers; villager garrisoning in Town Centers; training; combat; a delayed enemy wave; and regression tests.
+Implemented in source: a self-contained two-settlement offline skirmish; tap/double-tap selection; one-finger camera pan; pinch zoom; unit joystick movement; resource gathering and drop-offs; huntable boar and sheep that wander, flee and decay to carcasses; Wood Yards, Mining Camps, and Markets; resource trading; an idle-villager HUD counter that doubles as a jump-to-idle button; Houses, Barracks, Farms, Wood Palisades, Stone Walls, team-owned Gates that open for their owner, and Guard Towers; villager garrisoning in Town Centers; training; combat with impact shake and floating damage; a delayed enemy wave; and regression tests.
+
+The app opens straight into the skirmish. The native launcher the port used to park on ("Start sandbox") is no longer shown at boot. Note the consequence: the legacy C/SDL art scene it used to start now has no UI entry point, though its code and the launcher view are still in the tree and still compile.
 
 Not added: campaigns, matchmaking/network multiplayer, persistent saves, cloud sync, or App Store distribution. The match remains in memory only; force-quitting or the OS terminating the process loses it.
 
