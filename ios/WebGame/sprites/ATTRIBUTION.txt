@@ -1,0 +1,40 @@
+Attribution for the sprite set in this directory
+================================================
+
+These PNG files are isometric sprites baked from the 0 A.D. meshes and textures
+bundled at ios/ZeroADArt/ in this repository.
+
+    Original artwork: Wildfire Games and contributors.
+    https://www.wildfiregames.com/
+    https://play0ad.com/
+
+    Licensed under Creative Commons Attribution-ShareAlike 3.0:
+    https://creativecommons.org/licenses/by-sa/3.0/
+
+Modification notice
+-------------------
+
+The source meshes and textures have been MODIFIED. Each sprite is a derivative
+work produced by rendering a COLLADA mesh from a fixed isometric camera and
+sampling its texture map per triangle, with lighting and colour adjustment
+applied. No sprite is an unmodified copy of a source file.
+
+Because the originals are CC BY-SA 3.0, these derivatives are distributed under
+the same licence. They are NOT covered by this repository's GPL-3.0-or-later
+licence and may not be relicensed more restrictively. Anyone redistributing
+these files, including inside a compiled application, must carry this
+attribution and these licence terms.
+
+Full licence text and the original, unmodified notices are retained at:
+
+    ios/ZeroADArt/LICENSE.txt
+    ios/ZeroADArt/ATTRIBUTION.txt
+
+Regeneration
+------------
+
+    python3 scripts/bake_zeroad_art.py
+
+Requires Pillow and the assimp CLI. The output is committed, so no build step
+depends on either tool. This is not Release 28, not an official 0 A.D. mobile
+edition, and not affiliated with or endorsed by Wildfire Games.

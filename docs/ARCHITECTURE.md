@@ -15,7 +15,7 @@ UIKit Files picker
   structural preflight
   activate staged data with previous-dataset backup/rollback
 
-Start sandbox
+Legacy native sandbox  [UNREACHABLE at runtime]
   background SDL loading thread
     Data_Load -> Map_Make -> Grid_Make -> Units_Generate
   acquire/release atomic completion publication
@@ -27,6 +27,8 @@ UIKit touches -> OETouch event queue -> replacement Input_Pump
   Units_PacketService -> Units_Caretake
   Units_Float -> Video_Draw -> Video_Render
 ```
+
+The steps from the Files picker down are the **legacy SDL path**. It still compiles, but nothing reaches it: the "Start sandbox" launcher button that used to start it is no longer shown at boot, so this flow is documented for the code that remains rather than for what runs. The playable target is the Pocket Empires web game described below.
 
 There is no duplicate toy RTS implementation. The runtime calls the real upstream unit service, simulation, and draw functions. No network server is started. SDL2_net remains a static build dependency because the upstream compilation units and headers reference it; the mobile entry path does not connect to or listen on sockets.
 
@@ -40,10 +42,44 @@ There is no duplicate toy RTS implementation. The runtime calls the real upstrea
 | `ios/OERuntime.c` | Engine integration, offline sessions, two player sides, action discovery, lifecycle, rendering. |
 | `ios/OEInput.c` | Replacement for desktop input; combines hardware keys and queued touch state. |
 | `ios/OEPlatform.m` | UIKit launcher, game overlay, Files importer, context/pause menus, safe-area controls. |
+| `ios/OEWebGame.m` | `WKWebView` host for the bundled Pocket Empires game, and its page-load validation. |
+| `ios/OEArtDemo.m` | Native SceneKit art scene over the bundled 0 A.D. meshes. Built and compiled, but **unreachable**: nothing calls `startInView:`. |
 | `ios/OEText.m` | System-font rasterization and bounded SDL texture cache. |
 | `ios/main.m` | SDL/UIKit entry and display callback. |
+| `ios/WebGame/index.html` | The entire Pocket Empires skirmish: map generation, simulation, canvas rendering, and UI, in one self-contained file. |
+| `ios/ZeroADArt/` | Selected 0 A.D. art (CC BY-SA 3.0), packaged into the bundle. |
+| `scripts/bake_zeroad_art.py` | Offline rasteriser that bakes those meshes into `ios/WebGame/sprites/`. Not run by the build. |
 | `scripts/prepare_engine.py` | Verified-baseline, build-only engine adaptation. |
 | `CMakeLists.txt` | Pinned dependency retrieval, static linkage, resource packaging, generated Xcode scheme. |
+
+## The Pocket Empires target
+
+The playable target is not the SDL engine. `ios/OEWebGame.m` hosts `ios/WebGame/index.html` in a `WKWebView`; that file contains the whole game — isometric map generation, the simulation loop, and an immediate-mode canvas-2D renderer. It is loaded through `loadFileURL:allowingReadAccessToURL:`, which grants read access to the `open-empire-mobile/` directory only. That boundary is why the sprite set lives at `ios/WebGame/sprites/` rather than reusing `ios/ZeroADArt/` directly: the page cannot read outside its own directory. (`fetch` against `file://` is blocked regardless, so sprites load as `<img>` elements.)
+
+`CMakeLists.txt` globs `ios/WebGame/*` unfiltered and recursively, so any new file under that directory is packaged automatically without a CMake edit.
+
+## 0 A.D. artwork pipeline
+
+0 A.D. is a 3D game and ships no sprites, so the artwork is **baked offline** rather than loaded:
+
+```text
+ios/ZeroADArt/actors/*.xml        actor graph: binds <mesh> to a baseTex that often
+        |                         lives in a separate <group>, and composes buildings
+        |                         from <props> actors
+        v
+scripts/bake_zeroad_art.py        expand props -> export each .dae via assimp (which
+        |                         preserves map_Kd) -> software-rasterise from the game's
+        |                         isometric angle with per-triangle UV sampling
+        v
+ios/WebGame/sprites/*.png         sprites + manifest.json (footprint width and centre)
+        |                         + ATTRIBUTION.txt (CC BY-SA 3.0)
+        v
+index.html                        scales each sprite so its footprint maps onto the
+                                  building's tile diamond; falls back to procedural
+                                  vector art per element until an image decodes
+```
+
+Two details in that pipeline are load-bearing. The up-axis is decided **once per composite** from the mesh with the most vertices, because it is not consistent across this asset set (units are Z-up, the oak is Y-up, and small flat props guess wrong). And the vertical projection must subtract the model's lowest point as well as centring it horizontally, or every sprite is drawn partly below its own canvas and the front of the building is silently clipped.
 
 ## Important design choices
 

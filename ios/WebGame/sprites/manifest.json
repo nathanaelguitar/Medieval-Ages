@@ -1,0 +1,137 @@
+{
+ "bld_barracks": {
+  "file": "bld_barracks.png",
+  "fill": 0.4352,
+  "fp_cx": 131.55,
+  "fp_cy": 202.88,
+  "fp_w": 227.78,
+  "h": 260,
+  "w": 260
+ },
+ "bld_house_a": {
+  "file": "bld_house_a.png",
+  "fill": 0.4451,
+  "fp_cx": 100.29,
+  "fp_cy": 159.51,
+  "fp_w": 174.34,
+  "h": 200,
+  "w": 200
+ },
+ "bld_house_b": {
+  "file": "bld_house_b.png",
+  "fill": 0.526,
+  "fp_cx": 99.28,
+  "fp_cy": 164.79,
+  "fp_w": 182.79,
+  "h": 200,
+  "w": 200
+ },
+ "bld_house_c": {
+  "file": "bld_house_c.png",
+  "fill": 0.488,
+  "fp_cx": 90.54,
+  "fp_cy": 160.91,
+  "fp_w": 183.81,
+  "h": 200,
+  "w": 200
+ },
+ "bld_house_d": {
+  "file": "bld_house_d.png",
+  "fill": 0.4839,
+  "fp_cx": 88.25,
+  "fp_cy": 159.35,
+  "fp_w": 183.78,
+  "h": 200,
+  "w": 200
+ },
+ "bld_house_e": {
+  "file": "bld_house_e.png",
+  "fill": 0.5472,
+  "fp_cx": 91.18,
+  "fp_cy": 156.93,
+  "fp_w": 194.27,
+  "h": 200,
+  "w": 200
+ },
+ "bld_store": {
+  "file": "bld_store.png",
+  "fill": 0.4087,
+  "fp_cx": 100.79,
+  "fp_cy": 159.36,
+  "fp_w": 190.48,
+  "h": 200,
+  "w": 200
+ },
+ "bld_tc": {
+  "file": "bld_tc.png",
+  "fill": 0.2813,
+  "fp_cx": 147.94,
+  "fp_cy": 239.37,
+  "fp_w": 262.12,
+  "h": 300,
+  "w": 300
+ },
+ "bld_tower": {
+  "file": "bld_tower.png",
+  "fill": 0.2329,
+  "fp_cx": 105.01,
+  "fp_cy": 192.66,
+  "fp_w": 84.11,
+  "h": 210,
+  "w": 210
+ },
+ "tree_oak_1": {
+  "file": "tree_oak_1.png",
+  "fill": 0.4388,
+  "fp_cx": 74.48,
+  "fp_cy": 151.12,
+  "fp_w": 215.01,
+  "h": 160,
+  "w": 160
+ },
+ "tree_oak_2": {
+  "file": "tree_oak_2.png",
+  "fill": 0.4811,
+  "fp_cx": 76.96,
+  "fp_cy": 151.75,
+  "fp_w": 215.39,
+  "h": 160,
+  "w": 160
+ },
+ "tree_pine_1": {
+  "file": "tree_pine_1.png",
+  "fill": 0.2243,
+  "fp_cx": 77.4,
+  "fp_cy": 153.77,
+  "fp_w": 134.87,
+  "h": 160,
+  "w": 160
+ },
+ "tree_pine_2": {
+  "file": "tree_pine_2.png",
+  "fill": 0.1832,
+  "fp_cx": 77.09,
+  "fp_cy": 148.48,
+  "fp_w": 126.74,
+  "h": 160,
+  "w": 160
+ },
+ "unit_spear": {
+  "file": "unit_spear.png",
+  "fill": 0.1146,
+  "fp_cx": 37.79,
+  "fp_cy": 70.06,
+  "fp_w": 27.61,
+  "h": 72,
+  "w": 72
+ },
+ "unit_vill": {
+  "file": "unit_vill.png",
+  "fill": 0.1755,
+  "fp_cx": 38.42,
+  "fp_cy": 66.0,
+  "fp_w": 34.22,
+  "h": 72,
+  "w": 72
+ }
+}

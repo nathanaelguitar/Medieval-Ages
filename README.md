@@ -46,7 +46,15 @@ The engine copy is under `build-ios/engine`; edit port code or `scripts/prepare_
 
 ## Assets and offline play
 
-The current Pocket Empires target uses procedural canvas artwork and its own icons. It bundles no Microsoft or 0 A.D. game files, needs no asset importer, and can run offline after installation. The original Trial-data importer remains in the older native-port code path but is not needed by this target.
+The Pocket Empires target needs no asset importer and runs offline after installation. The original Trial-data importer remains in the older native-port code path but is not needed by this target.
+
+**On 0 A.D. artwork — this section previously claimed the app "bundles no Microsoft or 0 A.D. game files". That was wrong and is corrected here.** The app has always shipped 210 files from `ios/ZeroADArt/` (0 A.D. actor XML, meshes, and textures) into `OpenEmpire.app/ZeroADArt/`, consumed by the native SceneKit art scene in `ios/OEArtDemo.m`. It bundles no **Microsoft** files; the Trial-data path still requires a local installation the app does not supply.
+
+This branch additionally renders the skirmish from that artwork. `scripts/bake_zeroad_art.py` renders the 0 A.D. meshes offline from the game's isometric angle into `ios/WebGame/sprites/` — 9 buildings, 4 trees, 2 characters, and a seamless ground texture. At runtime `index.html` draws those sprites in place of the procedural vector art, falling back to the vector art per-element whenever a sprite is missing or has not decoded yet. Append **`?art=proc`** to the URL to force the original procedural look and compare the two directly.
+
+0 A.D.'s art is **CC BY-SA 3.0** (C) Wildfire Games, not GPL. The baked sprites are modified derivatives and inherit that licence, including its share-alike term — see [the attribution](ios/WebGame/sprites/ATTRIBUTION.txt) and [dependency notes](docs/DEPENDENCIES.md). This port is not affiliated with or endorsed by Wildfire Games.
+
+What the bake does **not** reach: farms, walls, palisades and gates keep their procedural art (this asset set has no wall-segment mesh, and its gate is a prop authored to sit inside a fortress wall rather than a standalone gateway); boar and sheep stay procedural (no matching mesh or texture is bundled); and characters bake in their bind pose, because the character meshes are rigged but no animation clips are bundled with them.
 
 ## Playing
 
@@ -68,12 +76,15 @@ The game starts Blue and Red settlements, each with a town center, starting vill
 | Tap the Idle pill | Selects every idle villager and pans to them if they are off screen. The pill highlights while any villager is idle. |
 | Select a completed Market | Trade 100 wood for 125 food, or 100 food for wood, gold, or stone. |
 | Top HUD | Population is shown beside the current idle-villager count. |
+| Artwork | Buildings, trees, characters and ground use sprites baked from the bundled 0 A.D. art. Add `?art=proc` to the URL to switch back to the procedural vector art and compare. |
 
 A basic acceptance sequence is: select a villager, tap a tree, verify wood increases at a drop-off, build a Wood Yard, gather stone and build a Stone Wall, then train troops in the Barracks and use the stick to move them. This sequence still needs manual touch verification on the phone.
 
 ## What this version does and does not add
 
 Implemented in source: a self-contained two-settlement offline skirmish; tap/double-tap selection; one-finger camera pan; pinch zoom; unit joystick movement; resource gathering and drop-offs; huntable boar and sheep that wander, flee and decay to carcasses; Wood Yards, Mining Camps, and Markets; resource trading; an idle-villager HUD counter that doubles as a jump-to-idle button; Houses, Barracks, Farms, Wood Palisades, Stone Walls, team-owned Gates that open for their owner, and Guard Towers; villager garrisoning in Town Centers; training; combat with impact shake and floating damage; a delayed enemy wave; and regression tests.
+
+Rendering is dual-path. Buildings, trees, characters and the ground draw from 0 A.D. sprites baked offline; everything else, and anything whose sprite has not loaded, draws with the original procedural vector art. The switch is one constant in `index.html`, and `?art=proc` forces the procedural path.
 
 The app opens straight into the skirmish. The native launcher the port used to park on ("Start sandbox") is no longer shown at boot. Note the consequence: the legacy C/SDL art scene it used to start now has no UI entry point, though its code and the launcher view are still in the tree and still compile.
 

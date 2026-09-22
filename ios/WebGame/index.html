@@ -949,6 +949,80 @@ function selectIdle(){
  selection=idle;sfx('sel');toast(idle.length+(idle.length===1?' villager idle':' villagers idle'));
  refreshPanel(true)}
 
+/* ============ 0 A.D. artwork ============ */
+/* The sprite set is baked offline by scripts/bake_zeroad_art.py from the meshes and textures in
+   ios/ZeroADArt (CC BY-SA 3.0, (C) Wildfire Games -- see sprites/ATTRIBUTION.txt for the
+   attribution and share-alike terms). Every draw site below falls back to its procedural vector
+   art whenever a sprite is missing or has not decoded yet, so the game renders correctly from the
+   first frame and stays playable if the sprite set is absent entirely. `?art=proc` forces the old
+   look, which makes the two directly comparable in one session.
+
+   Entries are [file, footprintWidth, footprintCx, footprintCy, spriteW, spriteH]. The footprint is
+   the model's projected ground rectangle. Scaling a sprite so that width maps onto the building's
+   tile diamond keeps all sprites on the same grid, and anchoring by the footprint centre means a
+   structure with wide ground decor still plants correctly on its tiles. */
+const ART=!/[?&]art=proc\b/.test(location.search);
+const SPRM={bld_barracks:['bld_barracks.png',227.78,131.55,202.88,260,260],bld_house_a:['bld_house_a.png',174.34,100.29,159.51,200,200],bld_house_b:['bld_house_b.png',182.79,99.28,164.79,200,200],bld_house_c:['bld_house_c.png',183.81,90.54,160.91,200,200],bld_house_d:['bld_house_d.png',183.78,88.25,159.35,200,200],bld_house_e:['bld_house_e.png',194.27,91.18,156.93,200,200],bld_store:['bld_store.png',190.48,100.79,159.36,200,200],bld_tc:['bld_tc.png',262.12,147.94,239.37,300,300],bld_tower:['bld_tower.png',84.11,105.01,192.66,210,210],tree_oak_1:['tree_oak_1.png',215.01,74.48,151.12,160,160],tree_oak_2:['tree_oak_2.png',215.39,76.96,151.75,160,160],tree_pine_1:['tree_pine_1.png',134.87,77.4,153.77,160,160],tree_pine_2:['tree_pine_2.png',126.74,77.09,148.48,160,160],unit_spear:['unit_spear.png',27.61,37.79,70.06,72,72],unit_vill:['unit_vill.png',34.22,38.42,66.0,72,72]};
+const SPR={};
+let groundPat=null;
+function loadArt(){
+ if(!ART)return;
+ for(const k in SPRM){const im=new Image();im.src='sprites/'+SPRM[k][0];SPR[k]=im}
+ /* The ground is a seamless 0 A.D. surface flattened to a light band, multiplied over the
+    existing terrain colours so the game keeps its grass/dirt/water semantics and gains 0 A.D.'s
+    surface detail rather than being repainted. A failed load must not take the game down. */
+ const g=new Image();
+ g.onload=()=>{try{groundPat=ctx.createPattern(g,'repeat')}catch(e){groundPat=null}};
+ g.src='sprites/ground.png';
+}
+/* Only draw a sprite once the browser has actually decoded it. */
+function spr(k){const i=SPR[k];return(ART&&i&&i.complete&&i.naturalWidth)?i:null}
+/* Draw sprite k with its ground footprint centred on screen point (sx,sy), scaled so that the
+   footprint measures targetW pixels across. */
+function drawSpr(k,sx,sy,targetW){
+ const im=spr(k);if(!im)return false;
+ const m=SPRM[k],kk=targetW/m[1];
+ ctx.drawImage(im,sx-m[2]*kk,sy-m[3]*kk,im.width*kk,im.height*kk);
+ return true}
+/* Which structure draws as which 0 A.D. building. Farms and walls keep their procedural art:
+   this asset set has no wall-segment mesh, and its gate is a prop authored to sit inside a
+   fortress wall rather than a standalone gateway (it bakes into two disconnected fragments). */
+const BLDSPR={tc:'bld_tc',barracks:'bld_barracks',woodyard:'bld_store',mine:'bld_store',market:'bld_store',tower:'bld_tower'};
+const HOUSES=['bld_house_a','bld_house_b','bld_house_c','bld_house_d','bld_house_e'];
+function buildingSprite(b){
+ if(!ART)return null;
+ if(b.type==='house')return HOUSES[(b.tx*7+b.ty*13)%HOUSES.length];
+ return BLDSPR[b.type]||null}
+/* 0 A.D. marks ownership with a player-colour tint on the material. Baking that would double the
+   sprite count for a cosmetic difference, so it is applied once here and cached. Multiply tints
+   the sprite but also paints the transparent surround, so the original alpha is restored after. */
+const TINT={0:'#cfe0ff',1:'#ffd0c8'};
+const SPRT={};
+function unitSprite(u){
+ const base=u.type==='vill'?'unit_vill':'unit_spear';
+ const im=spr(base);if(!im)return null;
+ const key=base+u.team;
+ if(!SPRT[key]){
+  const c=document.createElement('canvas');c.width=im.width;c.height=im.height;
+  const g=c.getContext('2d');
+  g.drawImage(im,0,0);
+  g.globalCompositeOperation='multiply';g.fillStyle=TINT[u.team]||'#ffffff';
+  g.fillRect(0,0,c.width,c.height);
+  g.globalCompositeOperation='destination-in';g.drawImage(im,0,0);
+  SPRT[key]=c}
+ return SPRT[key]}
+/* A white-on-silhouette copy for hit feedback. source-atop fills only where the sprite is opaque,
+   which is exactly the shape of the flash, and it is cached per sprite. */
+const SPRF={};
+function flashSprite(k){
+ const im=spr(k);if(!im)return null;
+ if(!SPRF[k]){
+  const c=document.createElement('canvas');c.width=im.width;c.height=im.height;
+  const g=c.getContext('2d');g.drawImage(im,0,0);
+  g.globalCompositeOperation='source-atop';g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
+  SPRF[k]=c}
+ return SPRF[k]}
+
 /* ============ rendering ============ */
 /* Multiply a #rrggbb colour by f. Cheaper and more predictable than stacking gradients
    for every roof slope and wall face. */
@@ -976,6 +1050,9 @@ function drawTile(x,y,sx,sy){
    ctx.beginPath();ctx.moveTo(sx-13,sy+16);ctx.quadraticCurveTo(sx,sy+10,sx+13,sy+16);ctx.stroke()}
  }else{
   ctx.fillStyle=tileCol[k];ctx.fill();
+  /* 0 A.D. surface detail multiplied over the terrain colour. dPath's path is still current, so
+     this re-fills the same diamond rather than needing to rebuild it. */
+  if(groundPat){ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=groundPat;ctx.fill();ctx.restore()}
   const d=decor[k];
   if(d===1){ctx.strokeStyle='rgba(30,60,25,.5)';ctx.lineWidth=1.2;ctx.beginPath();
    ctx.moveTo(sx-4,sy+18);ctx.lineTo(sx-5,sy+13);ctx.moveTo(sx,sy+19);ctx.lineTo(sx,sy+13);ctx.moveTo(sx+4,sy+18);ctx.lineTo(sx+5,sy+13);ctx.stroke()}
@@ -995,6 +1072,9 @@ function drawRes(r){
  const[sx,sy]=w2s(r.gx,r.gy);
  if(r.kind==='tree'){
   const v=(r.tx*7+r.ty*13)%3;
+  /* 0 A.D. oak and aleppo pine, chosen by the same tile hash the vector art used. A tree has no
+     grid footprint of its own, so this scales its canopy spread to roughly one tile. */
+  if(drawSpr(['tree_oak_1','tree_oak_2','tree_pine_1'][v],sx,sy,28))return;
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(sx,sy+1,9,4,0,0,7);ctx.fill();
   ctx.fillStyle='#6b4a2b';ctx.fillRect(sx-1.8,sy-12,3.6,12);
   ctx.fillStyle=['#2c5a29','#336530','#3a7034'][v];
@@ -1084,6 +1164,22 @@ function drawUnit(u){
  const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
  sg.addColorStop(0,'rgba(0,0,0,.36)');sg.addColorStop(.55,'rgba(0,0,0,.15)');sg.addColorStop(1,'rgba(0,0,0,0)');
  ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(sx,sy+1.5,9.5,4.2,0,0,7);ctx.fill();
+ /* 0 A.D. character sprite. The game tracks only a mirrored facing (u.face), so the single baked
+    view is flipped exactly as the vector art was -- there is no direction vector to select among
+    the eight facings bake_zeroad_art.py can produce. */
+ const us=unitSprite(u);
+ if(us){
+  ctx.save();ctx.translate(sx,sy-bob);ctx.scale(u.face<0?-1:1,1);
+  const k=26/us.height;
+  ctx.drawImage(us,-us.width*k/2,-us.height*k,us.width*k,us.height*k);
+  ctx.restore();
+  if(u.carry>=2){const cc=u.order.ctype==='w'?'#8a5a33':u.order.ctype==='g'?'#e9c352':u.order.ctype==='s'?'#aeb6bd':'#d0544a';
+   ctx.fillStyle=cc;ctx.beginPath();ctx.arc(sx-4,sy-18,2.5,0,7);ctx.fill();
+   ctx.strokeStyle='#1b140d';ctx.lineWidth=.85;ctx.stroke()}
+  if(u.flash>0){ctx.globalAlpha=Math.min(0.7,u.flash*5);ctx.fillStyle='#fff';
+   ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
+  if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-24,16,u.hp/u.maxhp);
+  return}
  ctx.save();ctx.translate(sx,sy-bob);ctx.scale(u.face*1.12,1.12);
  ctx.lineJoin='round';ctx.lineCap='round';
  const sw=u.moving?Math.sin(u.anim*2.6)*2.2:0;
@@ -1174,6 +1270,26 @@ function drawBuilding(b,ghost){
  const A=w2s(b.tx,b.ty),B=w2s(b.tx+s,b.ty),C=w2s(b.tx+s,b.ty+s),D=w2s(b.tx,b.ty+s);
  const p=b.done?1:Math.max(0.15,b.progress),h=b.hh*p;
  const pal=BLD[b.type];
+ /* 0 A.D. structure sprite. Skipped for the placement ghost, where the exact tile footprint is
+    the information the player needs. Scaling the model's projected ground footprint onto this
+    building's tile diamond keeps every structure on the grid and preserves scale between types. */
+ const bs=ghost?null:buildingSprite(b);
+ const bimg=bs?spr(bs):null;
+ if(bimg){
+  const bm=SPRM[bs],kk=(s*TW)/bm[1];
+  const[ccx,ccy]=w2s(b.cx,b.cy);
+  const dx=ccx-bm[2]*kk,dy=ccy-bm[3]*kk,dw=bimg.width*kk,dh=bimg.height*kk;
+  ctx.save();
+  /* An unfinished structure rises out of the ground rather than fading in at full height, so
+     build progress stays legible at a glance. */
+  if(!b.done){ctx.globalAlpha=0.55+0.45*p;
+   ctx.beginPath();ctx.rect(dx,dy+dh-dh*p,dw,dh*p);ctx.clip()}
+  ctx.drawImage(bimg,dx,dy,dw,dh);
+  ctx.restore();
+  if(b.flash>0){const f=flashSprite(bs);
+   if(f){ctx.save();ctx.globalAlpha=Math.min(0.55,b.flash*4);ctx.drawImage(f,dx,dy,dw,dh);ctx.restore()}}
+  if(selection.includes(b)||b.hp<b.maxhp)drawBar((A[0]+C[0])/2,A[1]-b.hh-12,34,b.hp/b.maxhp);
+  return}
  ctx.save();if(ghost)ctx.globalAlpha=0.55;
  if(b.type==='palisade'||b.type==='stonewall'||b.type==='gate'){
   if(!ghost){ctx.fillStyle='rgba(0,0,0,.2)';poly4(A,B,C,D);ctx.fill()}
@@ -1466,6 +1582,7 @@ function frame(ts){
 function resize(){dpr=Math.min(2,devicePixelRatio||1);cw=innerWidth;ch=innerHeight;
  cv.width=cw*dpr;cv.height=ch*dpr;cv.style.width=cw+'px';cv.style.height=ch+'px'}
 addEventListener('resize',resize);resize();
+loadArt();   /* started before the first frame; sprite sites fall back until each image decodes */
 genTerrain();
 mkBuilding(0,'tc',9,41,true);
 mkBuilding(1,'tc',44,12,true);
