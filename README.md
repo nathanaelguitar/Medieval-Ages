@@ -67,8 +67,10 @@ The game starts Blue and Red settlements, each with a town center, starting vill
 | Tap a friendly unit or building | Select it. |
 | Double-tap a friendly unit | Select all friendly units of that type. |
 | Tap a tree, berry patch, gold mine, stone mine, boar, or sheep with villagers selected | Start gathering or hunting. Resources return to the Town Center, Wood Yard, or Mining Camp. Wounded game bolts, so the villager has to chase it down and the animal drops to a carcass as it is used up. |
-| Drag one finger on the map | Pan the camera. |
+| Drag one finger on the map | Rubber-band select: every unit you control inside the box is selected. Dragging over empty ground clears the selection. |
+| Drag two fingers on the map | Pan the camera. |
 | Pinch | Zoom in/out. |
+| Drag on the minimap | Pan the camera. |
 | Bottom-right stick | Directly move the selected units. |
 | Tap an enemy or the sword button | Attack the target/nearest enemy with selected military units. |
 | Tap your Town Center with villagers selected | Garrison them for protection; the Town Center fires stronger/faster arrows. |
