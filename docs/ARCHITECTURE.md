@@ -81,6 +81,8 @@ index.html                        scales each sprite so its footprint maps onto 
 
 Characters need a detour, because the bundled meshes are rigged and skinned — a 24-bone biped using 0 A.D.'s standard `Biped_*` bone names — but ship with **no animation clips**. The fix is to borrow 0 A.D.'s own: the clips under `ios/ZeroADArt/animations/` come from the same project and drive 102 of the 103 channel targets on these rigs exactly, so they are not retargeted so much as reapplied.
 
+Only the actor's own mesh is baked for a character. Buildings need their `<props>` merged because every one of theirs attaches at the root; unit props attach to named bones instead (`helmet`, `shield_arm`, `weapon_R`, `leg_R`), and the prop meshes are authored flat in the bone's local space, so merging them at identity — measured directly — puts a helmet at knee height and greaves through the shins. Placing them correctly means resolving the bone rest matrices, which is not done yet, so they are excluded and the body mesh carries its own head.
+
 ```text
 ios/ZeroADArt/animations/biped/citizen/*.dae    0 A.D. walk + idle clips (CC BY-SA 3.0)
 ios/ZeroADArt/meshes/skeletal/new/*.dae         rigged character

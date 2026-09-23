@@ -129,8 +129,14 @@ class ActorIndex:
                 best, best_freq = variant, freq
         return best
 
-    def expand(self, rel, want=None, _depth=0, _seen=None):
-        """Yield (mesh_rel, skin_rel) for an actor and every prop beneath it, recursively."""
+    def expand(self, rel, want=None, _depth=0, _seen=None, props=True):
+        """Yield (mesh_rel, skin_rel) for an actor and every prop beneath it, recursively.
+
+        `props=False` uses only the actor's own mesh. Buildings need their props -- all of theirs
+        attach at the root, so merging them is correct. Units do not: their props attach to named
+        bones (`helmet`, `shield_arm`, `weapon_R`, `leg_R`), and the prop meshes are authored flat
+        in the bone's local space, so merging them at identity drops a helmet at knee height.
+        """
         if _depth > 6:
             return
         _seen = _seen if _seen is not None else set()
@@ -145,10 +151,12 @@ class ActorIndex:
         if mesh is not None and mesh.text:
             skin = _basetex_in(variant) or self.file_basetex.get(rel)
             yield mesh.text.strip(), skin
-        props = variant.find("props")
-        if props is None:
+        if not props:
             return
-        for prop in props.findall("prop"):
+        props_elem = variant.find("props")
+        if props_elem is None:
+            return
+        for prop in props_elem.findall("prop"):
             actor = prop.get("actor")
             if not actor or any(s in actor for s in SKIP_ACTOR):
                 continue
@@ -287,7 +295,7 @@ def reorder(p, up):
     return p[1], p[2], p[0]
 
 
-def build_pieces(index, actor_rel, want=None, verbose=True):
+def build_pieces(index, actor_rel, want=None, verbose=True, include_props=True):
     """Load every mesh in an actor composite and put them in one shared coordinate frame.
 
     The up-axis is decided once, from the mesh with the most vertices, and applied to all parts.
@@ -296,7 +304,7 @@ def build_pieces(index, actor_rel, want=None, verbose=True):
     tears the composite apart.
     """
     raw = []
-    for mesh_rel, skin_rel in index.expand(actor_rel, want):
+    for mesh_rel, skin_rel in index.expand(actor_rel, want, props=include_props):
         if any(s in mesh_rel for s in SKIP_MESH):
             if verbose:
                 print(f"    {mesh_rel}  skipped (vegetation, not structure)")
@@ -522,6 +530,8 @@ ANIMATED_UNITS = [
     # sprite name, character, clip, frames sampled across the cycle, sprite size
     ("unit_vill_walk", "villager", "walk", 8, 72),
     ("unit_vill_idle", "villager", "idle", 6, 72),
+    ("unit_spear_walk", "soldier", "walk", 8, 72),
+    ("unit_spear_idle", "soldier", "idle", 6, 72),
 ]
 BLENDER_SCRIPT = os.path.join(HERE, "blender_bake_animation.py")
 
@@ -577,9 +587,9 @@ def main():
     def wanted(name):
         return not args.only or args.only in name
 
-    def bake_one(name, actor, want, size, yaw=ISOMETRIC_YAW):
+    def bake_one(name, actor, want, size, yaw=ISOMETRIC_YAW, include_props=True):
         print(f"  [{name}] {actor}" + (f" ({want})" if want else ""))
-        pieces = build_pieces(index, actor, want)
+        pieces = build_pieces(index, actor, want, include_props=include_props)
         if not pieces:
             print("    -- no geometry, skipped")
             return False
@@ -609,7 +619,7 @@ def main():
         for i in range(args.facings):
             suffix = f"_{i}" if args.facings > 1 else ""
             bake_one(f"{name}{suffix}", actor, None, size,
-                     yaw=ISOMETRIC_YAW + i * (360.0 / args.facings))
+                     yaw=ISOMETRIC_YAW + i * (360.0 / args.facings), include_props=False)
 
     if args.with_animation:
         print("\n== animated units ==")

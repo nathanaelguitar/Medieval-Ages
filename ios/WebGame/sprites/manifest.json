@@ -118,10 +118,168 @@
  },
  "unit_spear": {
   "file": "unit_spear.png",
-  "fill": 0.1146,
-  "fp_cx": 37.79,
-  "fp_cy": 70.06,
-  "fp_w": 27.61,
+  "fill": 0.1709,
+  "fp_cx": 37.43,
+  "fp_cy": 65.68,
+  "fp_w": 33.86,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_idle": {
+  "clip": "idle",
+  "duration": 2.5,
+  "files": [
+   "unit_spear_idle_0.png",
+   "unit_spear_idle_1.png",
+   "unit_spear_idle_2.png",
+   "unit_spear_idle_3.png",
+   "unit_spear_idle_4.png",
+   "unit_spear_idle_5.png"
+  ],
+  "fps": 2.4,
+  "frames": 6,
+  "group": "animation"
+ },
+ "unit_spear_idle_0": {
+  "file": "unit_spear_idle_0.png",
+  "fill": 0.2305,
+  "fp_cx": 34.79,
+  "fp_cy": 67.81,
+  "fp_w": 45.64,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_idle_1": {
+  "file": "unit_spear_idle_1.png",
+  "fill": 0.2319,
+  "fp_cx": 34.79,
+  "fp_cy": 67.79,
+  "fp_w": 45.76,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_idle_2": {
+  "file": "unit_spear_idle_2.png",
+  "fill": 0.2319,
+  "fp_cx": 34.79,
+  "fp_cy": 67.77,
+  "fp_w": 45.9,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_idle_3": {
+  "file": "unit_spear_idle_3.png",
+  "fill": 0.2319,
+  "fp_cx": 34.79,
+  "fp_cy": 67.74,
+  "fp_w": 46.03,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_idle_4": {
+  "file": "unit_spear_idle_4.png",
+  "fill": 0.2319,
+  "fp_cx": 34.79,
+  "fp_cy": 67.77,
+  "fp_w": 45.9,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_idle_5": {
+  "file": "unit_spear_idle_5.png",
+  "fill": 0.2317,
+  "fp_cx": 34.79,
+  "fp_cy": 67.79,
+  "fp_w": 45.76,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk": {
+  "clip": "walk",
+  "duration": 1.6667,
+  "files": [
+   "unit_spear_walk_0.png",
+   "unit_spear_walk_1.png",
+   "unit_spear_walk_2.png",
+   "unit_spear_walk_3.png",
+   "unit_spear_walk_4.png",
+   "unit_spear_walk_5.png",
+   "unit_spear_walk_6.png",
+   "unit_spear_walk_7.png"
+  ],
+  "fps": 4.8,
+  "frames": 8,
+  "group": "animation"
+ },
+ "unit_spear_walk_0": {
+  "file": "unit_spear_walk_0.png",
+  "fill": 0.1825,
+  "fp_cx": 36.76,
+  "fp_cy": 65.82,
+  "fp_w": 50.65,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_1": {
+  "file": "unit_spear_walk_1.png",
+  "fill": 0.2199,
+  "fp_cx": 38.75,
+  "fp_cy": 68.9,
+  "fp_w": 46.64,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_2": {
+  "file": "unit_spear_walk_2.png",
+  "fill": 0.2459,
+  "fp_cx": 33.24,
+  "fp_cy": 70.11,
+  "fp_w": 54.02,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_3": {
+  "file": "unit_spear_walk_3.png",
+  "fill": 0.2151,
+  "fp_cx": 32.92,
+  "fp_cy": 65.53,
+  "fp_w": 57.52,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_4": {
+  "file": "unit_spear_walk_4.png",
+  "fill": 0.2234,
+  "fp_cx": 35.56,
+  "fp_cy": 65.62,
+  "fp_w": 53.62,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_5": {
+  "file": "unit_spear_walk_5.png",
+  "fill": 0.224,
+  "fp_cx": 39.17,
+  "fp_cy": 70.6,
+  "fp_w": 43.24,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_6": {
+  "file": "unit_spear_walk_6.png",
+  "fill": 0.1935,
+  "fp_cx": 37.51,
+  "fp_cy": 66.75,
+  "fp_w": 45.12,
+  "h": 72,
+  "w": 72
+ },
+ "unit_spear_walk_7": {
+  "file": "unit_spear_walk_7.png",
+  "fill": 0.1784,
+  "fp_cx": 35.94,
+  "fp_cy": 62.58,
+  "fp_w": 47.88,
   "h": 72,
   "w": 72
  },
@@ -129,7 +287,7 @@
   "file": "unit_vill.png",
   "fill": 0.1755,
   "fp_cx": 38.42,
-  "fp_cy": 66.0,
+  "fp_cy": 65.97,
   "fp_w": 34.22,
   "h": 72,
   "w": 72

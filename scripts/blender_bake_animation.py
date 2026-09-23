@@ -40,13 +40,26 @@ SKIN_ROOT = os.path.join(ART, "textures", "skins")
 ANIM_ROOT = os.path.join(ART, "animations")
 
 CHARACTERS = {
-    "villager": ("skeletal/new/f_dress.dae", "skeletal/hele/dress_female_01.png"),
-    "soldier": ("skeletal/new/m_armor_tunic_short.dae", "skeletal/athen/linothorax_lamellar_01_03.png"),
-}
-
-CLIPS = {
-    "walk": "biped/citizen/walk_relax_f.dae",
-    "idle": "biped/citizen/idle_relax_f.dae",
+    "villager": {
+        "mesh": "skeletal/new/f_dress.dae",
+        "skin": "skeletal/hele/dress_female_01.png",
+        "clips": {"walk": "biped/citizen/walk_relax_f.dae",
+                  "idle": "biped/citizen/idle_relax_f.dae"},
+    },
+    "soldier": {
+        "mesh": "skeletal/new/m_armor_tunic_short.dae",
+        "skin": "skeletal/athen/linothorax_lamellar_01_03.png",
+        # Relax rather than ready. These props are not rendered (see the prop note in
+        # bake_zeroad_art.py), so the weapon-ready stance reads as a wide brace holding nothing:
+        # measured content width swings 30/46/30px against relax's 24/32/22, and the villager's
+        # natural walk is 32/20/30. The shield variants are worse still, holding an arm out for a
+        # shield that is not there.
+        "clips": {"walk": "biped/infantry/spearman/walk_relax.dae",
+                  "idle": "biped/infantry/spearman/idle_relax.dae",
+                  # alternates, kept so the stance can be compared without re-downloading
+                  "walk_ready": "biped/infantry/spearman/walk_ready.dae",
+                  "idle_ready": "biped/infantry/spearman/idle_ready.dae"},
+    },
 }
 
 FPS = 24
@@ -57,10 +70,16 @@ def parse_args():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--character", default="villager", choices=sorted(CHARACTERS))
-    ap.add_argument("--clip", default="walk", choices=sorted(CLIPS))
+    ap.add_argument("--clip", default="walk",
+                    help="clip name; which are available depends on --character "
+                         f"({', '.join(sorted({c for v in CHARACTERS.values() for c in v['clips']}))})")
     ap.add_argument("--frames", type=int, default=12, help="frames to sample across the clip")
     ap.add_argument("--out", required=True)
-    return ap.parse_args(argv)
+    args = ap.parse_args(argv)
+    if args.clip not in CHARACTERS[args.character]["clips"]:
+        sys.exit(f"{args.character} has no '{args.clip}' clip; "
+                 f"available: {sorted(CHARACTERS[args.character]['clips'])}")
+    return args
 
 
 def action_fcurves(action):
@@ -98,8 +117,9 @@ def to_gltf(dae, glb):
 
 def main():
     args = parse_args()
-    mesh_rel, skin_rel = CHARACTERS[args.character]
-    clip_rel = CLIPS[args.clip]
+    spec = CHARACTERS[args.character]
+    mesh_rel, skin_rel = spec["mesh"], spec["skin"]
+    clip_rel = spec["clips"][args.clip]
     mesh_dae = os.path.join(MESH_ROOT, mesh_rel)
     clip_dae = os.path.join(ANIM_ROOT, clip_rel)
     skin = os.path.join(SKIN_ROOT, skin_rel)
