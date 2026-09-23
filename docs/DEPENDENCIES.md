@@ -24,7 +24,7 @@ Unlike the engine dependencies above, the 0 A.D. art is **not** merely a build i
 
 | Path | What it is | Shipped in the bundle |
 | --- | --- | --- |
-| `ios/ZeroADArt/` | 0 A.D. actor XML, COLLADA meshes, OBJ/MTL, and PNG/DDS textures selected from the 2024 GitHub mirror | Yes — 210 files under `ZeroADArt/` (the `.dae` and `.dds` sources are not packaged) |
+| `ios/ZeroADArt/` | 0 A.D. actor XML, COLLADA meshes, OBJ/MTL, and PNG/DDS textures selected from the 2024 GitHub mirror, plus fauna sources pinned in `ATTRIBUTION.txt` | Yes — 213 distributable files under `ZeroADArt/` (the `.dae` and `.dds` sources are not packaged) |
 | `ios/WebGame/sprites/` | Isometric sprites baked from those meshes by `scripts/bake_zeroad_art.py` | Yes — under `open-empire-mobile/sprites/` |
 
 Licence: **Creative Commons Attribution-ShareAlike 3.0** (CC BY-SA 3.0), (C) 2009 Wildfire Games. Full text and the original notices are retained at `ios/ZeroADArt/LICENSE.txt` and `ios/ZeroADArt/ATTRIBUTION.txt`; the baked sprites carry an equivalent notice at `ios/WebGame/sprites/ATTRIBUTION.txt`.
@@ -33,7 +33,7 @@ The share-alike term is the part that matters here and is easy to miss: **the ba
 
 This is separate from, and in addition to, the upstream OpenEmpire Trial-data notice, which concerns Microsoft artwork. This port grants no rights to Microsoft assets in either case.
 
-Regenerating the sprites (`python3 scripts/bake_zeroad_art.py`) requires Pillow and the `assimp` CLI, and reproduces the same licence position. The output is committed, so no build step depends on either tool.
+Regenerating static sprites (`python3 scripts/bake_zeroad_art.py`) requires Pillow and the `assimp` CLI. Regenerating animated cycles additionally requires Blender (`--with-animation`). The generated PNGs and manifests are committed, so no build step depends on these tools.
 
 Useful primary documentation:
 

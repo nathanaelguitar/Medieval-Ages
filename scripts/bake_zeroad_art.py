@@ -75,6 +75,142 @@ def clamp8(v):
     return 0 if v < 0 else (255 if v > 255 else v)
 
 
+# --------------------------------------------------------------------------------------
+# skeleton: resolving bone rest matrices, so unit props can be attached
+# --------------------------------------------------------------------------------------
+# 0 A.D. attaches a unit's helmet, shield, spear and greaves to named skeleton bones, and authors
+# those prop meshes flat in the bone's local space. Merging them at identity (correct for buildings,
+# whose props all attach at the root) therefore drops a helmet at knee height. These helpers walk
+# the COLLADA visual scene to recover each bone's rest transform.
+
+def m4_identity():
+    return [1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0]
+
+
+def m4_mul(a, b):
+    """Row-major 4x4 product a*b."""
+    out = [0.0] * 16
+    for r in range(4):
+        for c in range(4):
+            out[r * 4 + c] = sum(a[r * 4 + k] * b[k * 4 + c] for k in range(4))
+    return out
+
+
+def m4_apply(m, p):
+    x, y, z = p
+    w = m[12] * x + m[13] * y + m[14] * z + m[15]
+    if abs(w) < 1e-12:
+        w = 1.0
+    return ((m[0] * x + m[1] * y + m[2] * z + m[3]) / w,
+            (m[4] * x + m[5] * y + m[6] * z + m[7]) / w,
+            (m[8] * x + m[9] * y + m[10] * z + m[11]) / w)
+
+
+def m4_translate(x, y, z):
+    return [1.0, 0, 0, x, 0, 1.0, 0, y, 0, 0, 1.0, z, 0, 0, 0, 1.0]
+
+
+def m4_scale(x, y, z):
+    return [x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1.0]
+
+
+def m4_rotate(ax, ay, az, deg):
+    n = math.sqrt(ax * ax + ay * ay + az * az)
+    if n < 1e-12:
+        return m4_identity()
+    ax, ay, az = ax / n, ay / n, az / n
+    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+    t = 1.0 - c
+    return [t * ax * ax + c, t * ax * ay - s * az, t * ax * az + s * ay, 0,
+            t * ax * ay + s * az, t * ay * ay + c, t * ay * az - s * ax, 0,
+            t * ax * az - s * ay, t * ay * az + s * ax, t * az * az + c, 0,
+            0, 0, 0, 1.0]
+
+
+def m4_from_collada(text, row_major=True):
+    """COLLADA <matrix> is row-major: the 16 values are m00 m01 m02 m03 m10 ...
+
+    This is already the internal layout, so the values map straight across -- transposing here
+    (an easy mistake, since the same numbers *look* like a column-major dump) puts every bone in
+    the wrong place. The tell is the last row: `0 0 0 1` with the translation in the last column
+    of rows 0-2 means row-major.
+    """
+    v = [float(x) for x in text.split()]
+    if len(v) != 16:
+        return m4_identity()
+    if row_major:
+        return v
+    return [v[0], v[4], v[8], v[12],
+            v[1], v[5], v[9], v[13],
+            v[2], v[6], v[10], v[14],
+            v[3], v[7], v[11], v[15]]
+
+
+def m4_transpose(m):
+    return [m[0], m[4], m[8], m[12],
+            m[1], m[5], m[9], m[13],
+            m[2], m[6], m[10], m[14],
+            m[3], m[7], m[11], m[15]]
+
+
+# assimp converts the COLLADA Z-up frame to Y-up on export, so anything read from the DAE -- a bone
+# rest matrix, say -- has to be conjugated by this before it can act on exported vertices, or on the
+# armature Blender imported from that same export. Skip it and props scatter instead of attaching.
+AXIS_ZUP_TO_YUP = [1, 0, 0, 0,
+                   0, 0, 1, 0,
+                   0, -1, 0, 0,
+                   0, 0, 0, 1]
+AXIS_ZUP_TO_YUP_T = m4_transpose(AXIS_ZUP_TO_YUP)
+
+
+def m4_to_converted(m):
+    return m4_mul(m4_mul(AXIS_ZUP_TO_YUP, m), AXIS_ZUP_TO_YUP_T)
+
+
+def node_local_matrix(node, row_major=True):
+    """Compose a node's transform elements in document order, per the COLLADA spec."""
+    m = m4_identity()
+    for child in node:
+        tag = child.tag.split("}")[-1]
+        txt = (child.text or "").split()
+        if tag == "matrix" and txt:
+            m = m4_mul(m, m4_from_collada(" ".join(txt), row_major))
+        elif tag == "translate" and len(txt) >= 3:
+            m = m4_mul(m, m4_translate(*[float(x) for x in txt[:3]]))
+        elif tag == "rotate" and len(txt) >= 4:
+            m = m4_mul(m, m4_rotate(*[float(x) for x in txt[:4]]))
+        elif tag == "scale" and len(txt) >= 3:
+            m = m4_mul(m, m4_scale(*[float(x) for x in txt[:3]]))
+    return m
+
+
+def parse_skeleton(dae_path, row_major=True, with_parents=False):
+    """bone id -> rest world matrix (and optionally its parent), from the COLLADA visual scene."""
+    NS = "{http://www.collada.org/2005/11/COLLADASchema}"
+    try:
+        root = ET.parse(dae_path).getroot()
+    except (ET.ParseError, OSError):
+        return {}
+    scene = root.find(f"{NS}library_visual_scenes")
+    if scene is None:
+        return {}
+    out, parents = {}, {}
+
+    def walk(node, parent, parent_id):
+        nid = node.get("id")
+        world = m4_mul(parent, node_local_matrix(node, row_major))
+        if nid and nid not in out:   # the tree lists some bones twice; keep the first
+            out[nid] = world
+            parents[nid] = parent_id
+        for child in node.findall(f"{NS}node"):
+            walk(child, world, nid)
+
+    for vs in scene.findall(f"{NS}visual_scene"):
+        for node in vs.findall(f"{NS}node"):
+            walk(node, m4_identity(), None)
+    return (out, parents) if with_parents else out
+
+
 def _basetex_in(elem):
     """The file named by a baseTex <texture> directly inside elem, if any."""
     texs = elem.find("textures")
@@ -129,13 +265,13 @@ class ActorIndex:
                 best, best_freq = variant, freq
         return best
 
-    def expand(self, rel, want=None, _depth=0, _seen=None, props=True):
-        """Yield (mesh_rel, skin_rel) for an actor and every prop beneath it, recursively.
+    def expand(self, rel, want=None, _depth=0, _seen=None, props=True, attachpoint="root"):
+        """Yield (mesh_rel, skin_rel, attachpoint) for an actor and its props, recursively.
 
-        `props=False` uses only the actor's own mesh. Buildings need their props -- all of theirs
-        attach at the root, so merging them is correct. Units do not: their props attach to named
-        bones (`helmet`, `shield_arm`, `weapon_R`, `leg_R`), and the prop meshes are authored flat
-        in the bone's local space, so merging them at identity drops a helmet at knee height.
+        `attachpoint` names the skeleton bone a prop hangs off. Buildings use `root` throughout, so
+        their props merge at identity. Units use bone names (`helmet`, `shield_arm`, `weapon_R`),
+        and those prop meshes are authored in the bone's local space -- merging them at identity
+        drops a helmet at knee height instead of on the head.
         """
         if _depth > 6:
             return
@@ -150,7 +286,7 @@ class ActorIndex:
         mesh = variant.find("mesh")
         if mesh is not None and mesh.text:
             skin = _basetex_in(variant) or self.file_basetex.get(rel)
-            yield mesh.text.strip(), skin
+            yield mesh.text.strip(), skin, attachpoint
         if not props:
             return
         props_elem = variant.find("props")
@@ -160,7 +296,8 @@ class ActorIndex:
             actor = prop.get("actor")
             if not actor or any(s in actor for s in SKIP_ACTOR):
                 continue
-            yield from self.expand(actor, None, _depth + 1, _seen)
+            yield from self.expand(actor, None, _depth + 1, _seen,
+                                   attachpoint=prop.get("attachpoint") or "root")
 
 
 def skin_path(ref):
@@ -304,7 +441,7 @@ def build_pieces(index, actor_rel, want=None, verbose=True, include_props=True):
     tears the composite apart.
     """
     raw = []
-    for mesh_rel, skin_rel in index.expand(actor_rel, want, props=include_props):
+    for mesh_rel, skin_rel, attachpoint in index.expand(actor_rel, want, props=include_props):
         if any(s in mesh_rel for s in SKIP_MESH):
             if verbose:
                 print(f"    {mesh_rel}  skipped (vegetation, not structure)")
@@ -315,7 +452,7 @@ def build_pieces(index, actor_rel, want=None, verbose=True, include_props=True):
         verts, uvs, faces = load_obj(obj)
         if not verts or not faces:
             continue
-        raw.append((mesh_rel, verts, uvs, faces, skin_path(skin_rel)))
+        raw.append((mesh_rel, verts, uvs, faces, skin_path(skin_rel), attachpoint))
     if not raw:
         return []
 
@@ -324,10 +461,30 @@ def build_pieces(index, actor_rel, want=None, verbose=True, include_props=True):
     if verbose:
         print(f"    up-axis '{XYZ[up]}' taken from {dominant[0]} ({len(dominant[1])} verts)")
 
+    # Bone rest matrices come from the body mesh's own skeleton. Prop geometry arrives via assimp
+    # in Y-up while the COLLADA scene is Z-up, so the bone matrix is conjugated by that axis change
+    # before it can act on these vertices.
+    skeleton = parse_skeleton(os.path.join(MESH_ROOT, dominant[0]))
+    dlo = [min(v[i] for v in dominant[1]) for i in range(3)]
+    dhi = [max(v[i] for v in dominant[1]) for i in range(3)]
+    # Assimp exports the biped as Y-up, not Z-up. Measure along the axis selected for the body;
+    # using Z here makes a 3.85-unit soldier look only 0.84 units tall and wrongly filters helmets.
+    body_h = dhi[up] - dlo[up]
+
     pieces = []
-    for mesh_rel, verts, uvs, faces, texpath in raw:
+    for mesh_rel, verts, uvs, faces, texpath, attachpoint in raw:
         own = detect_up_axis(verts)
         note = "" if own == up else f"  (own guess {XYZ[own]}, overridden)"
+        if attachpoint and attachpoint != "root":
+            piece, why = place_prop(mesh_rel, skin_rel, attachpoint, skeleton, up, body_h)
+            if piece is None:
+                # Better to drop a prop than to drop it at the origin or smear it across the feet.
+                if verbose:
+                    print(f"    {mesh_rel}  skipped ({why})")
+                continue
+            note += f"  [{why}]"
+            pieces.append(piece)
+            continue
         if verbose:
             print(f"    {mesh_rel}  verts={len(verts)} tris={len(faces)} "
                   f"tex={os.path.basename(texpath) if texpath else 'NONE'}{note}")
@@ -339,12 +496,16 @@ def build_pieces(index, actor_rel, want=None, verbose=True, include_props=True):
 # rasteriser
 # --------------------------------------------------------------------------------------
 
-def render(pieces, size, yaw=ISOMETRIC_YAW, pitch=ISOMETRIC_PITCH, bg=(0, 0, 0, 0)):
-    """Orthographic isometric render with a z-buffer and barycentric UV texture sampling."""
-    allv = [v for p in pieces for v in p.verts]
+def project_fit(vertsets, size, yaw=ISOMETRIC_YAW, pitch=ISOMETRIC_PITCH):
+    """Camera framing shared by a whole set of meshes.
+
+    Called with every frame of a clip at once so the framing is identical across them. Fitting each
+    frame separately makes the character change size whenever a limb -- or a spear -- swings wide.
+    Returns (cx, cy, ground, scale, ox, oz).
+    """
+    allv = [v for vs in vertsets for v in vs]
     if not allv:
         raise SystemExit("no geometry")
-
     lo = [min(v[i] for v in allv) for i in range(3)]
     hi = [max(v[i] for v in allv) for i in range(3)]
     cx, cy = (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2
@@ -360,16 +521,37 @@ def render(pieces, size, yaw=ISOMETRIC_YAW, pitch=ISOMETRIC_PITCH, bg=(0, 0, 0, 
         y, z = y * cp - z * sp, y * sp + z * cp
         return x, y, z  # x = screen-right, y = depth, z = screen-up
 
-    # projected extent drives the fit
     proj = [cam(v) for v in allv]
     span_x = max(p[0] for p in proj) - min(p[0] for p in proj)
     span_z = max(p[2] for p in proj) - min(p[2] for p in proj)
     scale = (size * 0.86) / max(span_x, span_z, 1e-6)
     ox = (min(p[0] for p in proj) + max(p[0] for p in proj)) / 2
     oz = min(p[2] for p in proj)
+    return cx, cy, ground, scale, ox, oz
+
+
+def render(pieces, size, yaw=ISOMETRIC_YAW, pitch=ISOMETRIC_PITCH, bg=(0, 0, 0, 0), fit=None):
+    """Orthographic isometric render with a z-buffer and barycentric UV texture sampling."""
+    allv = [v for p in pieces for v in p.verts]
+    if not allv:
+        raise SystemExit("no geometry")
+
+    cx, cy, ground, scale, ox, oz = fit if fit else project_fit([allv], size, yaw, pitch)
+
+    yr, pr = math.radians(yaw), math.radians(pitch)
+    cyw, syw = math.cos(yr), math.sin(yr)
+    cp, sp = math.cos(pr), math.sin(pr)
+
+    def cam(v):
+        x, y, z = v[0] - cx, v[1] - cy, v[2] - ground
+        x, y = x * cyw - y * syw, x * syw + y * cyw
+        y, z = y * cp - z * sp, y * sp + z * cp
+        return x, y, z  # x = screen-right, y = depth, z = screen-up
 
     # Ground footprint: the model's base rectangle. The canvas side scales the sprite so this maps
     # onto the building's tile diamond, which keeps every sprite on the same grid.
+    lo = [min(v[i] for v in allv) for i in range(3)]
+    hi = [max(v[i] for v in allv) for i in range(3)]
     corners = []
     for ux in (lo[0], hi[0]):
         for uy in (lo[1], hi[1]):
@@ -496,6 +678,8 @@ TREES = [
 UNITS = [
     ("unit_vill", "units/athenians/female_citizen.xml", 72),
     ("unit_spear", "units/athenians/hero_infantry_spearman_pericles.xml", 72),
+    ("animal_boar", "fauna/boar.xml", 72),
+    ("animal_sheep", "fauna/sheep1.xml", 72),
 ]
 
 
@@ -532,6 +716,10 @@ ANIMATED_UNITS = [
     ("unit_vill_idle", "villager", "idle", 6, 72),
     ("unit_spear_walk", "soldier", "walk", 8, 72),
     ("unit_spear_idle", "soldier", "idle", 6, 72),
+    ("animal_boar_walk", "boar", "walk", 8, 72),
+    ("animal_boar_idle", "boar", "idle", 6, 72),
+    ("animal_sheep_walk", "sheep", "walk", 8, 72),
+    ("animal_sheep_idle", "sheep", "idle", 6, 72),
 ]
 BLENDER_SCRIPT = os.path.join(HERE, "blender_bake_animation.py")
 
@@ -540,29 +728,203 @@ BLENDER_SCRIPT = os.path.join(HERE, "blender_bake_animation.py")
 CHARACTER_SKINS = {
     "villager": "skeletal/hele/dress_female_01.png",
     "soldier": "skeletal/athen/linothorax_lamellar_01_03.png",
+    "boar": "skeletal/animal_boar_01.png",
+    "sheep": "skeletal/animal_sheep_a.dds",
+}
+
+# The actor a character bakes from, so its bone-attached props can be resolved and handed to
+# Blender -- otherwise an animated unit would visibly shed its helmet and spear the moment it walks.
+CHARACTER_ACTORS = {
+    "villager": "units/athenians/female_citizen.xml",
+    "soldier": "units/athenians/hero_infantry_spearman_pericles.xml",
+    "boar": "fauna/boar.xml",
+    "sheep": "fauna/sheep1.xml",
+}
+
+# ...and the body mesh, which is the skeleton props are resolved against.
+CHARACTER_MESHES = {
+    "villager": "skeletal/new/f_dress.dae",
+    "soldier": "skeletal/new/m_armor_tunic_short.dae",
+    "boar": "skeletal/animal_boar.dae",
+    "sheep": "skeletal/sheep.dae",
 }
 
 
-def blender_frame_cache(character, clip, frames, cache_root):
-    """Run Blender to write deformed per-frame OBJs, and return the cache directory."""
+def mesh_extent(verts):
+    """Bounding-box diagonal of a mesh, in its own space."""
+    if not verts:
+        return 0.0
+    lo = [min(v[i] for v in verts) for i in range(3)]
+    hi = [max(v[i] for v in verts) for i in range(3)]
+    return math.sqrt(sum((hi[i] - lo[i]) ** 2 for i in range(3)))
+
+
+# A unit prop is only kept if it is a plausible thing to hang off a bone. Two failure modes, both
+# measured rather than guessed:
+#   * Too small. Props authored flat at the origin (the soldier's cape spans 0.07 on a 3.85 body,
+#     the villager's head prop 0.01) are meant to be placed by a bone that this pipeline does not
+#     always have. Left in, they smear a sliver across the feet.
+#   * Too long. A spear is 3.4 units on a 3.85 body. Its own bone is dropped by the glTF hop, so it
+#     ends up following the hand -- and a walk cycle swings the hand hard, turning the spear into a
+#     thin diagonal line across the whole sprite and shrinking the figure to fit.
+# Compact, bone-attached gear (helmet, shield, greaves) rides along correctly.
+PROP_MIN_EXTENT = 0.05
+PROP_MAX_EXTENT_FRAC = 0.5
+
+
+def prop_extent_ok(extent, body_height):
+    return PROP_MIN_EXTENT <= extent <= PROP_MAX_EXTENT_FRAC * body_height
+
+
+def place_prop(mesh_rel, skin_rel, attachpoint, skeleton, up, body_h):
+    """Load a bone-attached prop and transform it onto its bone. Returns (Piece, note) or (None, why).
+
+    Shared by the static and animated unit bakes so a unit looks the same whether it is standing or
+    walking. In the animated bake the props stay at this rest placement rather than following the
+    animation: Blender's bone space and the COLLADA rest space this transform is derived in do not
+    agree -- a prop placed through Blender's pose matrices came out 6.16 units where the rest
+    placement gives 0.16, a scale mismatch -- and rather than mix the two, the placement that is
+    known correct is used for both. A helmet, shield or greave barely moves in a walk anyway.
+    """
+    bone = f"Biped_{attachpoint}"
+    m = skeleton.get(bone)
+    if m is None:
+        return None, f"no bone '{bone}'"
+    obj = export_obj(mesh_rel)
+    if not obj:
+        return None, "assimp failed"
+    verts, uvs, faces = load_obj(obj)
+    if not verts or not faces:
+        return None, "no geometry"
+    verts = [m4_apply(m4_to_converted(m), v) for v in verts]
+    # Measured AFTER attaching, because bones carry scale: the spear mesh is 0.16 units in its own
+    # space but larger once the bone's scale applies, and measuring before made it look small enough
+    # to keep. See PROP_MIN_EXTENT for why both extremes are dropped.
+    ext = mesh_extent(verts)
+    if not prop_extent_ok(ext, body_h):
+        return None, f"placed extent {ext:.2f} vs body {body_h:.2f}"
+    return Piece([reorder(v, up) for v in verts], uvs, faces, skin_path(skin_rel)), f"on {bone}"
+
+
+def unit_prop_pieces(index, actor_rel, skeleton_dae, want=None):
+    """Bone-placed props for a unit, at rest, in canonical (right, depth, up) form.
+
+    Derives its own up-axis rather than taking the caller's. The animated bake merges these with
+    geometry Blender exported -- and Blender writes Z-up OBJ while assimp writes Y-up -- so passing
+    the body's axis in here reordered the props into the wrong frame. That mismatch is what turned
+    the spear into a 6-unit streak across the sprite. Reordering each source by its own up axis puts
+    both in the same canonical frame, which is what makes them merge cleanly.
+    """
+    skeleton = parse_skeleton(skeleton_dae)
+    body = load_obj(export_obj(os.path.relpath(skeleton_dae, MESH_ROOT)))
+    if not body[0]:
+        return []
+    aup = detect_up_axis(body[0])          # assimp's frame, for anything loaded through it
+    hv = [reorder(v, aup) for v in body[0]]
+    body_h = max(v[2] for v in hv) - min(v[2] for v in hv)
+    out = []
+    for mesh_rel, skin_rel, ap in index.expand(actor_rel, want):
+        if not ap or ap == "root":
+            continue
+        piece, note = place_prop(mesh_rel, skin_rel, ap, skeleton, aup, body_h)
+        if piece:
+            out.append(piece)
+    return out
+
+
+def unit_prop_spec(index, actor_rel, want=None, skeleton_dae=None):
+    """Props to attach in Blender, as dicts carrying everything it needs to place them.
+
+    The glTF hop prunes the armature to its deform bones -- a 102-joint rig arrives in Blender as
+    24 -- so `Biped_helmet`, `Biped_weapon_R` and `Biped_shield_arm` may simply not exist there.
+    Each prop therefore carries its ancestor chain and those bones' rest matrices, letting Blender
+    pick the nearest ancestor it actually has and offset from it, which keeps the helmet on the
+    head and the spear in the hand even though their own bones were dropped.
+    """
+    if not skeleton_dae:
+        return []
+    rests, parents = parse_skeleton(skeleton_dae, with_parents=True)
+    body = load_obj(export_obj(os.path.relpath(skeleton_dae, MESH_ROOT)))
+    body_up = detect_up_axis(body[0]) if body[0] else 1
+    body_h = (max(v[body_up] for v in body[0]) - min(v[body_up] for v in body[0])) if body[0] else 1.0
+    out = []
+    for mesh_rel, skin_rel, ap in index.expand(actor_rel, want):
+        if not ap or ap == "root":
+            continue
+        target = f"Biped_{ap}"
+        if target not in rests:
+            continue
+        pobj = export_obj(mesh_rel)
+        if not pobj:
+            continue
+        pv = load_obj(pobj)[0]
+        # Measure where the prop ends up, not where it is authored -- bones carry scale.
+        placed = [m4_apply(m4_to_converted(rests[target]), v) for v in pv]
+        if not prop_extent_ok(mesh_extent(placed), body_h):
+            continue
+        chain, node = [], target
+        while node and len(chain) < 8:
+            chain.append(node)
+            node = parents.get(node)
+        # Conjugated, because Blender's armature and the prop geometry both arrived through the
+        # assimp Y-up conversion while these rest matrices are still in the DAE's Z-up frame.
+        out.append({"mesh": mesh_rel, "skin": skin_rel, "target": target, "chain": chain,
+                    "rests": {b: m4_to_converted(rests[b]) for b in chain}})
+    return out
+
+
+def blender_frame_cache(character, clip, frames, cache_root, index=None):
+    """Run Blender to write deformed per-frame OBJs, and return the cache directory.
+
+    The cache is keyed on the Blender script's contents as well as the character and clip. Without
+    that, editing the script (say, to start exporting props) silently reuses frames produced by the
+    old one -- and the bake then reports success from stale geometry.
+    """
     out = os.path.join(cache_root, f"{character}_{clip}")
     meta = os.path.join(out, "meta.json")
+    try:
+        stamp = str(os.path.getmtime(BLENDER_SCRIPT)) + ":" + str(os.path.getsize(BLENDER_SCRIPT))
+    except OSError:
+        stamp = "0"
     if os.path.exists(meta):
-        return out
+        try:
+            with open(meta) as fh:
+                cached = json.load(fh)
+        except Exception:
+            cached = {}
+        if cached.get("script_stamp") == stamp and cached.get("frames") == frames:
+            return out
+        print("    cache is stale (script or frame count changed), re-running blender")
     blender = shutil.which("blender")
     if not blender:
         print("    blender not found on PATH -- skipping animated units "
               "(install it with: brew install --cask blender)")
         return None
+    os.makedirs(out, exist_ok=True)
+    # Hand Blender the bone-attached props so an animated unit keeps its helmet and spear.
+    props_file = os.path.join(out, "_props.json")
+    actor = CHARACTER_ACTORS[character]
+    dae = os.path.join(MESH_ROOT, CHARACTER_MESHES[character])
+    with open(props_file, "w") as fh:
+        json.dump(unit_prop_spec(index, actor, skeleton_dae=dae) if index else [], fh)
     print(f"    running blender for {character}/{clip} ({frames} frames)...")
     r = subprocess.run([blender, "--background", "--python", BLENDER_SCRIPT, "--",
                         "--character", character, "--clip", clip,
-                        "--frames", str(frames), "--out", out],
+                        "--frames", str(frames), "--out", out,
+                        "--props", props_file],
                        capture_output=True, text=True, check=False)
     if not os.path.exists(meta):
         tail = "\n".join(r.stdout.splitlines()[-12:])
         print(f"    blender failed for {character}/{clip}:\n{tail}\n{r.stderr[-600:]}")
         return None
+    try:
+        with open(meta) as fh:
+            data = json.load(fh)
+        data["script_stamp"] = stamp
+        with open(meta, "w") as fh:
+            json.dump(data, fh, indent=1)
+    except Exception:
+        pass
     return out
 
 
@@ -619,7 +981,7 @@ def main():
         for i in range(args.facings):
             suffix = f"_{i}" if args.facings > 1 else ""
             bake_one(f"{name}{suffix}", actor, None, size,
-                     yaw=ISOMETRIC_YAW + i * (360.0 / args.facings), include_props=False)
+                     yaw=ISOMETRIC_YAW + i * (360.0 / args.facings))
 
     if args.with_animation:
         print("\n== animated units ==")
@@ -628,11 +990,20 @@ def main():
             if not wanted(name):
                 continue
             print(f"  [{name}] {character} / {clip}")
-            cache = blender_frame_cache(character, clip, nframes, cache_root)
+            cache = blender_frame_cache(character, clip, nframes, cache_root, index)
             if cache is None:
                 continue
             tex = skin_path(CHARACTER_SKINS[character])
+            try:
+                with open(os.path.join(cache, "meta.json")) as fh:
+                    cmeta = json.load(fh)
+            except Exception:
+                cmeta = {}
+            duration = cmeta.get("duration") or 1.0
+
             files = []
+            frames = []
+            prop_pieces = None
             for i in range(nframes):
                 obj = os.path.join(cache, f"frame_{i:03d}.obj")
                 if not os.path.exists(obj):
@@ -641,10 +1012,29 @@ def main():
                 verts, uvs, faces = load_obj(obj)
                 if not verts or not faces:
                     continue
-                # one axis decision per frame; a skinned character bakes consistently
+                # The body decides the axis; props share its frame, exactly as in the composite
+                # path -- letting a prop guess for itself tilts it.
                 up = detect_up_axis(verts)
-                piece = Piece([reorder(v, up) for v in verts], uvs, faces, tex)
-                img, meta = render([piece], size)
+                if prop_pieces is None:
+                    # Built once, from the same rest placement the static bake uses, so a unit
+                    # looks the same standing as walking.
+                    prop_pieces = unit_prop_pieces(
+                        index, CHARACTER_ACTORS[character],
+                        os.path.join(MESH_ROOT, CHARACTER_MESHES[character]))
+                    if prop_pieces:
+                        print(f"    {len(prop_pieces)} props placed at rest")
+                pieces = [Piece([reorder(v, up) for v in verts], uvs, faces, tex)] + prop_pieces
+                frames.append(pieces)
+
+            # One framing for the whole clip. Fitting each frame on its own makes the character
+            # visibly change size as a limb or a spear swings wide.
+            allv = [v for ps in frames for p in ps for v in p.verts]
+            fit = project_fit([allv], size) if allv else None
+
+            for i, pieces in enumerate(frames):
+                if not pieces:
+                    continue
+                img, meta = render(pieces, size, fit=fit)
                 fn = f"{name}_{i}.png"
                 img.save(os.path.join(args.out, fn))
                 opaque = sum(1 for v in img.split()[3].get_flattened_data() if v > 128)
@@ -654,23 +1044,23 @@ def main():
             if files:
                 # Playback rate, not the source framerate: N frames sampled across `duration`
                 # seconds must advance at N/duration per second to run at the clip's real speed.
-                try:
-                    with open(os.path.join(cache, "meta.json")) as fh:
-                        duration = json.load(fh).get("duration") or 1.0
-                except Exception:
-                    duration = 1.0
                 manifest[name] = {"group": "animation", "frames": len(files), "files": files,
                                   "clip": clip, "duration": duration,
                                   "fps": round(len(files) / duration, 3)}
                 print(f"    -> {len(files)} frames over {duration}s "
-                      f"(plays at {len(files) / duration:.2f} fps)")
+                      f"(plays at {len(files) / duration:.2f} fps)"
+                      + (f", {len(prop_pieces)} props" if prop_pieces else ""))
 
     print("\n== ground ==")
     bake_ground(args.out)
 
+    manifest_json = json.dumps(manifest, indent=1, sort_keys=True)
     with open(os.path.join(args.out, "manifest.json"), "w") as f:
-        json.dump(manifest, f, indent=1, sort_keys=True)
-        f.write("\n")
+        f.write(manifest_json + "\n")
+    # A script asset works in WKWebView's bundled file:// origin, where fetch() of a local JSON
+    # file is rejected by WebKit's origin rules. index.html loads this before its game script.
+    with open(os.path.join(args.out, "manifest.js"), "w") as f:
+        f.write("window.POCKET_EMPIRES_SPRITES = " + manifest_json + ";\n")
     print(f"\nwrote {len(manifest)} sprites + manifest.json to {os.path.relpath(args.out, ROOT)}")
 
 

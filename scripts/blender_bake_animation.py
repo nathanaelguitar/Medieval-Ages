@@ -27,10 +27,17 @@ Original artwork is CC BY-SA 3.0, (C) Wildfire Games; see ios/ZeroADArt/LICENSE.
 import argparse
 import json
 import os
+import struct
 import subprocess
 import sys
 
 import bpy
+from mathutils import Matrix
+
+
+def m4(floats):
+    """Row-major 16 floats -> mathutils Matrix (which is also row-major indexed)."""
+    return Matrix([list(floats[0:4]), list(floats[4:8]), list(floats[8:12]), list(floats[12:16])])
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -60,6 +67,18 @@ CHARACTERS = {
                   "walk_ready": "biped/infantry/spearman/walk_ready.dae",
                   "idle_ready": "biped/infantry/spearman/idle_ready.dae"},
     },
+    "boar": {
+        "mesh": "skeletal/animal_boar.dae",
+        "skin": "skeletal/animal_boar_01.png",
+        "clips": {"walk": "quadraped/animal_boar_walk_01.dae",
+                  "idle": "quadraped/animal_boar_idle_02.dae"},
+    },
+    "sheep": {
+        "mesh": "skeletal/sheep.dae",
+        "skin": "skeletal/animal_sheep_a.dds",
+        "clips": {"walk": "quadraped/sheep_walk.dae",
+                  "idle": "quadraped/sheep_idle_01.dae"},
+    },
 }
 
 FPS = 24
@@ -75,6 +94,8 @@ def parse_args():
                          f"({', '.join(sorted({c for v in CHARACTERS.values() for c in v['clips']}))})")
     ap.add_argument("--frames", type=int, default=12, help="frames to sample across the clip")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--props", help="JSON list of {mesh, skin, bone} props to attach, written by "
+                                    "bake_zeroad_art.py from the actor's <props> graph")
     args = ap.parse_args(argv)
     if args.clip not in CHARACTERS[args.character]["clips"]:
         sys.exit(f"{args.character} has no '{args.clip}' clip; "
@@ -112,6 +133,32 @@ def to_gltf(dae, glb):
     r = subprocess.run(["assimp", "export", dae, glb], capture_output=True, text=True, check=False)
     if r.returncode != 0 or not os.path.exists(glb):
         sys.exit(f"assimp failed on {dae}:\n{r.stderr}")
+    # Assimp 6 writes one boar animation ID as a Latin-1 byte in its GLB JSON chunk, even though
+    # the DAE is valid UTF-8. Repair malformed UTF-8 in the JSON chunk only; this keeps the binary
+    # vertex/animation buffers byte-for-byte intact and gives Blender valid glTF input.
+    with open(glb, "rb") as fh:
+        data = fh.read()
+    if data[:4] == b"glTF" and len(data) >= 20:
+        total = struct.unpack_from("<I", data, 8)[0]
+        offset, chunks, changed = 12, [], False
+        while offset + 8 <= min(total, len(data)):
+            length, kind = struct.unpack_from("<I4s", data, offset)
+            start, end = offset + 8, offset + 8 + length
+            if end > len(data):
+                break
+            chunk = data[start:end]
+            if kind == b"JSON":
+                fixed = chunk.decode("utf-8", errors="replace").encode("utf-8")
+                fixed += b" " * ((-len(fixed)) % 4)
+                changed |= fixed != chunk
+                chunk = fixed
+            chunks.append((kind, chunk))
+            offset = end
+        if changed:
+            body = b"".join(struct.pack("<I4s", len(chunk), kind) + chunk
+                             for kind, chunk in chunks)
+            with open(glb, "wb") as fh:
+                fh.write(struct.pack("<4sII", b"glTF", 2, 12 + len(body)) + body)
     return glb
 
 
@@ -187,6 +234,43 @@ def main():
     if not matched:
         sys.exit("action drives no bones present on this rig -- refusing to write empty frames")
 
+    # ---- bone-attached props: helmet, shield, spear, greaves. Each keeps its own texture, so each
+    # is exported as its own OBJ per frame rather than merged into the body's. The rig arrives
+    # pruned to its deform bones, so a prop whose own bone was dropped follows the nearest ancestor
+    # that survived, offset by the difference between the two rest matrices.
+    prop_objs = []
+    if args.props and os.path.exists(args.props):
+        with open(args.props) as fh:
+            spec = json.load(fh)
+        for i, p in enumerate(spec):
+            try:
+                glb = to_gltf(os.path.join(MESH_ROOT, p["mesh"]),
+                              os.path.join(cache, f"prop{i}.glb"))
+            except SystemExit:
+                continue
+            known = set(bpy.data.objects)
+            bpy.ops.import_scene.gltf(filepath=glb)
+            added = [o for o in bpy.data.objects if o not in known]
+            mesh_obj = next((o for o in added if o.type == "MESH"), None)
+            for o in added:            # drop any armature or stray the prop file brought along
+                if o is not mesh_obj:
+                    bpy.data.objects.remove(o, do_unlink=True)
+            if mesh_obj is None:
+                continue
+            present = [b for b in p["chain"] if b in arm.pose.bones]
+            if not present:
+                print(f"   prop {p['mesh']}: none of {p['chain']} survive on this rig, skipped")
+                bpy.data.objects.remove(mesh_obj, do_unlink=True)
+                continue
+            follow = present[0]
+            offset = m4(p["rests"][follow]).inverted() @ m4(p["rests"][p["target"]])
+            if follow != p["target"]:
+                print(f"   prop {os.path.basename(p['mesh'])}: {p['target']} dropped by the glTF "
+                      f"hop, following {follow}")
+            prop_objs.append({"obj": mesh_obj, "follow": follow, "offset": offset,
+                              "skin": p["skin"], "i": i})
+        print(f"   {len(prop_objs)} of {len(spec)} props attached")
+
     start, end = action.frame_range
     scene = bpy.context.scene
     scene.render.fps = FPS
@@ -198,8 +282,18 @@ def main():
     span = end - start
     step = span / args.frames
     written = []
+    prop_files = []
     reference = None
     max_delta = 0.0
+
+    def export_one(obj, path):
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.wm.obj_export(filepath=path, export_selected_objects=True,
+                              apply_modifiers=True, export_materials=False,
+                              export_uv=True, export_normals=True)
+
     for i in range(args.frames):
         f = start + i * step
         scene.frame_set(int(f), subframe=f - int(f))
@@ -210,15 +304,23 @@ def main():
         else:
             max_delta = max(max_delta,
                             max((a - b).length for a, b in zip(pts, reference)))
-        path = os.path.join(args.out, f"frame_{i:03d}.obj")
-        bpy.ops.object.select_all(action="DESELECT")
-        body.select_set(True)
-        bpy.context.view_layer.objects.active = body
-        bpy.ops.wm.obj_export(filepath=path, export_selected_objects=True,
-                              apply_modifiers=True, export_materials=False,
-                              export_uv=True, export_normals=True)
-        written.append(os.path.basename(path))
-        print(f"   frame {i:3d}  t={(f - start) / FPS:.3f}s -> {os.path.basename(path)}")
+        name = f"frame_{i:03d}.obj"
+        export_one(body, os.path.join(args.out, name))
+        written.append(name)
+        for p in prop_objs:
+            # The prop geometry is authored in its bone's local space, so the *pose* matrix of the
+            # bone it follows places it -- at rest that equals the rest matrix, which is what the
+            # static bake resolves straight from the COLLADA scene.
+            p["obj"].matrix_world = (arm.matrix_world
+                                     @ arm.pose.bones[p["follow"]].matrix
+                                     @ p["offset"])
+            pname = f"frame_{i:03d}_p{p['i']}.obj"
+            export_one(p["obj"], os.path.join(args.out, pname))
+            if i == 0:
+                prop_files.append({"index": p["i"], "texture": p["skin"],
+                                   "target": p["follow"], "bone": p["follow"]})
+        print(f"   frame {i:3d}  t={(f - start) / FPS:.3f}s -> {name}"
+              + (f" + {len(prop_objs)} props" if prop_objs else ""))
 
     # A rig that never moves produces a flawless-looking sprite sheet of one frozen pose, so this
     # is checked rather than assumed.
@@ -230,7 +332,8 @@ def main():
     with open(os.path.join(args.out, "meta.json"), "w") as fh:
         json.dump({"character": args.character, "clip": args.clip, "frames": args.frames,
                    "fps": FPS, "duration": round(span / FPS, 4),
-                   "texture": os.path.relpath(skin, ART), "files": written}, fh, indent=1)
+                   "texture": os.path.relpath(skin, ART), "files": written,
+                   "props": prop_files}, fh, indent=1)
         fh.write("\n")
     print(f"   wrote {len(written)} frames + meta.json to {args.out}")
 

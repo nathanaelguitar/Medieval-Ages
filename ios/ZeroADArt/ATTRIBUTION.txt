@@ -3,6 +3,7 @@ https://www.wildfiregames.com/
 https://play0ad.com/
 Creative Commons Attribution-ShareAlike 3.0:
 https://creativecommons.org/licenses/by-sa/3.0/
-Unmodified source files, selected from the 2024 GitHub mirror.
+Unmodified source files selected from the 2024 GitHub mirror, plus fauna actors, meshes, textures,
+and animation clips from 0ad/0ad commit 61a3b9507d974084e6badb88a0826bd89a6d5b8b.
 Not Release 28, not an official mobile edition, and not a playable game.
 Retain original art/LICENSE.txt and any nested license notices.

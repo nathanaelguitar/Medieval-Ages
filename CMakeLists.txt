@@ -16,6 +16,10 @@ if(OE_BUILD_TESTS)
     add_test(NAME portable_input_clock_assets COMMAND oe_portable_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
     add_test(NAME patch_preparation COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tests/test_prepare.py")
+    # Checks the selected 0 A.D. art resolves and that the baked manifest still describes sprites
+    # that exist on disk. Needs only the standard library -- the bake itself requires Pillow and
+    # assimp, but the committed output and the actor graph can be validated without either.
+    add_test(NAME zeroad_art_sources COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tests/test_zeroad_art.py")
     return()
 endif()
 

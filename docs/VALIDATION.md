@@ -51,3 +51,17 @@ clang -std=c11 -Wall -Wextra -Wpedantic -Werror \
   tests/test_portable.c -lm -o /tmp/oe-tests
 /tmp/oe-tests
 ```
+
+## Follow-up validation — September 22, 2026
+
+After adding bone-attached unit equipment and animated 0 A.D. boar/sheep sprites:
+
+| Check | Result |
+| --- | --- |
+| Python regression suite | Passed: 16 tests, including skeleton attach points, fauna asset references, and generated sprite-manifest completeness. |
+| CMake/CTest portable suites | Passed: 2 of 2. |
+| Pocket Empires inline JavaScript parse | Passed with Node. |
+| Python script compilation | Passed for both art bakers and the new art tests. |
+| Resume launcher syntax | Passed with `zsh -n`. |
+| Patch whitespace check | Passed with `git diff --check`. |
+| iPhone build/install and touch gameplay after these art changes | Not rerun; the earlier device result above applies to the preceding build only. |
