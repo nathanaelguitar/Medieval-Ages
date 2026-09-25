@@ -14,7 +14,12 @@
 html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;background:#0a0f07;touch-action:none;overscroll-behavior:none;font-family:-apple-system,'SF Pro Text',system-ui,sans-serif}
 #game{position:absolute;inset:0;display:block;touch-action:none}
 #vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 64%,rgba(0,0,0,.30))}
-#hud{position:absolute;inset:0;pointer-events:none;color:#fff}
+/* Pause reads as a tap-anywhere overlay rather than a dialog: the board is frozen, so the only
+   thing to do is come back, and one tap on the dimmed map does it. z-index sits under #hud so the
+   pause pill itself stays tappable (it toggles the same state). */
+#pauseOv{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,10,5,.42);backdrop-filter:blur(1.5px);z-index:9;cursor:pointer}
+#pauseCard{font-size:15px;letter-spacing:.06em;padding:9px 18px}
+#hud{position:absolute;inset:0;pointer-events:none;color:#fff;z-index:10}
 .ui{pointer-events:auto;touch-action:none}
 /* top resources */
 #resbar{position:absolute;left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));display:flex;gap:6px;pointer-events:none}
@@ -25,6 +30,11 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 #pli{pointer-events:auto;touch-action:manipulation;cursor:pointer;transition:border-color .15s}
 #pli.has{border-color:rgba(217,179,106,.6)}
 #pli:active{transform:scale(.94)}
+/* Pause pill: same tap target treatment as Idle, and it lights up while the board is frozen so a
+   paused game is visible from the status strip alone. */
+#ppause{pointer-events:auto;touch-action:manipulation;cursor:pointer;transition:border-color .15s,background .15s}
+#ppause.on{border-color:rgba(217,179,106,.7);background:rgba(217,179,106,.18)}
+#ppause:active{transform:scale(.94)}
 /* minimap */
 #mmWrap{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));background:rgba(10,14,9,.78);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:3px;backdrop-filter:blur(6px)}
 #mm{display:block;border-radius:7px}
@@ -108,7 +118,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 <div id="vig"></div>
 <div id="hud">
  <div id="resbar">
-  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="pli" title="Idle villagers"></div>
+  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Pause"></div>
  </div>
  <div id="mmWrap" class="ui"><canvas id="mm" width="150" height="84"></canvas></div>
  <div id="panel" class="ui"></div>
@@ -116,6 +126,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
  <div id="joyZone" class="ui"><div id="joyBase"><div id="joyNub"></div></div></div>
  <div id="toasts"></div>
 </div>
+<div id="pauseOv"><div class="pill" id="pauseCard"></div></div>
 <div id="startOv" class="ov ui">
  <h1>POCKET<span>EMPIRES</span></h1>
  <p class="sub">a tiny Age-of-Empires–style skirmish</p>
@@ -147,6 +158,9 @@ const dist2=(ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy};
 const MAP=56,TW=64,TH=32,TW2=32,TH2=16;
 const w2s=(x,y)=>[(x-y)*TW2,(x+y)*TH2];
 const TEAMC=[{m:'#4d84dd',d:'#2c5aa6',s:'#9dbcf0'},{m:'#d85048',d:'#a02f2c',s:'#f0a09a'}];
+/* How long a shot's recoil and release flourish stay on screen. Short enough to read as a single
+   blow, long enough to survive a frame drop on a phone. */
+const KICK_SECONDS=0.3;
 const BLD={tc:{w1:'#dcbd82',w2:'#c2a468',roof:'#a06a35',trim:'#7c4f24'},
  barracks:{w1:'#a89a88',w2:'#8e8071',roof:'#6f4e2e',trim:'#54391f'},
  house:{w1:'#d3ae74',w2:'#b8935c',roof:'#916034',trim:'#6d431f'},
@@ -183,6 +197,8 @@ const ICO={
  s:'<svg viewBox="0 0 14 14"><path d="m7 1.5 4.6 3.2-1.7 6-5.8 1.1-2.1-5.5z" fill="#aeb6bd" stroke="#68717a" stroke-width="1"/></svg>',
  p:'<svg viewBox="0 0 14 14"><circle cx="7" cy="4.8" r="2.5" fill="#cfd6e4"/><path d="M2.8 12.6c0-2.7 1.9-4.3 4.2-4.3s4.2 1.6 4.2 4.3z" fill="#cfd6e4"/></svg>',
  i:'<svg viewBox="0 0 14 14"><circle cx="7" cy="4.8" r="2.5" fill="#cfd6e4"/><path d="M2.8 12.6c0-2.7 1.9-4.3 4.2-4.3s4.2 1.6 4.2 4.3z" fill="#cfd6e4"/><circle cx="11.2" cy="11" r="1.7" fill="#d9b36a" stroke="#1c1608" stroke-width=".7"/></svg>'};
+const ICO_PAUSE='<svg viewBox="0 0 14 14"><rect x="3.4" y="2.6" width="2.6" height="8.8" rx="1.1" fill="#e6dcc4"/><rect x="8" y="2.6" width="2.6" height="8.8" rx="1.1" fill="#e6dcc4"/></svg>';
+const ICO_PLAY='<svg viewBox="0 0 14 14"><path d="M4.2 2.6 11.4 7l-7.2 4.4z" fill="#e6dcc4"/></svg>';
 const ICON={
  vill:'<svg viewBox="0 0 20 20"><circle cx="10" cy="5.4" r="2.6" fill="#e8e2d2"/><path d="M4.6 16.6c0-3.4 2.4-5.4 5.4-5.4s5.4 2 5.4 5.4z" fill="#e8e2d2"/></svg>',
  swords:'<svg viewBox="0 0 20 20"><path d="M16.5 3.5 8 12" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round"/><path d="M6.4 10.4l3.2 3.2" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round"/><path d="M6.6 14.6l-2.4 2.4" stroke="#c89b52" stroke-width="2.6" stroke-linecap="round"/></svg>',
@@ -208,7 +224,7 @@ let units=[],buildings=[],resources=[],resMap=new Map(),arrows=[],parts=[],texts
 let res=[{w:350,f:600,g:250,s:100},{w:350,f:350,g:220,s:220}];
 let popCap=[5,5];
 let selection=[],placing=null,box=null,pinch=null;
-let camX=0,camY=0,zoom=0.85,time=0,started=false,over=false,uid=1,lastT=0,afT=0,shake=0;
+let camX=0,camY=0,zoom=0.85,time=0,started=false,over=false,uid=1,lastT=0,afT=0,shake=0,paused=false,hitStopT=0;
 let grid=new Uint8Array(MAP*MAP).fill(1);
 const tiles=new Uint8Array(MAP*MAP),decor=new Uint8Array(MAP*MAP),waterD=new Uint8Array(MAP*MAP);
 const gateAt=new Map();   // tile key -> owning team, for gate buildings
@@ -298,7 +314,7 @@ function genResources(){
 function blockBorders(){for(let i=0;i<MAP;i++){grid[i]=0;grid[(MAP-1)*MAP+i]=0;grid[i*MAP]=0;grid[i*MAP+MAP-1]=0}}
 
 /* ============ entities ============ */
-function mkUnit(team,type,x,y){const d=DEFS[type];const u={kind:'unit',id:uid++,team,type,x,y,hp:d.hp,maxhp:d.hp,cd:rnd(0.3),order:{type:'idle'},lastTask:null,path:null,pi:0,dx:0,dy:0,carry:0,gt:0,gres:null,lastRes:null,face:1,anim:rnd(9),stuck:0,retries:0,lx:x,ly:y,flash:0,nT:0,fleeT:0,moving:false};units.push(u);return u}
+function mkUnit(team,type,x,y){const d=DEFS[type];const u={kind:'unit',id:uid++,team,type,x,y,hp:d.hp,maxhp:d.hp,cd:rnd(0.3),order:{type:'idle'},lastTask:null,path:null,pi:0,dx:0,dy:0,carry:0,gt:0,gres:null,lastRes:null,face:1,anim:rnd(9),stuck:0,retries:0,lx:x,ly:y,flash:0,nT:0,fleeT:0,moving:false,engaged:-9,fire:-9};units.push(u);return u}
 function gridBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++)grid[j*MAP+i]=on?0:1}
 /* A gate owns its tiles in gateAt rather than the shared grid, so only the owner passes. */
 function gateBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++){
@@ -449,7 +465,10 @@ function separation(){
 
 /* ============ combat ============ */
 function closestPoint(t,x,y){if(t.kind==='bld')return[clamp(x,t.tx,t.tx+t.size),clamp(y,t.ty,t.ty+t.size)];return[t.x,t.y]}
-function hitFx(wx,wy){const[sx,sy]=w2s(wx,wy);for(let i=0;i<4;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy-8,vx:Math.cos(a)*rnd(10,40),vy:Math.sin(a)*rnd(10,40)-15,g:80,life:0,max:0.35,r:1.6,col:'#ffd28a'})}}
+function hitFx(wx,wy){const[sx,sy]=w2s(wx,wy);for(let i=0;i<4;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy-8,vx:Math.cos(a)*rnd(10,40),vy:Math.sin(a)*rnd(10,40)-15,g:80,life:0,max:0.35,r:1.6,col:'#ffd28a'})}
+ /* A puff of dust under the sparks. Sparks alone read as a glint; sparks plus ground kicked up
+    read as an impact, which is what sells a hit at phone scale. */
+ for(let i=0;i<3;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy+1,vx:Math.cos(a)*rnd(8,26),vy:-rnd(4,16),g:26,life:0,max:rnd(0.35,0.6),r:rnd(2,3.4),col:'rgba(198,182,150,.65)'})}}
 function burst(wx,wy,col,n=8,sp=50){const[sx,sy]=w2s(wx,wy);for(let i=0;i<n;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy-8,vx:Math.cos(a)*rnd(sp*0.3,sp),vy:Math.sin(a)*rnd(sp*0.3,sp)-20,g:70,life:0,max:rnd(0.4,0.8),r:rnd(1.5,3),col})}}
 function ping(wx,wy,col){const[sx,sy]=w2s(wx,wy);parts.push({ring:1,x:sx,y:sy,life:0,max:0.6,col})}
 function spawnArrow(src,target,dmg){
@@ -461,7 +480,9 @@ function updArrow(a,dt){
  if(a.target&&a.target.garrisoned){a.dead=true;return}
  if(a.target&&!a.target.dead&&a.target.hp>0){const c=closestPoint(a.target,a.x,a.y);a.tx=c[0];a.ty=c[1]}
  const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy),st=a.sp*dt;
- if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0)damage(a.target,a.dmg,a.team);a.dead=true}
+ /* An arrow that lands kicks up the same sparks and dust a melee blow does. Without it a volley
+    reads as arrows evaporating in mid-air, since the flight is the only thing drawn. */
+ if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team);hitFx(a.tx,a.ty)}a.dead=true}
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
 function damage(t,amt,fromTeam){
@@ -479,8 +500,13 @@ function damage(t,amt,fromTeam){
   t.alertT=time+5;
   units.forEach(u=>{if(u.team===1&&u.type!=='vill'&&!u.dead&&u.order.type==='idle'){u.order={type:'amove',x:t.x!==undefined?t.x:t.cx,y:t.y!==undefined?t.y:t.cy,tgt:null};u.path=null;u.nT=0;setPath(u,u.order.x,u.order.y)}})}
  if(t.hp<=0)kill(t)}
+/* A kill lands a beat of slow motion. It is the cheapest way to make a death feel like it mattered
+   without adding frames, and it doubles as the moment the eye reads the whole board -- so it is
+   deliberately brief and only fires on a death, never on a plain hit. */
+function hitStop(seconds){hitStopT=Math.max(hitStopT,seconds)}
 function kill(t){
  t.dead=true;t.hp=0;
+ hitStop(t.kind==='unit'?0.12:0.2);
  if(t.kind==='unit'){burst(t.x,t.y,TEAMC[t.team].m,10,55);shake=Math.max(shake,2.4);hitFx(t.x,t.y)}
  else{if(t.type==='gate')gateBlock(t,false);else gridBlock(t,false);
   if(t.garrison&&t.garrison.length)releaseGarrison(t);recalcPop();burst(t.cx,t.cy,'#9a9a9a',24,80);burst(t.cx,t.cy,'#d9b36a',10,60);
@@ -500,10 +526,13 @@ function acquire(u,r){
 function combat(u,t,dt){
  const c=closestPoint(t,u.x,u.y);
  const d=Math.hypot(c[0]-u.x,c[1]-u.y),def=DEFS[u.type];
+ /* Anything within reach of a target counts as engaged, whether or not this frame lands a blow:
+    the stance should hold through the whole exchange, not blink on each swing. */
+ if(d<=def.rng+1.6)u.engaged=time;
  if(d<=def.rng+0.12){
   u.path=null;
   u.face=((c[0]-u.x)-(c[1]-u.y))>=0?1:-1;
-  if(u.cd<=0){u.cd=def.cdr;u.anim+=2;
+  if(u.cd<=0){u.cd=def.cdr;u.anim+=2;u.fire=time;
    if(def.ranged)spawnArrow(u,t,def.atk);
    else{damage(t,def.atk,u.team);hitFx(c[0],c[1])}}
  }else if(losW(u.x,u.y,c[0],c[1],u.team)){u.path=null;stepMove(u,c[0],c[1],dt)}
@@ -837,6 +866,19 @@ const ptrUp=e=>{
  else tap(p.x,p.y);
  box=null};
 cv.addEventListener('pointerup',ptrUp);cv.addEventListener('pointercancel',ptrUp);
+/* Mouse-wheel zoom for the web build: keep the world point under the cursor fixed while the zoom
+   changes, so the map grows out of (or shrinks toward) where the cursor is -- the way every other
+   RTS/map view behaves. A notch of a real mouse wheel is ~100px; a trackpad pinch reports smaller
+   deltas with ctrlKey set, so scale by the event delta instead of a fixed step. */
+cv.addEventListener('wheel',e=>{
+ e.preventDefault();
+ if(!started)return;
+ const nz=clamp(zoom*Math.pow(1.0015,-e.deltaY),0.5,1.9);
+ if(nz===zoom)return;
+ const wx=(e.clientX-cw/2)/zoom+camX,wy=(e.clientY-ch/2)/zoom+camY;
+ zoom=nz;
+ camX=wx-(e.clientX-cw/2)/zoom;camY=wy-(e.clientY-ch/2)/zoom;clampCam();
+},{passive:false});
 
 $('sword').addEventListener('pointerdown',e=>{
  e.preventDefault();e.stopPropagation();
@@ -969,6 +1011,12 @@ function selectIdle(){
    tile diamond keeps all sprites on the same grid, and anchoring by the footprint centre means a
    structure with wide ground decor still plants correctly on its tiles. */
 const ART=!/[?&]art=proc\b/.test(location.search);
+/* The 0 A.D. surface overlay on land tiles is opt-in (`?ground=1`). Its grain is fine detail at a
+   fixed pattern size, so on displays whose backing scale is not a clean 2x it beats against the
+   device pixel grid and moires into a wide lattice of light bands with mismatched corners -- which
+   reads as boxes drawn across the map rather than as texture. Flat terrain is the default; the
+   overlay is one flag away for anyone whose display samples it cleanly. */
+const GROUND_OVERLAY=/[?&]ground=1\b/.test(location.search);
 /* Sprite and animation data comes from sprites/manifest.js, which scripts/bake_zeroad_art.py
    writes alongside the PNGs. It is loaded as a <script> above rather than fetched, because
    fetch() is blocked against file:// inside the app's WKWebView. If it is missing the game
@@ -999,10 +1047,13 @@ function loadArt(){
  }
  /* The ground is a seamless 0 A.D. surface flattened to a light band, multiplied over the
     existing terrain colours so the game keeps its grass/dirt/water semantics and gains 0 A.D.'s
-    surface detail rather than being repainted. A failed load must not take the game down. */
- const g=new Image();
- g.onload=()=>{try{groundPat=ctx.createPattern(g,'repeat')}catch(e){groundPat=null}};
- g.src='sprites/ground.png';
+    surface detail rather than being repainted. A failed load must not take the game down. Loaded
+    only under ?ground=1 -- see GROUND_OVERLAY for why it is not the default. */
+ if(GROUND_OVERLAY){
+  const g=new Image();
+  g.onload=()=>{try{groundPat=ctx.createPattern(g,'repeat')}catch(e){groundPat=null}};
+  g.src='sprites/ground.png';
+ }
 }
 /* Only draw a sprite once the browser has actually decoded it. */
 function spr(k){const i=SPR[k];return(ART&&i&&i.complete&&i.naturalWidth)?i:null}
@@ -1040,22 +1091,37 @@ function tinted(img,team){
   g.globalCompositeOperation='destination-in';g.drawImage(img,0,0);
   SPRT.set(key,c)}
  return c}
-/* Which clips each unit type plays. A type with no entry keeps its static sprite -- the archer
-   has no mesh in this asset set, so it has no clips either. */
+/* Which clips each unit type plays. The archer has no mesh of its own in this asset set, so it
+   draws as a spearman -- but it still gets that spearman's clips rather than the static sprite,
+   which used to leave the ranged units standing perfectly still through a whole fight. */
 const UNIT_ANIM={vill:{walk:'unit_vill_walk',idle:'unit_vill_idle'},
- swords:{walk:'unit_spear_walk',idle:'unit_spear_idle'}};
+ swords:{walk:'unit_spear_walk',idle:'unit_spear_idle',
+         readyWalk:'unit_spear_ready_walk',readyIdle:'unit_spear_ready_idle'},
+ archer:{walk:'unit_spear_walk',idle:'unit_spear_idle',
+         readyWalk:'unit_spear_ready_walk',readyIdle:'unit_spear_ready_idle'}};
 /* Animated characters, baked from 0 A.D.'s own clips by scripts/blender_bake_animation.py.
-   Walking units play the walk cycle, everyone else the idle. */
+   Walking units play the walk cycle, anyone in a fight plays the weapon-raised stance, and everyone
+   else idles. */
 function unitSprite(u){
  const base=u.type==='vill'?'unit_vill':'unit_spear';
  let img=null;
  const clips=UNIT_ANIM[u.type];
- const a=clips?ANIM[u.moving?clips.walk:clips.idle]:null;
+ /* In a fight, and for a moment after the last shot, the weapon comes up -- but only for the types
+    that actually have a ready stance. The villager does not (the bundle ships the hoplite's, not
+    the citizen's), so it keeps idling rather than dropping to its static stand-in mid-fight. The
+    window is longer than every attack cooldown on purpose, so a unit mid-exchange never flickers
+    back to idle between swings. */
+ const engaged=time-u.engaged<0.9;
+ let clip=null;
+ if(clips){
+  const stance=u.moving?clips.readyWalk:clips.readyIdle;
+  clip=(engaged&&stance)?stance:(u.moving?clips.walk:clips.idle)}
+ const a=clip?ANIM[clip]:null;
  if(a&&a.frames.length&&a.frames.every(f=>f.complete&&f.naturalWidth)){
   const n=a.frames.length;
   /* Walking is driven by u.anim, which advances with movement, so the stride matches the pace.
-     Idle has no such signal, so it runs off the clock, offset per unit to avoid lockstep. */
-  const ph=u.moving?Math.floor(u.anim):Math.floor((time+u.id*0.37)*a.fps);
+     Everything else runs off the clock, offset per unit to avoid lockstep. */
+  const ph=u.moving&&!engaged?Math.floor(u.anim):Math.floor((time+u.id*0.37)*a.fps);
   img=a.frames[((ph%n)+n)%n]}
  if(!img)img=spr(base);
  return img?(tinted(img,u.team)||img):null}
@@ -1093,6 +1159,12 @@ function drawBar(x,y,w,f){f=clamp(f,0,1);
  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x-w/2-1,y-1,w+2,4.6);
  ctx.fillStyle=f>0.5?'#6fc45b':f>0.25?'#e0b13e':'#d8544a';
  ctx.fillRect(x-w/2,y,w*f,2.6)}
+/* True when a tile on the shore has water beside it. Used for the beach foam, which is what turns
+   a sand ring into a coast -- without it the shoreline reads as a plain colour change. */
+function touchesWater(x,y){
+ return [[1,0],[-1,0],[0,1],[0,-1]].some(d=>{
+  const nx=x+d[0],ny=y+d[1];
+  return nx>=0&&ny>=0&&nx<MAP&&ny<MAP&&tiles[ny*MAP+nx]===2})}
 function drawTile(x,y,sx,sy){
  const k=y*MAP+x,t=tiles[k];
  dPath(sx,sy);
@@ -1111,6 +1183,12 @@ function drawTile(x,y,sx,sy){
      this re-fills the same diamond rather than needing to rebuild it. */
   if(groundPat){ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=groundPat;ctx.fill();ctx.restore()}
   const d=decor[k];
+  /* Sand that meets water gets a foam edge, breathing slowly and phase-shifted per tile so the
+     whole shore does not pulse in unison. */
+  if(t===3&&touchesWater(x,y)){
+   const br=0.28+0.16*Math.sin(time*1.1+x*1.7+y*2.3);
+   ctx.strokeStyle=`rgba(240,248,246,${br.toFixed(3)})`;ctx.lineWidth=1.6;
+   ctx.beginPath();ctx.moveTo(sx-9,sy+12);ctx.quadraticCurveTo(sx,sy+7,sx+9,sy+12);ctx.stroke()}
   if(d===1){ctx.strokeStyle='rgba(30,60,25,.5)';ctx.lineWidth=1.2;ctx.beginPath();
    ctx.moveTo(sx-4,sy+18);ctx.lineTo(sx-5,sy+13);ctx.moveTo(sx,sy+19);ctx.lineTo(sx,sy+13);ctx.moveTo(sx+4,sy+18);ctx.lineTo(sx+5,sy+13);ctx.stroke()}
   else if(d===2){ctx.fillStyle='#d8d27a';ctx.beginPath();ctx.arc(sx+3,sy+16,1.4,0,7);ctx.fill();
@@ -1129,15 +1207,18 @@ function drawRes(r){
  const[sx,sy]=w2s(r.gx,r.gy);
  if(r.kind==='tree'){
   const v=(r.tx*7+r.ty*13)%3;
+  /* Canopies sway. The phase comes from the tile, so a stand of trees ripples through itself
+     instead of swinging as one block, and the trunk stays put while the crown leans. */
+  const sway=Math.sin(time*0.9+r.tx*1.7+r.ty*2.3)*1.4;
   /* 0 A.D. oak and aleppo pine, chosen by the same tile hash the vector art used. A tree has no
      grid footprint of its own, so this scales its canopy spread to roughly one tile. */
-  if(drawSpr(['tree_oak_1','tree_oak_2','tree_pine_1'][v],sx,sy,28))return;
+  if(drawSpr(['tree_oak_1','tree_oak_2','tree_pine_1'][v],sx+sway*0.6,sy,28))return;
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(sx,sy+1,9,4,0,0,7);ctx.fill();
   ctx.fillStyle='#6b4a2b';ctx.fillRect(sx-1.8,sy-12,3.6,12);
   ctx.fillStyle=['#2c5a29','#336530','#3a7034'][v];
-  ctx.beginPath();ctx.arc(sx-5,sy-13,6.5,0,7);ctx.arc(sx+5,sy-14,6,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(sx-5+sway,sy-13,6.5,0,7);ctx.arc(sx+5+sway,sy-14,6,0,7);ctx.fill();
   ctx.fillStyle=['#387033','#3f7a39','#468140'][v];
-  ctx.beginPath();ctx.arc(sx,sy-19,7.5,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(sx+sway,sy-19,7.5,0,7);ctx.fill();
  }else if(r.kind==='gold'){
   ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(sx,sy+1,10,4,0,0,7);ctx.fill();
   ctx.fillStyle='#8f8f98';ctx.beginPath();ctx.moveTo(sx-9,sy);ctx.lineTo(sx-2,sy-9);ctx.lineTo(sx+5,sy);ctx.closePath();ctx.fill();
@@ -1226,11 +1307,26 @@ function drawUnit(u){
     view is flipped exactly as the vector art was -- there is no direction vector to select among
     the eight facings bake_zeroad_art.py can produce. */
  const us=unitSprite(u);
+ /* The firing kick: a short recoil away from the target plus a release flourish. There is no
+    attack clip and no bow mesh to play -- the bundle ships neither -- so the shot is sold by
+    motion and a flash instead of by a pose. KICK_SECONDS is the visible window; the flourish only
+    shows on the release itself so it reads as a shot rather than a permanent glow. */
+ const kick=u.fire>=0&&time-u.fire<KICK_SECONDS?(1-(time-u.fire)/KICK_SECONDS):0;
  if(us){
-  ctx.save();ctx.translate(sx,sy-bob);ctx.scale(u.face<0?-1:1,1);
+  ctx.save();ctx.translate(sx-u.face*kick*2.6,sy-bob-kick*0.7);ctx.scale(u.face<0?-1:1,1);
   const k=26/us.height;
   ctx.drawImage(us,-us.width*k/2,-us.height*k,us.width*k,us.height*k);
   ctx.restore();
+  if(kick>0.25){
+   const hot=kick>0.75;
+   ctx.save();ctx.globalAlpha=(kick-0.25)/0.75;
+   ctx.strokeStyle=DEFS[u.type].ranged?'#ffe9a8':'#fff2d2';ctx.lineWidth=hot?2.4:1.7;ctx.lineCap='round';
+   const ax=sx+u.face*7,ay=sy-15;
+   ctx.beginPath();ctx.arc(ax,ay,DEFS[u.type].ranged?6:4,-0.9+u.face*0.3,0.9+u.face*0.3);ctx.stroke();
+   if(DEFS[u.type].ranged){          /* a nocked arrow leaving the hand */
+    ctx.strokeStyle='#e8e2d4';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+u.face*13,ay-3);ctx.stroke()}
+   ctx.restore()}
   if(u.carry>=2){const cc=u.order.ctype==='w'?'#8a5a33':u.order.ctype==='g'?'#e9c352':u.order.ctype==='s'?'#aeb6bd':'#d0544a';
    ctx.fillStyle=cc;ctx.beginPath();ctx.arc(sx-4,sy-18,2.5,0,7);ctx.fill();
    ctx.strokeStyle='#1b140d';ctx.lineWidth=.85;ctx.stroke()}
@@ -1323,6 +1419,16 @@ function drawUnit(u){
  if(u.flash>0){ctx.globalAlpha=Math.min(0.7,u.flash*5);ctx.fillStyle='#fff';
   ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
  if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-24,16,u.hp/u.maxhp)}
+/* The owner's banner, flown from a pole above a finished structure. Shared by both draw paths
+   because the sprite path returns early: with the 0 A.D. artwork on, nothing on the map used to
+   say whose a building was, and in a mirror match the two bases look identical. */
+function drawBanner(b,x,roofY){
+ if(!b.done)return;
+ ctx.strokeStyle='#5b4a33';ctx.lineWidth=1.4;
+ ctx.beginPath();ctx.moveTo(x,roofY);ctx.lineTo(x,roofY-15);ctx.stroke();
+ const wv=Math.sin(time*3+b.id)*1.5;
+ ctx.fillStyle=TEAMC[b.team].m;
+ ctx.beginPath();ctx.moveTo(x,roofY-15);ctx.lineTo(x+9,roofY-12.5+wv);ctx.lineTo(x,roofY-10);ctx.closePath();ctx.fill()}
 function drawBuilding(b,ghost){
  const s=b.size;
  const A=w2s(b.tx,b.ty),B=w2s(b.tx+s,b.ty),C=w2s(b.tx+s,b.ty+s),D=w2s(b.tx,b.ty+s);
@@ -1346,6 +1452,9 @@ function drawBuilding(b,ghost){
   ctx.restore();
   if(b.flash>0){const f=flashSprite(bs);
    if(f){ctx.save();ctx.globalAlpha=Math.min(0.55,b.flash*4);ctx.drawImage(f,dx,dy,dw,dh);ctx.restore()}}
+  /* Banner on the sprite path too, planted on the sprite's own top edge rather than the tile
+     footprint, so it sits on the roof instead of floating over the middle of the model. */
+  if(!ghost)drawBanner(b,ccx,dy+3);
   if(selection.includes(b)||b.hp<b.maxhp)drawBar((A[0]+C[0])/2,A[1]-b.hh-12,34,b.hp/b.maxhp);
   return}
  ctx.save();if(ghost)ctx.globalAlpha=0.55;
@@ -1447,11 +1556,7 @@ function drawBuilding(b,ghost){
    /* fly the banner from the roof peak (or the flat top, on a tower) */
    const fx=b.type==='tower'?Aw[0]:(Aw[0]+Cw[0])/2;
    const fy=b.type==='tower'?Aw[1]:(Aw[1]+Cw[1])/2-h*0.58;
-   ctx.strokeStyle='#5b4a33';ctx.lineWidth=1.4;
-   ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx,fy-15);ctx.stroke();
-   const wv=Math.sin(time*3+b.id)*1.5;
-   ctx.fillStyle=TEAMC[b.team].m;
-   ctx.beginPath();ctx.moveTo(fx,fy-15);ctx.lineTo(fx+9,fy-12.5+wv);ctx.lineTo(fx,fy-10);ctx.closePath();ctx.fill()}}
+   drawBanner(b,fx,fy)}}
  if(b.flash>0){ctx.globalAlpha=Math.min(0.5,b.flash*4);ctx.fillStyle='#fff';
   const Aw=[A[0],A[1]-h],Bw=[B[0],B[1]-h],Cw=[C[0],C[1]-h],Dw=[D[0],D[1]-h];poly4(Aw,Bw,Cw,Dw);ctx.fill()}
  ctx.restore();
@@ -1481,6 +1586,36 @@ function renderMM(){
   const w=scr2wS(p[0],p[1]);const x=mX(w[0]),y=mY(w[1]);
   i?mctx.lineTo(x,y):mctx.moveTo(x,y)});
  mctx.closePath();mctx.stroke()}
+/* Ambient life. Motes drift over the world on their own slow loops -- world-anchored so they stay
+   put when the camera moves, and skipped over water so the ponds do not fill with fireflies. Birds
+   cross in screen space because they are scenery, not something the player can interact with. */
+const motes=[];
+for(let i=0;i<30;i++)motes.push({x:Math.random()*MAP,y:Math.random()*MAP,r:rnd(0.7,1.8),ph:rnd(0,7),sp:rnd(0.25,0.6),ax:rnd(1.5,3),ay:rnd(1.5,3)});
+function drawMotes(){
+ for(const m of motes){
+  const wx=m.x+Math.sin(time*m.sp+m.ph)*m.ax,wy=m.y+Math.cos(time*m.sp*0.8+m.ph)*m.ay;
+  const tx=wx|0,ty=wy|0;
+  if(tx<0||ty<0||tx>=MAP||ty>=MAP)continue;
+  if(tiles[ty*MAP+tx]===2)continue;
+  const[sx,sy]=w2s(wx,wy),a=0.22+0.30*Math.sin(time*1.7+m.ph);
+  if(a<=0.02)continue;
+  ctx.globalAlpha=Math.min(0.55,a);
+  ctx.fillStyle='#fff2c0';
+  ctx.beginPath();ctx.arc(sx,sy-7-m.r,m.r,0,7);ctx.fill()}
+ ctx.globalAlpha=1}
+const flocks=[{y:0.16,sp:0.030,ph:0},{y:0.30,sp:0.022,ph:2.4}];
+function drawBirds(){
+ ctx.save();ctx.strokeStyle='rgba(30,34,26,.42)';ctx.lineWidth=1.5;ctx.lineCap='round';
+ for(const f of flocks){
+  const t=(time*f.sp+f.ph)*cw,fx=t%1.25*cw-cw*0.12;
+  for(let i=0;i<5;i++){
+   const bx=fx-i*13,by=f.y*ch+Math.sin(time*1.1+i)*4+i*3;
+   if(bx<-20||bx>cw+20)continue;
+   const flap=Math.sin(time*7+i*0.8)*2.6;
+   ctx.beginPath();
+   ctx.moveTo(bx-4,by+flap);ctx.lineTo(bx,by);ctx.lineTo(bx+4,by+flap);
+   ctx.stroke()}}
+ ctx.restore()}
 function render(){
  ctx.setTransform(dpr,0,0,dpr,0,0);
  ctx.fillStyle='#0a0f07';ctx.fillRect(0,0,cw,ch);
@@ -1495,6 +1630,7 @@ function render(){
   const sx=(x-y)*TW2,sy=(x+y)*TH2;
   if(sx+TW2<L||sx-TW2>R||sy+TH<T||sy>B)continue;
   drawTile(x,y,sx,sy)}
+ drawMotes();
  // ground marks
  for(const s of selection){if(s.dead)continue;
   if(s.kind==='unit'){const[sx,sy]=w2s(s.x,s.y);
@@ -1537,10 +1673,18 @@ function render(){
   dl.push([u.x+u.y,2,u])}
  dl.sort((a,b)=>a[0]-b[0]);
  for(const d of dl){if(d[1]===0)drawRes(d[2]);else if(d[1]===1)drawBuilding(d[2]);else drawUnit(d[2])}
- // arrows
- ctx.strokeStyle='#f3e9c8';ctx.lineWidth=1.4;
+ // arrows, each with a short trail so a volley reads as flight rather than as dashes
  for(const a of arrows){if(a.dead)continue;
   const p1=w2s(a.px,a.py),p2=w2s(a.x,a.y);
+  const dx=p1[0]-p2[0],dy=p1[1]-p2[1];
+  ctx.lineCap='round';
+  for(let i=1;i<=3;i++){
+   ctx.strokeStyle='rgba(243,233,200,'+(0.30/i)+')';ctx.lineWidth=1.4-i*0.22;
+   ctx.beginPath();
+   ctx.moveTo(p1[0]+dx*i*0.7,p1[1]+dy*i*0.7);
+   ctx.lineTo(p2[0]+dx*i*0.35,p2[1]+dy*i*0.35);
+   ctx.stroke()}
+  ctx.strokeStyle='#f3e9c8';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke()}
  // particles
  for(const p of parts){if(p.ring)continue;const t=p.life/p.max;
@@ -1556,6 +1700,13 @@ function render(){
   ctx.fillStyle=t.col||'#fff';ctx.fillText(label,sx,sy-30-t.t*22)}
  ctx.globalAlpha=1;
  ctx.restore();
+ /* Warm afternoon light, in screen space so it grades the whole view rather than the map -- and
+    under the HUD, which stays neutral. Kept very light: it should read as time of day, not a
+    filter, and it must not fight the team colours it sits on top of. */
+ const sun=ctx.createRadialGradient(cw*0.34,ch*0.16,0,cw*0.34,ch*0.16,Math.max(cw,ch)*0.95);
+ sun.addColorStop(0,'rgba(255,226,168,.16)');sun.addColorStop(0.55,'rgba(255,214,150,.05)');sun.addColorStop(1,'rgba(40,44,70,.13)');
+ ctx.fillStyle=sun;ctx.fillRect(0,0,cw,ch);
+ drawBirds();
  if(box&&box.active){ctx.fillStyle='rgba(255,255,255,.08)';ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
   ctx.fillRect(Math.min(box.x0,box.x1),Math.min(box.y0,box.y1),Math.abs(box.x1-box.x0),Math.abs(box.y1-box.y0));
   ctx.strokeRect(Math.min(box.x0,box.x1),Math.min(box.y0,box.y1),Math.abs(box.x1-box.x0),Math.abs(box.y1-box.y0))}
@@ -1585,7 +1736,13 @@ function update(dt){
  if(shake>0)shake=Math.max(0,shake-dt*16);
  for(const b of buildings){if(b.dead)continue;
   if(b.flash>0)b.flash-=dt;
-  if(!b.done)continue;
+  if(!b.done){
+   /* Dust at the build site while the scaffold is up, so a half-built structure reads as busy
+      rather than as a hole in the map. Finished buildings smoke only once damaged. */
+   b.dustT=(b.dustT||0)-dt;
+   if(b.dustT<=0){b.dustT=rnd(0.25,0.6);const[sx,sy]=w2s(b.cx,b.cy);
+    parts.push({x:sx+rnd(-b.size*7,b.size*7),y:sy+rnd(-2,6),vx:rnd(-10,10),vy:-rnd(8,20),g:18,life:0,max:rnd(0.5,0.9),r:rnd(1.8,3.2),col:'rgba(206,190,158,.6)'})}
+   continue}
   /* the gate lifts its portcullis while one of the owner's units is in the gateway */
   if(b.type==='gate')b.gateOpen=units.some(u=>!u.dead&&!u.garrisoned&&u.team===b.team&&dist2(u.x,u.y,b.cx,b.cy)<3.2);
   if(b.queue.length){const q=b.queue[0];q.t+=dt;
@@ -1633,8 +1790,26 @@ function frame(ts){
  requestAnimationFrame(frame);
  if(!lastT)lastT=ts;
  const dt=Math.min(0.05,(ts-lastT)/1000);lastT=ts;
- if(started&&!over){time+=dt;update(dt)}
+ /* Paused freezes the world as well as the clock: units keep their orders and the queue keeps its
+    progress, so resuming picks up mid-stride rather than restarting anything. Rendering carries on
+    so the map stays live under the overlay. */
+ /* Hit-stop dilates the world clock but not the render clock: particles and the recoil flourish
+    keep their own pace so a death reads as a beat rather than a stall. */
+ let world=dt;
+ if(hitStopT>0){world=dt*0.25;hitStopT=Math.max(0,hitStopT-dt)}
+ if(started&&!over&&!paused){time+=world;update(world)}
  render()}
+/* Pause sits with the resource pills because that row is already the player's status strip, and
+   `time` drives every idle cycle, so freezing it stops the whole board rather than just movement. */
+function setPaused(on){
+ paused=on;
+ const b=$('ppause');
+ b.classList.toggle('on',paused);
+ b.innerHTML=paused?ICO_PLAY:ICO_PAUSE;
+ b.title=paused?'Resume':'Pause';
+ $('pauseOv').style.display=paused?'flex':'none';
+ if(paused){if(AC&&AC.suspend)AC.suspend()}else if(AC&&AC.resume)AC.resume();
+ lastT=0}
 
 /* ============ init ============ */
 function resize(){dpr=Math.min(2,devicePixelRatio||1);cw=innerWidth;ch=innerHeight;
@@ -1667,6 +1842,15 @@ function scheduleTut(){
   [22,'Raise an army, then press the sword to charge!']]
  .forEach(([t,m])=>setTimeout(()=>{if(started&&!over)toast(m)},t*1000))}
  $('pli').addEventListener('click',e=>{e.stopPropagation();selectIdle()});
+ $('ppause').addEventListener('click',e=>{e.stopPropagation();if(!started||over)return;setPaused(!paused)});
+ $('pauseOv').addEventListener('click',()=>{if(paused)setPaused(false)});
+ $('pauseCard').innerHTML=ICO_PAUSE+'<b>PAUSED</b>';   /* the overlay's own label, not the pill's */
+ $('ppause').innerHTML=ICO_PAUSE;
+ /* Space toggles pause on the web build, the way every RTS does it. */
+ addEventListener('keydown',e=>{
+  if(e.key!==' '&&e.key!=='Space')return;
+  const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
+  e.preventDefault();if(!started||over)return;setPaused(!paused)});
  $('startBtn').addEventListener('click',()=>{
   initAudio();if(AC&&AC.resume)AC.resume();
   $('startOv').style.display='none';started=true;sfx('horn');scheduleTut()});

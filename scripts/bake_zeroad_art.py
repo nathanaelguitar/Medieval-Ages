@@ -35,7 +35,7 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -683,14 +683,20 @@ UNITS = [
 ]
 
 
-# A seamless 0 A.D. surface used as a detail overlay on land tiles. decal_struct_sand_medium.png
-# measures an edge delta of 0.0 (genuinely tileable), unlike the 2048px terrain blend textures,
-# which are 9 MB and do not wrap. Flattened to a narrow light band so the canvas can multiply it
-# over the existing terrain colours -- the game keeps its grass/dirt/water semantics and gains
-# 0 A.D.'s surface character, rather than being repainted wholesale.
+# A 0 A.D. surface used as a detail overlay on land tiles. The raw decal does not survive being
+# repeated on screen: it carries a painted vignette (slow shading drift), and after the resize its
+# opposite edges disagree by up to ~30 levels, so every repeat drew a box-grid of seams with odd
+# corner junctions across the map. Bake it into pure grain instead -- keep only detail finer than
+# GROUND_LOWPASS (the vignette and its edge step are far coarser), make that grain wrap by
+# cross-fading toward its half-turn roll near the borders, and park the result in a narrow bright
+# band: multiplying by ~255 is a no-op, so the terrain keeps its flat grass/dirt/water colour and
+# gains only a faint 0 A.D. tooth.
 GROUND_SRC = "props/decal_struct_sand_medium.png"
 GROUND_SIZE = 256
-GROUND_FLOOR, GROUND_CEIL = 190, 255
+GROUND_LOWPASS = 8    # px; detail coarser than this is vignette, not tooth
+GROUND_BLEND = 48     # px; border margin over which the grain cross-fades to its rolled self
+GROUND_FLOOR = 210    # darkest value the grain may reach (255 = no effect)
+GROUND_GAIN = 0.55    # how strongly surviving grain darkens: 255 - |detail| * GAIN
 
 
 def bake_ground(out_dir):
@@ -699,8 +705,18 @@ def bake_ground(out_dir):
         print(f"  ground source missing: {GROUND_SRC}")
         return
     im = Image.open(src).convert("L").resize((GROUND_SIZE, GROUND_SIZE), Image.LANCZOS)
-    span = GROUND_CEIL - GROUND_FLOOR
-    im = im.point(lambda v: GROUND_FLOOR + (v * span) // 255)
+    grain = ImageChops.subtract(im, im.filter(ImageFilter.GaussianBlur(GROUND_LOWPASS)), 1, 128)
+    rolled = ImageChops.offset(grain, GROUND_SIZE // 2, GROUND_SIZE // 2)
+    mask = Image.new("L", (GROUND_SIZE, GROUND_SIZE), 255)
+    mp = mask.load()
+    for j in range(GROUND_SIZE):
+        row_edge = min(j, GROUND_SIZE - 1 - j)
+        for i in range(GROUND_SIZE):
+            d = min(row_edge, i, GROUND_SIZE - 1 - i)
+            if d < GROUND_BLEND:
+                mp[i, j] = (255 * d) // GROUND_BLEND
+    grain = Image.composite(grain, rolled, mask)
+    im = grain.point([max(GROUND_FLOOR, 255 - int(abs(v - 128) * GROUND_GAIN)) for v in range(256)])
     fn = os.path.join(out_dir, "ground.png")
     im.convert("RGB").save(fn, optimize=True)
     print(f"  -> ground.png  {GROUND_SIZE}x{GROUND_SIZE}  {os.path.getsize(fn) // 1024}K")
@@ -716,6 +732,11 @@ ANIMATED_UNITS = [
     ("unit_vill_idle", "villager", "idle", 6, 72),
     ("unit_spear_walk", "soldier", "walk", 8, 72),
     ("unit_spear_idle", "soldier", "idle", 6, 72),
+    # The weapon-raised stances the page plays while a unit is in a fight. The bundle ships these
+    # for the hoplite and nothing else -- there is no attack clip and no archer or bow mesh at all
+    # -- so this is what "shooting" has to look like on the ranged units, which draw as spearmen.
+    ("unit_spear_ready_walk", "soldier", "walk_ready", 8, 72),
+    ("unit_spear_ready_idle", "soldier", "idle_ready", 6, 72),
     ("animal_boar_walk", "boar", "walk", 8, 72),
     ("animal_boar_idle", "boar", "idle", 6, 72),
     ("animal_sheep_walk", "sheep", "walk", 8, 72),
@@ -776,6 +797,31 @@ def prop_extent_ok(extent, body_height):
     return PROP_MIN_EXTENT <= extent <= PROP_MAX_EXTENT_FRAC * body_height
 
 
+def collada_unit(mesh_rel):
+    """The COLLADA unit a mesh is authored in, as a factor onto its own vertices.
+
+    A composite mixes units: the biped bodies, helmets, sheaths and greaves declare metres, while
+    the face props declare centimetres (dudette_head_b) or inches (head_beard). Dividing each prop
+    by its own declared unit is what makes them agree -- the villager's head lands at 0.99 units and
+    the beard at 0.93 on a 3.86-unit body, and every metre-authored prop is left untouched. Skipping
+    it is what made the villager headless: at its authored 0.0099 units the extent floor below read
+    the head as debris and dropped it, and f_dress.dae carries no head of its own (its topmost band
+    is a broad 0.72-unit hood, not a skull), so the bake produced a robe with nothing above the
+    shoulders. Blender has always applied this -- it is where the 6.16-unit spear came from -- so the
+    rest-placement path has to as well or the two disagree about the same mesh.
+    """
+    try:
+        with open(os.path.join(MESH_ROOT, mesh_rel), encoding="utf-8", errors="ignore") as fh:
+            head = fh.read(4096)
+    except OSError:
+        return 1.0
+    m = re.search(r'<unit\b[^>]*meter="([0-9.eE+-]+)"', head)
+    if not m:
+        return 1.0
+    meter = float(m.group(1))
+    return 1.0 / meter if meter > 0 else 1.0
+
+
 def place_prop(mesh_rel, skin_rel, attachpoint, skeleton, up, body_h):
     """Load a bone-attached prop and transform it onto its bone. Returns (Piece, note) or (None, why).
 
@@ -796,6 +842,11 @@ def place_prop(mesh_rel, skin_rel, attachpoint, skeleton, up, body_h):
     verts, uvs, faces = load_obj(obj)
     if not verts or not faces:
         return None, "no geometry"
+    unit = collada_unit(mesh_rel)
+    note_unit = ""
+    if abs(unit - 1.0) > 1e-6:
+        verts = [tuple(c * unit for c in v) for v in verts]
+        note_unit = f", unit x{unit:g} ({XYZ[up]}-up source)"
     verts = [m4_apply(m4_to_converted(m), v) for v in verts]
     # Measured AFTER attaching, because bones carry scale: the spear mesh is 0.16 units in its own
     # space but larger once the bone's scale applies, and measuring before made it look small enough
@@ -803,7 +854,8 @@ def place_prop(mesh_rel, skin_rel, attachpoint, skeleton, up, body_h):
     ext = mesh_extent(verts)
     if not prop_extent_ok(ext, body_h):
         return None, f"placed extent {ext:.2f} vs body {body_h:.2f}"
-    return Piece([reorder(v, up) for v in verts], uvs, faces, skin_path(skin_rel)), f"on {bone}"
+    return (Piece([reorder(v, up) for v in verts], uvs, faces, skin_path(skin_rel)),
+            f"on {bone}{note_unit}")
 
 
 def unit_prop_pieces(index, actor_rel, skeleton_dae, want=None):
@@ -858,9 +910,12 @@ def unit_prop_spec(index, actor_rel, want=None, skeleton_dae=None):
         if not pobj:
             continue
         pv = load_obj(pobj)[0]
-        # Measure where the prop ends up, not where it is authored -- bones carry scale.
+        # Measure where the prop ends up, not where it is authored -- bones carry scale. Blender
+        # loads the mesh itself and applies the COLLADA unit on the way in (that is where the
+        # 6.16-unit spear came from), so the check has to apply it too or the spec drops props that
+        # Blender would happily place -- the villager's head among them.
         placed = [m4_apply(m4_to_converted(rests[target]), v) for v in pv]
-        if not prop_extent_ok(mesh_extent(placed), body_h):
+        if not prop_extent_ok(mesh_extent(placed) * collada_unit(mesh_rel), body_h):
             continue
         chain, node = [], target
         while node and len(chain) < 8:
@@ -945,6 +1000,17 @@ def main():
     print(f"actor files parsed: {len(index.trees)}")
 
     manifest = {}
+    # A filtered bake writes the manifest too, so starting from an empty one would drop every
+    # sprite it did not touch -- `--only ready` once left the page with sixteen entries and no
+    # buildings, trees or villagers at all. Carry the existing table forward and let the bake
+    # overwrite only the entries it actually rebuilds.
+    if args.only:
+        try:
+            with open(os.path.join(args.out, "manifest.json")) as fh:
+                manifest = json.load(fh)
+            print(f"merging into the existing manifest ({len(manifest)} entries)")
+        except (OSError, ValueError):
+            pass
 
     def wanted(name):
         return not args.only or args.only in name
@@ -1030,6 +1096,13 @@ def main():
             # visibly change size as a limb or a spear swings wide.
             allv = [v for ps in frames for p in ps for v in p.verts]
             fit = project_fit([allv], size) if allv else None
+
+            # A re-bake merged over an older manifest must not leave the previous frame count
+            # behind -- sampling the same clip at fewer frames would otherwise keep the extra
+            # entries alive and the page would play frames that no longer match the clip. Purged
+            # here, before the new frames are written, so it cannot take them with it.
+            for stale in [k for k in manifest if k.startswith(f"{name}_")]:
+                del manifest[stale]
 
             for i, pieces in enumerate(frames):
                 if not pieces:
