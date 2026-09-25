@@ -71,22 +71,26 @@ The game starts Blue and Red settlements, each with a town center, starting vill
 | Drag two fingers on the map | Pan the camera. |
 | Pinch | Zoom in/out. |
 | Drag on the minimap | Pan the camera. |
-| Bottom-right stick | Directly move the selected units. |
+| Bottom-right stick | Directly move the selected units; with nothing selected it pans the camera instead. |
+| Camera follow | The view glides to keep the units you have selected in sight once they would leave the comfort margin. Panning by hand suspends the follow for a couple of seconds so it never fights you. |
+| Mouse wheel | Zoom in and out, anchored on the cursor. Web build only. |
+| Space | Pause and resume. The pause pill in the status strip and a tap on the dimmed map do the same. |
 | Tap an enemy or the sword button | Attack the target/nearest enemy with selected military units. |
 | Tap your Town Center with villagers selected | Garrison them for protection; the Town Center fires stronger/faster arrows. |
 | Select your Town Center | Use **Unload** to release garrisoned villagers. |
-| Build actions | Place Houses, Barracks, Wood Yards, Mining Camps, Markets, Farms, Wood Palisades, Stone Walls, Gates, and Guard Towers. Each button shows a one-word caption as well as its icon. |
+| Build actions | Place Houses, Barracks, Wood Yards, Mills, Mining Camps, Markets, Farms, Wood Palisades, Stone Walls, Gates, and Guard Towers. Each button shows a one-word caption as well as its icon. |
+| Drop-offs | Wood Yards take wood, Mills take food from berries, farms and hunted game, Mining Camps take gold and stone. The Town Center accepts all four, so the camps exist to shorten the walk when a resource is far from home. |
 | Build a Gate | Gates sit in a wall line and are owned by whoever built them: your units walk straight through, enemy units are blocked. The portcullis lifts on its own while one of your units is in the opening. |
 | Tap the Idle pill | Selects every idle villager and pans to them if they are off screen. The pill highlights while any villager is idle. |
 | Select a completed Market | Trade 100 wood for 125 food, or 100 food for wood, gold, or stone. |
 | Top HUD | Population is shown beside the current idle-villager count. |
 | Artwork | Buildings, trees, characters and ground use sprites baked from the bundled 0 A.D. art. Add `?art=proc` to the URL to switch back to the procedural vector art and compare. |
 
-A basic acceptance sequence is: select a villager, tap a tree, verify wood increases at a drop-off, build a Wood Yard, gather stone and build a Stone Wall, then train troops in the Barracks and use the stick to move them. This sequence still needs manual touch verification on the phone.
+A basic acceptance sequence is: select a villager, tap a tree, verify wood increases at a drop-off, build a Wood Yard, send a villager to berries and build a Mill, gather stone and build a Stone Wall, then train troops in the Barracks and use the stick to move them. This sequence still needs manual touch verification on the phone.
 
 ## What this version does and does not add
 
-Implemented in source: a self-contained two-settlement offline skirmish; tap/double-tap selection; one-finger camera pan; pinch zoom; unit joystick movement; resource gathering and drop-offs; huntable boar and sheep that wander, flee and decay to carcasses; Wood Yards, Mining Camps, and Markets; resource trading; an idle-villager HUD counter that doubles as a jump-to-idle button; Houses, Barracks, Farms, Wood Palisades, Stone Walls, team-owned Gates that open for their owner, and Guard Towers; villager garrisoning in Town Centers; training; combat with impact shake and floating damage; a delayed enemy wave; and regression tests.
+Implemented in source: a self-contained two-settlement offline skirmish; tap/double-tap selection; one-finger camera pan; pinch and wheel zoom; unit joystick movement, or camera panning from the same stick with an empty selection; a follow camera that keeps your selected units in view; resource gathering and drop-offs; huntable boar and sheep that wander, flee and decay to carcasses; Wood Yards, Mills, Mining Camps, and Markets; resource trading; an idle-villager HUD counter that doubles as a jump-to-idle button; Houses, Barracks, Farms, Wood Palisades, Stone Walls, team-owned Gates that open for their owner, and Guard Towers; villager garrisoning in Town Centers; training; pause; combat with ready stances, firing recoil, arrow trails, impact sparks and floating damage; ambient life, beach foam and a sun grade; a delayed enemy wave; and regression tests.
 
 Rendering is dual-path. Buildings, trees, characters and the ground draw from 0 A.D. sprites baked offline; everything else, and anything whose sprite has not loaded, draws with the original procedural vector art. The switch is one constant in `index.html`, and `?art=proc` forces the procedural path.
 

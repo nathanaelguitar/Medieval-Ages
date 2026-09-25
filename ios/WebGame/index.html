@@ -166,6 +166,7 @@ const BLD={tc:{w1:'#dcbd82',w2:'#c2a468',roof:'#a06a35',trim:'#7c4f24'},
  house:{w1:'#d3ae74',w2:'#b8935c',roof:'#916034',trim:'#6d431f'},
  farm:{w1:'#7a5f38',w2:'#6b5230',roof:'#8fae4a',trim:'#5b4a2c'},
  woodyard:{w1:'#b08455',w2:'#8e673e',roof:'#6d4326',trim:'#4f301e'},
+ mill:{w1:'#d8c49a',w2:'#b8a179',roof:'#8b5f33',trim:'#5e3f22'},
  mine:{w1:'#9aa1a8',w2:'#777f87',roof:'#4b5057',trim:'#30343a'},
  palisade:{w1:'#a87945',w2:'#82552f',roof:'#c69a5e',trim:'#4e311b'},
  stonewall:{w1:'#aeb6bd',w2:'#858d94',roof:'#cbd0d3',trim:'#4c545b'},
@@ -180,6 +181,7 @@ const DEFS={
  farm:{name:'Farm',hp:120,size:2,hh:9,t:12,cost:{w:60}},
  barracks:{name:'Barracks',hp:550,size:3,hh:40,t:16,cost:{w:125}},
  woodyard:{name:'Wood Yard',hp:350,size:2,hh:24,t:10,cost:{w:50}},
+ mill:{name:'Mill',hp:380,size:2,hh:26,t:11,cost:{w:60}},
  mine:{name:'Mining Camp',hp:420,size:2,hh:28,t:12,cost:{w:75}},
  palisade:{name:'Wood Palisade',hp:220,size:1,hh:9,t:5,cost:{w:20}},
  stonewall:{name:'Stone Wall',hp:480,size:1,hh:11,t:8,cost:{s:25}},
@@ -204,6 +206,7 @@ const ICON={
  swords:'<svg viewBox="0 0 20 20"><path d="M16.5 3.5 8 12" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round"/><path d="M6.4 10.4l3.2 3.2" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round"/><path d="M6.6 14.6l-2.4 2.4" stroke="#c89b52" stroke-width="2.6" stroke-linecap="round"/></svg>',
  archer:'<svg viewBox="0 0 20 20"><path d="M6 3c5 2 5 12 0 14" stroke="#e8e2d2" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M6 3v14" stroke="#e8e2d2" stroke-width="1"/><path d="M4 10h11m0 0-2.5-2M15 10l-2.5 2" stroke="#e8e2d2" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>',
  house:'<svg viewBox="0 0 20 20"><path d="M3 10 10 3.5 17 10v7H3z" fill="#e8e2d2"/><rect x="8.4" y="12" width="3.2" height="5" fill="#5b4a33"/></svg>',
+ mill:'<svg viewBox="0 0 20 20"><circle cx="10" cy="8.5" r="5" fill="#e8e2d2"/><circle cx="10" cy="8.5" r="1.5" fill="#5b4a33"/><path d="M10 3.5v10M5 8.5h10" stroke="#5b4a33" stroke-width="1.2"/><path d="M6 16.5h8l-1.6-3H7.6z" fill="#c89b52"/></svg>',
  farm:'<svg viewBox="0 0 20 20"><path d="M10 17v-6" stroke="#e8e2d2" stroke-width="1.8" stroke-linecap="round"/><path d="M10 11C10 7 7 5.5 4.5 5.5 4.5 9 7 11 10 11zm0 0c0-4 3-5.5 5.5-5.5 0 3.5-2.5 5.5-5.5 5.5z" fill="#e8e2d2"/></svg>',
  barracks:'<svg viewBox="0 0 20 20"><path d="M6 17V3.5" stroke="#e8e2d2" stroke-width="1.8" stroke-linecap="round"/><path d="M6 4h8.5L12 7l2.5 3H6z" fill="#e8e2d2"/></svg>',
  woodyard:'<svg viewBox="0 0 20 20"><path d="M3 15.5h14M5 15.5V8h10v7.5M4 8l6-4 6 4" fill="none" stroke="#c89b52" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 11h6M7 13.5h6" stroke="#e8e2d2" stroke-width="1.4"/></svg>',
@@ -225,6 +228,9 @@ let res=[{w:350,f:600,g:250,s:100},{w:350,f:350,g:220,s:220}];
 let popCap=[5,5];
 let selection=[],placing=null,box=null,pinch=null;
 let camX=0,camY=0,zoom=0.85,time=0,started=false,over=false,uid=1,lastT=0,afT=0,shake=0,paused=false,hitStopT=0;
+/* Seconds during which the player's own panning outranks the follow camera. Without this the two
+   fight: you drag the view somewhere and it immediately drags itself back to your villagers. */
+let followMute=0;
 let grid=new Uint8Array(MAP*MAP).fill(1);
 const tiles=new Uint8Array(MAP*MAP),decor=new Uint8Array(MAP*MAP),waterD=new Uint8Array(MAP*MAP);
 const gateAt=new Map();   // tile key -> owning team, for gate buildings
@@ -544,7 +550,9 @@ function findDrop(u){
  let best=null,bd=1e9;
  for(const b of buildings){
   if(b.dead||!b.done||b.team!==u.team)continue;
-  const accepts=b.type==='tc'||(kind==='w'&&b.type==='woodyard')||((kind==='g'||kind==='s')&&b.type==='mine');
+  /* The Mill is the food half of what the Wood Yard and Mining Camp do for wood and stone: berries,
+     farms and hunted game all walk their load here instead of trekking back to the Town Center. */
+  const accepts=b.type==='tc'||(kind==='w'&&b.type==='woodyard')||(kind==='f'&&b.type==='mill')||((kind==='g'||kind==='s')&&b.type==='mine');
   if(!accepts)continue;
   const d=dist2(u.x,u.y,b.cx,b.cy);if(d<bd){bd=d;best=b}
  }
@@ -819,10 +827,13 @@ function joyUpdate(e){
 joyZone.addEventListener('pointerdown',e=>{
  e.preventDefault();e.stopPropagation();
  if(joy.id!==null)return;
- if(!selection.some(s=>s.kind==='unit'&&s.team===0&&!s.dead)){toast('Select a unit first: the stick moves your selection');return}
+ /* The stick drives your units when you have any, and pans the map when you do not. With nothing
+    selected there is nothing else it could usefully do, and it saves reaching for a two-finger
+    drag just to look around. */
+ joy.mode=selection.some(s=>s.kind==='unit'&&s.team===0&&!s.dead&&!s.garrisoned)?'units':'camera';
  joy.id=e.pointerId;joyZone.setPointerCapture(e.pointerId);joyUpdate(e)});
 joyZone.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyUpdate(e)});
-const joyEnd=e=>{if(e.pointerId===joy.id){joy.id=null;joy.vx=0;joy.vy=0;joyNub.style.transform='translate(0px,0px)';selection.forEach(u=>{if(u.kind==='unit'&&u.team===0&&u.order.type==='drive')u.order={type:'idle'}})}};
+const joyEnd=e=>{if(e.pointerId===joy.id){joy.id=null;joy.mode=null;joy.vx=0;joy.vy=0;joyNub.style.transform='translate(0px,0px)';selection.forEach(u=>{if(u.kind==='unit'&&u.team===0&&u.order.type==='drive')u.order={type:'idle'}})}};
 joyZone.addEventListener('pointerup',joyEnd);joyZone.addEventListener('pointercancel',joyEnd);
 
 cv.addEventListener('pointerdown',e=>{
@@ -849,6 +860,7 @@ cv.addEventListener('pointermove',e=>{
   zoom=clamp(pinch.z0*d/pinch.d0,0.5,1.9);
   const mx=(pts[0].x+pts[1].x)/2,my=(pts[0].y+pts[1].y)/2;
   camX=pinch.wx-(mx-cw/2)/zoom;camY=pinch.wy-(my-ch/2)/zoom;clampCam();
+  followMute=2.5;
   p.moved=true;return}
  if(Math.hypot(p.x-p.sx,p.y-p.sy)>11)p.moved=true;
  if(p.moved){
@@ -878,6 +890,7 @@ cv.addEventListener('wheel',e=>{
  const wx=(e.clientX-cw/2)/zoom+camX,wy=(e.clientY-ch/2)/zoom+camY;
  zoom=nz;
  camX=wx-(e.clientX-cw/2)/zoom;camY=wy-(e.clientY-ch/2)/zoom;clampCam();
+ followMute=2.5;
 },{passive:false});
 
 $('sword').addEventListener('pointerdown',e=>{
@@ -904,7 +917,7 @@ const mmNav=e=>{
  e.preventDefault();e.stopPropagation();
  const r=mm.getBoundingClientRect(),k=150/(MAP*TW);
  const px=(e.clientX-r.left)*(mm.width/r.width),py=(e.clientY-r.top)*(mm.height/r.height);
- camX=px/k-MAP*TW2;camY=(py-4)/k;clampCam()};
+ camX=px/k-MAP*TW2;camY=(py-4)/k;clampCam();followMute=2.5};
 mm.addEventListener('pointerdown',mmNav);
 mm.addEventListener('pointermove',e=>{if(e.buttons)mmNav(e)});
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -946,7 +959,7 @@ function refreshPanel(force){
  if(selection.length===1)html+=`<div class="php"><div id="phpf" style="width:${Math.max(0,first.hp/first.maxhp*100)}%"></div></div>`;
  const acts=[];
  if(!enemy){
-  if(counts.vill)acts.push({l:'House',s:'House',c:'30w',t:'house'},{l:'Farm',s:'Farm',c:'60w',t:'farm'},{l:'Barracks',s:'Barracks',c:'125w',t:'barracks'},{l:'Wood Yard',s:'Wood',c:'50w',t:'woodyard'},{l:'Mining Camp',s:'Mine',c:'75w',t:'mine'},{l:'Market',s:'Market',c:'100w',t:'market'},{l:'Palisade',s:'Palisade',c:'20w',t:'palisade'},{l:'Stone Wall',s:'Stone',c:'25s',t:'stonewall'},{l:'Gate',s:'Gate',c:'20w 20s',t:'gate'},{l:'Tower',s:'Tower',c:'80w 100s',t:'tower'});
+  if(counts.vill)acts.push({l:'House',s:'House',c:'30w',t:'house'},{l:'Farm',s:'Farm',c:'60w',t:'farm'},{l:'Barracks',s:'Barracks',c:'125w',t:'barracks'},{l:'Wood Yard',s:'Wood',c:'50w',t:'woodyard'},{l:'Mill',s:'Mill',c:'60w',t:'mill'},{l:'Mining Camp',s:'Mine',c:'75w',t:'mine'},{l:'Market',s:'Market',c:'100w',t:'market'},{l:'Palisade',s:'Palisade',c:'20w',t:'palisade'},{l:'Stone Wall',s:'Stone',c:'25s',t:'stonewall'},{l:'Gate',s:'Gate',c:'20w 20s',t:'gate'},{l:'Tower',s:'Tower',c:'80w 100s',t:'tower'});
   if(counts.tc)acts.push({l:'Villager',s:'Villager',c:'50f',t:'vill',q:1});
   if(selection.length===1&&first.kind==='bld'&&first.type==='tc'&&first.garrison.length)acts.push({l:'Unload '+first.garrison.length,s:'Unload',c:'',t:'ungarrison'});
   if(selection.length===1&&first.kind==='bld'&&first.type==='market'&&first.done){
@@ -1067,7 +1080,7 @@ function drawSpr(k,sx,sy,targetW){
 /* Which structure draws as which 0 A.D. building. Farms and walls keep their procedural art:
    this asset set has no wall-segment mesh, and its gate is a prop authored to sit inside a
    fortress wall rather than a standalone gateway (it bakes into two disconnected fragments). */
-const BLDSPR={tc:'bld_tc',barracks:'bld_barracks',woodyard:'bld_store',mine:'bld_store',market:'bld_store',tower:'bld_tower'};
+const BLDSPR={tc:'bld_tc',barracks:'bld_barracks',woodyard:'bld_store',mill:'bld_store',mine:'bld_store',market:'bld_store',tower:'bld_tower'};
 const HOUSES=['bld_house_a','bld_house_b','bld_house_c','bld_house_d','bld_house_e'];
 function buildingSprite(b){
  if(!ART)return null;
@@ -1716,6 +1729,15 @@ function render(){
 function applyJoy(dt){
  const m=Math.hypot(joy.vx,joy.vy);
  const own=selection.filter(s=>s.kind==='unit'&&s.team===0&&!s.dead&&!s.garrisoned);
+ /* Stick pans the view when it is not driving anyone -- either because nothing is selected, or
+    because the whole selection died mid-drag. Speed is divided by zoom so the map moves under the
+    thumb at the same rate however far in you are. */
+ if(joy.mode==='camera'||!own.length){
+  if(m>0.14){
+   const sp=(700/zoom)*Math.min(1,m*1.25);
+   camX+=joy.vx*sp*dt;camY+=joy.vy*sp*dt;clampCam();
+   followMute=Math.max(followMute,0.35)}       /* the player is steering: do not fight them */
+  return}
  if(m>0.14&&own.length){
    const vx=joy.vx,vy=joy.vy;
    let ax=(vx/TW2+vy/TH2)/2,ay=(vy/TH2-vx/TW2)/2;
@@ -1730,8 +1752,33 @@ function applyJoy(dt){
     if(Math.abs(vx)>0.2)u.face=vx>0?1:-1;
     u.moving=true;u.anim+=dt*7}
  }else if(m<=0.14)for(const u of selection)if(u.kind==='unit'&&u.order.type==='drive')u.order={type:'idle'}}
+/* Follow camera. The units you are commanding can roam the middle of the screen freely; the view
+   only starts moving once one would otherwise cross the comfort margin, and then it glides rather
+   than snapping, so a march pulls the camera along at a readable pace instead of yanking it. If the
+   group is spread wider than the view can hold, it centres on them instead of chasing the furthest
+   unit back and forth. */
+function followCamera(dt){
+ if(followMute>0){followMute=Math.max(0,followMute-dt);return}
+ const own=selection.filter(s=>s.kind==='unit'&&s.team===0&&!s.dead&&!s.garrisoned);
+ if(!own.length)return;
+ const hw=cw/(2*zoom),hh=ch/(2*zoom);
+ const mx=hw*0.24,my=hh*0.24;                       /* the margin units may cross for free */
+ let lox=Infinity,hix=-Infinity,loy=Infinity,hiy=-Infinity;
+ for(const u of own){if(u.x<lox)lox=u.x;if(u.x>hix)hix=u.x;if(u.y<loy)loy=u.y;if(u.y>hiy)hiy=u.y}
+ const cxAvg=(lox+hix)/2,cyAvg=(loy+hiy)/2;
+ let tx=camX,ty=camY;
+ if(hix-lox>2*(hw-mx))tx=cxAvg;                     /* cannot all fit: just centre on them */
+ else if(cxAvg-camX>hw-mx)tx=camX+(cxAvg-camX-(hw-mx));
+ else if(camX-cxAvg>hw-mx)tx=camX-((camX-cxAvg)-(hw-mx));
+ if(hiy-loy>2*(hh-my))ty=cyAvg;
+ else if(cyAvg-camY>hh-my)ty=camY+(cyAvg-camY-(hh-my));
+ else if(camY-cyAvg>hh-my)ty=camY-((camY-cyAvg)-(hh-my));
+ if(tx===camX&&ty===camY)return;
+ const k=Math.min(1,dt*2.6);
+ camX+=(tx-camX)*k;camY+=(ty-camY)*k;clampCam()}
 function update(dt){
  applyJoy(dt);
+ followCamera(dt);
  updAnimals(dt);
  if(shake>0)shake=Math.max(0,shake-dt*16);
  for(const b of buildings){if(b.dead)continue;
@@ -1834,9 +1881,9 @@ selection=units.filter(u=>u.team===0);
 refreshPanel(true);
 {const c=w2s(11,43);camX=c[0];camY=c[1];clampCam()}
 function scheduleTut(){
- [[1.2,'🕹 Stick moves selected units · drag the map to pan · pinch to zoom'],
+ [[1.2,'🕹 Stick moves selected units, or pans the map when nothing is selected · pinch or wheel to zoom'],
   [6,'Tap a villager, then tap a tree or berries to gather'],
-  [13,'Build a Wood Yard or Mining Camp for nearby drop-offs'],
+  [13,'Build a Wood Yard, Mill or Mining Camp for nearby drop-offs'],
   [18,'Build a Market to trade wood, food, gold and stone · watch the Idle pill'],
   [20,'Spend wood on houses, barracks and palisades · stone builds walls'],
   [22,'Raise an army, then press the sword to charge!']]
