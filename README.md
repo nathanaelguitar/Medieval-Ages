@@ -96,7 +96,9 @@ Rendering is dual-path. Buildings, trees, characters and the ground draw from 0 
 
 The app opens straight into the skirmish. The native launcher the port used to park on ("Start sandbox") is no longer shown at boot. Note the consequence: the legacy C/SDL art scene it used to start now has no UI entry point, though its code and the launcher view are still in the tree and still compile.
 
-Not added: campaigns, matchmaking/network multiplayer, persistent saves, cloud sync, or App Store distribution. The match remains in memory only; force-quitting or the OS terminating the process loses it.
+Not added: repairing damaged buildings, campaigns, matchmaking/network multiplayer, persistent saves, cloud sync, or App Store distribution. The match remains in memory only; force-quitting or the OS terminating the process loses it.
+
+On repair specifically, since it is the next thing anyone reaches for: a damaged Town Center cannot currently be repaired. Tapping your own Town Center with villagers selected garrisons them instead, which is the wanted behaviour, and there is no path that restores hit points to a finished building at all -- the build action only advances construction on an unfinished one, so `buildStep` has nothing to do once `b.done` is set. A repair order would want to be routed from the hammer, not from the plain tap: the tap already means "garrison", and overloading it would make a full Town Center the only one you could repair. The work is a repair order alongside build that walks villagers to the building and trades resources for hit points at a rate scaled by how many villagers are on it.
 
 The legacy C/SDL CPU sprite renderer is preserved in the workspace, but the current Pocket Empires screen is drawn by the bundled HTML canvas. Actual frame rate and memory use still need profiling on your device.
 

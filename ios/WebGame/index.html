@@ -1080,7 +1080,11 @@ function drawSpr(k,sx,sy,targetW){
 /* Which structure draws as which 0 A.D. building. Farms and walls keep their procedural art:
    this asset set has no wall-segment mesh, and its gate is a prop authored to sit inside a
    fortress wall rather than a standalone gateway (it bakes into two disconnected fragments). */
-const BLDSPR={tc:'bld_tc',barracks:'bld_barracks',woodyard:'bld_store',mill:'bld_store',mine:'bld_store',market:'bld_store',tower:'bld_tower'};
+/* Farms, walls and the Mill keep their procedural art: this asset set has no wall-segment mesh, its
+   gate is a prop authored to sit inside a fortress wall rather than a standalone gateway, and it has
+   no mill at all. Mapping the Mill to bld_store -- as the other drop-offs do -- made four different
+   buildings look identical. */
+const BLDSPR={tc:'bld_tc',barracks:'bld_barracks',woodyard:'bld_store',mine:'bld_store',market:'bld_store',tower:'bld_tower'};
 const HOUSES=['bld_house_a','bld_house_b','bld_house_c','bld_house_d','bld_house_e'];
 function buildingSprite(b){
  if(!ART)return null;
@@ -1519,6 +1523,48 @@ function drawBuilding(b,ghost){
    ctx.lineTo(C[0]+(B[0]-C[0])*t,C[1]+(B[1]-C[1])*t);ctx.stroke()}
   ctx.strokeStyle='#5b4a2c';ctx.lineWidth=1.4;
   [A,B,C,D].forEach(P=>{ctx.beginPath();ctx.moveTo(P[0],P[1]-6);ctx.lineTo(P[0],P[1]);ctx.stroke()});
+ }else if(b.type==='mill'){
+  /* The Mill is drawn, in both art modes, rather than baked: this asset set has no mill mesh, so it
+     borrowed the storehouse sprite and looked identical to the Wood Yard, Mining Camp and Market.
+     Sails turning over a tapered tower also give a working settlement one piece of motion that says
+     so from across the map. */
+  const Aw=[A[0],A[1]-h],Bw=[B[0],B[1]-h],Cw=[C[0],C[1]-h],Dw=[D[0],D[1]-h];
+  if(!ghost){ctx.fillStyle='rgba(0,0,0,.22)';poly4(A,B,C,D);ctx.fill()}
+  const Mx=(Aw[0]+Cw[0])/2,My=(Aw[1]+Cw[1])/2;
+  const to=(P,f)=>[P[0]+(Mx-P[0])*f,P[1]+(My-P[1])*f];
+  const tA=to(Aw,.22),tB=to(Bw,.22),tC=to(Cw,.22),tD=to(Dw,.22);
+  /* tapered tower, lit from the left like every other wall */
+  ctx.fillStyle=shade(pal.w2,.84);poly4(Dw,Cw,tC,tD);ctx.fill();
+  ctx.fillStyle=pal.w1;poly4(Cw,Bw,tB,tC);ctx.fill();
+  ctx.strokeStyle='rgba(26,20,12,.5)';ctx.lineWidth=1;
+  poly4(Dw,Cw,tC,tD);ctx.stroke();poly4(Cw,Bw,tB,tC);ctx.stroke();
+  /* conical cap over the narrowed top ring */
+  const apex=[Mx,My-h*.30];
+  const cap=(P,Q,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(P[0],P[1]);ctx.lineTo(Q[0],Q[1]);
+   ctx.lineTo(apex[0],apex[1]);ctx.closePath();ctx.fill();
+   ctx.strokeStyle='rgba(26,20,12,.45)';ctx.lineWidth=.9;ctx.stroke()};
+  cap(tA,tB,shade(pal.roof,.70));cap(tB,tC,shade(pal.roof,.95));
+  cap(tC,tD,shade(pal.roof,1.16));cap(tD,tA,shade(pal.roof,.80));
+  /* the sails. Squashed into the 2:1 ground plane before rotating, so they sweep across the wall
+     the way a disc does in this projection instead of turning like a flat clock face. */
+  if(b.done&&!ghost){
+   const hubX=(Bw[0]+tB[0]+Cw[0]+tC[0])/4,hubY=(Bw[1]+tB[1]+Cw[1]+tC[1])/4;
+   ctx.save();ctx.translate(hubX,hubY);ctx.scale(1,.55);ctx.rotate(time*.5);
+   for(let i=0;i<4;i++){
+    ctx.rotate(Math.PI/2);
+    ctx.fillStyle='#ece4d0';ctx.strokeStyle='#4a3a24';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.rect(2.5,-3,11.5,6);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='rgba(74,58,36,.45)';ctx.lineWidth=.8;
+    ctx.beginPath();ctx.moveTo(2.5,-1);ctx.lineTo(14,-1);ctx.moveTo(2.5,1);ctx.lineTo(14,1);ctx.stroke()}
+   ctx.fillStyle='#6b4a2b';ctx.beginPath();ctx.arc(0,0,2.7,0,7);ctx.fill();
+   ctx.strokeStyle='#3a2b18';ctx.lineWidth=.8;ctx.stroke();
+   ctx.restore()}
+  if(!b.done){
+   ctx.strokeStyle='#8a6a3c';ctx.lineWidth=1;
+   [A,B,C,D].forEach(P=>{ctx.beginPath();ctx.moveTo(P[0],P[1]);ctx.lineTo(P[0],P[1]-h);ctx.stroke()});
+   ctx.beginPath();ctx.moveTo(C[0],C[1]-h*.5);ctx.lineTo(B[0],B[1]-h*.9);ctx.stroke();
+   drawBar((A[0]+C[0])/2,A[1]-h-h*.30-10,34,p)}
+  if(b.done&&!ghost)drawBanner(b,apex[0],apex[1]);
  }else{
   if(!ghost){ctx.fillStyle='rgba(0,0,0,.22)';poly4(A,B,C,D);ctx.fill()}
   const Aw=[A[0],A[1]-h],Bw=[B[0],B[1]-h],Cw=[C[0],C[1]-h],Dw=[D[0],D[1]-h];
