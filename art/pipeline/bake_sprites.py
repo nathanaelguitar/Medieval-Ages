@@ -257,7 +257,17 @@ def main():
     rig = bpy.data.objects["Rig"]
     body = bpy.data.objects["Body"]
     props = [o for o in bpy.data.objects if o.type == "MESH" and o.parent is rig and o is not body]
+    for p in props:
+        print(f"   prop {p.name}: clips {p.get('clips', 'all')}")
     renderables = [body] + props
+    # v1: a prop may carry a "clips" property (rig_body.py --prop ... clips=a|b): it is rendered,
+    # framed and shadow-cast only in those clips, hidden otherwise
+    def props_for(clip):
+        return [p for p in props if not p.get("clips") or clip in str(p["clips"]).split(",")]
+
+    def show_props(clip):
+        for p in props:
+            p.hide_render = p not in props_for(clip)
     teams = a.teams.split(",")
     clips = []
     for spec in a.clip:
@@ -289,10 +299,17 @@ def main():
             f = start + i * span / n
             scene.frame_set(int(f), subframe=f - int(f))
             bpy.context.view_layer.update()
-            samples.append((name, i, f, evaluated_points(renderables), span / FPS,
+            samples.append((name, i, f, evaluated_points([body] + props_for(name)), span / FPS,
                             evaluated_points([body])))
     allpts = np.concatenate([s[3] for s in samples])
-    ground_z = float(allpts[:, 2].min())
+    # the ground is the lowest BODY point over every frame (v1: a prop that dips below the feet,
+    # e.g. a bow lying across a corpse, must not lower the footprint disc of every clip)
+    ground_z = float(np.concatenate([s[5] for s in samples])[:, 2].min())
+    for name, n, act, _ in clips:
+        rows = [(s[1], float(s[3][:, 2].min())) for s in samples if s[0] == name]
+        low = min(rows, key=lambda r: r[1])
+        if low[1] < ground_z - 0.05:
+            print(f"   clip {name}: lowest point {low[1]:+.2f} at frame {low[0]} is {ground_z - low[1]:.2f} below the ground (a prop)")
     # sword tip per frame of the one-shot clips (forward is -Y): a check that the designed impact
     # frame is where the blade is furthest forward / lowest
     sword = bpy.data.objects.get("Sword")
@@ -372,11 +389,11 @@ def main():
         for (cname, i, f, pts, _, _) in [s for s in samples if s[0] == name]:
             for k in range(a.dirs):
                 x, y = project(pts, name, k)
-                edges = {"left": x.min(), "top": y.min(), "right": cell - x.max(), "bottom": cell - y.max()}
+                # the bottom edge is 2 px by construction (camera placement); report the others
+                edges = {"left": x.min(), "top": y.min(), "right": cell - x.max()}
                 e = min(edges, key=edges.get)
                 if edges[e] < margin:
-                    j = int(np.argmin(x) if e == "left" else np.argmax(x) if e == "right"
-                            else np.argmin(y) if e == "top" else np.argmax(y))
+                    j = int(np.argmin(x) if e == "left" else np.argmax(x) if e == "right" else np.argmin(y))
                     margin, where = edges[e], (i, k, e, pts[j])
         clipped |= margin < 0
         print(f"   clip {name}: tightest margin {margin:.1f} px of a {cell}px cell (frame {where[0]}, d{where[1]}, {where[2]} edge, "
@@ -396,6 +413,7 @@ def main():
             set_texture(p, team)
         for name, n, act, cell in clips:
             bind(source, act)
+            show_props(name)
             scene.render.resolution_x = scene.render.resolution_y = cell * ss
             cam.data.ortho_scale = ortho_of[name]
             dur = next(s[4] for s in samples if s[0] == name)
@@ -426,12 +444,12 @@ def main():
                             scene.cycles.samples = full_samples
                             bpy.ops.render.render(write_still=True)
                             ground.hide_render = False
-                            for o in renderables:
+                            for o in [body] + props_for(name):
                                 o.visible_camera = False
                             scene.cycles.samples = a.shadow_samples
                             scene.render.filepath = os.path.join(tiles_dir, shadow_fn)
                             bpy.ops.render.render(write_still=True)
-                            for o in renderables:
+                            for o in [body] + props_for(name):
                                 o.visible_camera = True
                             scene.cycles.samples = full_samples
                         else:

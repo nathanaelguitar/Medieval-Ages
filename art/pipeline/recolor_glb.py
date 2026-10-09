@@ -82,14 +82,17 @@ def smoothstep(lo, hi, x):
     return t * t * (3 - 2 * t)
 
 
-def recolor(im, hue_lo, hue_hi, target_hue, sat_min, val_mul, val_max, mask_sat, feather=10.0):
+def recolor(im, hue_lo, hue_hi, target_hue, sat_min, val_mul, val_max, mask_sat, feather=10.0, sat_mul=1.0,
+            mask_sat_max=None):
     rgb = np.asarray(im.convert("RGB"), dtype=np.float32) / 255.0
     hsv = np.asarray(im.convert("RGB").convert("HSV"), dtype=np.float32)
     H, S, V = hsv[..., 0] * 360 / 255, hsv[..., 1] / 255, hsv[..., 2] / 255
     w = smoothstep(mask_sat[0], mask_sat[1], S)
+    if mask_sat_max is not None:          # ramp back to 0 above a saturation (skin vs. team cloth)
+        w *= 1 - smoothstep(mask_sat_max[0], mask_sat_max[1], S)
     w *= smoothstep(hue_lo - feather, hue_lo, H) * (1 - smoothstep(hue_hi, hue_hi + feather, H))
     H2 = np.where(w > 0, target_hue, H)
-    S2 = np.maximum(S, sat_min)
+    S2 = np.maximum(S * sat_mul, sat_min)
     V2 = np.minimum(V * val_mul, val_max)
     Hn = H * (1 - w) + H2 * w
     Sn = S * (1 - w) + S2 * w
@@ -109,6 +112,11 @@ def main():
     ap.add_argument("--val-mul", type=float, default=2.4)
     ap.add_argument("--val-max", type=float, default=0.6)
     ap.add_argument("--mask-sat", default="0.3,0.5", help="saturation ramp lo,hi for the mask weight")
+    ap.add_argument("--feather", type=float, default=10.0, help="hue window feather, degrees")
+    ap.add_argument("--mask-sat-max", default=None, help="lo,hi: saturation ramp above which the mask fades out")
+    ap.add_argument("--sat-mul", type=float, default=1.0,
+                    help="multiply saturation inside the mask before --sat-min (v1: tone down TRELLIS's orange skin, "
+                         "e.g. --hue 5,28 --target-hue 20 --sat-mul 0.6 --sat-min 0 --val-mul 1.0 --val-max 1.0)")
     ap.add_argument("--preview", help="PNG: before / after / mask at 768px")
     a = ap.parse_args()
     hue_lo, hue_hi = (float(x) for x in a.hue.split(","))
@@ -123,7 +131,9 @@ def main():
     o = bv.get("byteOffset", 0)
     im = Image.open(io.BytesIO(binchunk[o: o + bv["byteLength"]]))
     print(f"base colour image {im.size} {img.get('mimeType')} in bufferView {bv_i}")
-    out, w = recolor(im, hue_lo, hue_hi, a.target_hue, a.sat_min, a.val_mul, a.val_max, mask_sat)
+    out, w = recolor(im, hue_lo, hue_hi, a.target_hue, a.sat_min, a.val_mul, a.val_max, mask_sat, feather=a.feather,
+                     sat_mul=a.sat_mul,
+                     mask_sat_max=tuple(float(x) for x in a.mask_sat_max.split(",")) if a.mask_sat_max else None)
     print(f"mask covers {w.mean()*100:.2f}% of texels (fully: {(w > 0.99).mean()*100:.2f}%)")
     buf = io.BytesIO()
     if "jpeg" in img.get("mimeType", ""):

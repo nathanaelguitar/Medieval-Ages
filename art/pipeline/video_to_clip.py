@@ -609,16 +609,26 @@ def extract_oneshot(a):
 
     names = ([f"{j}_{s}" for j in ("thigh", "knee", "foot") for s in SIDES]
              + [f"upperarm_{near}", f"elbow_{near}", "torso"])
+    if a.far_arm == "track":
+        # v1 villagers: the far arm as tracked (unwrapped, same warp and synth machinery as the
+        # near arm); only sensible when it is well visible (two-handed tools, a basket arm)
+        ua_f, fa_f = arm_angles_unwrapped(P, a.facing, far)
+        raw[f"upperarm_{far}"] = ua_f
+        raw[f"elbow_{far}"] = fa_f - ua_f
+        sm[f"upperarm_{far}"] = smooth(despike(ua_f), fps, window_s=win)
+        sm[f"elbow_{far}"] = smooth(despike(fa_f - ua_f), fps, window_s=win)
+        names += [f"upperarm_{far}", f"elbow_{far}"]
     curves = {k: np.zeros(S) for k in names}
     for k in names:
         curves[k][tracked] = np.interp(src_t, tt, sm[k])
     # the unwrapped arm angles may sit on any 360-degree branch: bring the phase-0 values into
     # (-180, 180] so synthesized keys (plain degrees) do not make the arm spin a full turn
-    ua = curves[f"upperarm_{near}"]
-    fa = ua + curves[f"elbow_{near}"]
-    ua = ua - 360.0 * np.round(ua[0] / 360.0)
-    fa = fa - 360.0 * np.round(fa[0] / 360.0)
-    curves[f"upperarm_{near}"], curves[f"elbow_{near}"] = ua, fa - ua
+    for s in ([near, far] if a.far_arm == "track" else [near]):
+        ua = curves[f"upperarm_{s}"]
+        fa = ua + curves[f"elbow_{s}"]
+        ua = ua - 360.0 * np.round(ua[0] / 360.0)
+        fa = fa - 360.0 * np.round(fa[0] / 360.0)
+        curves[f"upperarm_{s}"], curves[f"elbow_{s}"] = ua, fa - ua
     # foot pitch: zero = the pitch at the phase-0 stance (planted feet), per foot
     for s in SIDES:
         curves[f"foot_{s}"] -= curves[f"foot_{s}"][0]
@@ -641,7 +651,8 @@ def extract_oneshot(a):
             curves[f"{j}_{s}"] = c[0] + g["crouch"] * (c - c[0])   # excursion about the phase-0 stance
         curves[f"foot_{s}"] = g["foot"] * curves[f"foot_{s}"]
     for j in ("upperarm", "elbow"):
-        c = curves[f"{j}_{near}"]; curves[f"{j}_{near}"] = c[0] + g["arm"] * (c - c[0])
+        for s in ([near, far] if a.far_arm == "track" else [near]):
+            c = curves[f"{j}_{s}"]; curves[f"{j}_{s}"] = c[0] + g["arm"] * (c - c[0])
     c = curves["torso"]; curves["torso"] = torso_ref + g["torso"] * (c - torso_ref)
     for s in SIDES:
         curves[f"knee_{s}"] = np.maximum(curves[f"knee_{s}"], 0)
@@ -653,10 +664,20 @@ def extract_oneshot(a):
         extra[name] = pts_
     last_vals = {k: float(curves[k][tracked][-1]) for k in names}
     key_list = [(p_track, dict(last_vals))]
+
+    def start_of(k, prev_v):
+        """The phase-0 value, on the 360-degree branch nearest the previous key for the unwrapped
+        arm angles (a draw arm that went up, back and down again ends near +360 and must not spin
+        a full turn on its way back to the start pose)."""
+        v0 = float(curves[k][0])
+        if k.startswith(("upperarm", "elbow")):
+            v0 += 360.0 * round((prev_v - v0) / 360.0)
+        return v0
+
     for ph, vals in synth:
         prev = dict(key_list[-1][1])
         if vals.get("*") == "start":
-            prev = {k: float(curves[k][0]) for k in names}
+            prev = {k: start_of(k, prev[k]) for k in names}
         for k, v in vals.items():
             if k == "*":
                 continue
@@ -664,7 +685,7 @@ def extract_oneshot(a):
                 if k not in extra:
                     sys.exit(f"--synth: unknown curve {k}")
                 continue
-            prev[k] = float(curves[k][0]) if v == "start" else (prev[k] if v == "hold" else v)
+            prev[k] = start_of(k, key_list[-1][1][k]) if v == "start" else (prev[k] if v == "hold" else v)
         key_list.append((ph, prev))
     for k in names:
         pts_ = [(ph, vals[k]) for ph, vals in key_list]
@@ -672,6 +693,12 @@ def extract_oneshot(a):
             curves[k][~tracked] = eval_phase_curve(pts_, phs[~tracked])
     for name, pts_ in extra.items():
         curves[name] = eval_phase_curve(pts_, phs)
+    if a.far_arm == "copy":
+        # two-handed tools (chop, mine, hoe): the far hand grips the same haft, so the far arm
+        # follows the near arm's planar angles plus a constant offset (upper arm, elbow degrees)
+        off = [float(x) for x in a.far_arm_offset.split(",")]
+        curves[f"upperarm_{far}"] = curves[f"upperarm_{near}"] + off[0]
+        curves[f"elbow_{far}"] = curves[f"elbow_{near}"] + off[1]
 
     def stats(cv):
         return {k: {"min": round(float(v.min()), 1), "max": round(float(v.max()), 1),
@@ -1151,6 +1178,10 @@ def main():
     o.add_argument("--foot-lock", action="store_true")
     o.add_argument("--foot-lock-until", type=float, default=1.0, help="phase after which the lock holds")
     o.add_argument("--clamp-props", action="store_true", help="keep the props above the ground too (death)")
+    o.add_argument("--far-arm", choices=("synth", "copy", "track"), default="synth",
+                   help="far arm: from --phase-curve upperarm_L/elbow_L (synth), the near arm's angles plus "
+                        "--far-arm-offset (copy: two-handed tools), or tracked like the near arm (track)")
+    o.add_argument("--far-arm-offset", default="0,0", help="copy mode: upper arm, elbow degrees added")
     o.add_argument("--out", required=True)
     o.add_argument("--previews")
     a = ap.parse_args()

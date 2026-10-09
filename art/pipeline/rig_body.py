@@ -107,6 +107,17 @@ def parse_args():
     ap.add_argument("--arm-delta", type=float, default=None,
                     help="degrees to swing the rig's upper arms outward (default: measured from the mesh)")
     ap.add_argument("--sword", default="auto", help="'auto' builds a procedural sword; 'none' skips it; or a GLB path")
+    # v1 archer/villagers: generic props. Fields separated by ';' (vectors use ','):
+    #   name=<kind or GLB path>  kind: bow, axe, pickaxe, hoe, hammer, basket, log
+    #   bone=Biped_hand_R        clips=chop|carry (bake visibility; omit = every clip)
+    #   at=chop:0.4              clip and phase the prop is placed at (default: base clip, frame 1)
+    #   pos=x,y,z                world offset from the bone head
+    #   dir=hand | x,y,z         the prop's long axis (local +Y): along the bone, or a world vector
+    #   pitch=deg                extra rotation of dir about world X (+ tips the far end up)
+    #   along=0..1               origin moved along the bone (0 = head, 1 = tail)
+    #   edge=x,y,z               world direction of the prop's local +X (blade edge, hammer face, basket arc)
+    #   size=..                  overall size in rig units (kind-specific default)
+    ap.add_argument("--prop", action="append", default=[], help="name=kind;bone=..;clips=a|b;at=clip:phase;dir=hand;...")
     # prop placement knobs, in the hand bone's frame (x: across palm, y: along bone head->tail, z: out of palm)
     # Props are placed in WORLD terms at frame 1 of the first clip (the idle stance), then
     # bone-parented so they follow the hands. Offsets are from the hand bone's head.
@@ -532,6 +543,171 @@ def build_sword(length, name="sword", blade_w=0.17, guard_w=0.55, blade_t=0.035)
     return obj
 
 
+PROP_MATS = {"wood": ((0.42, 0.27, 0.13, 1), 0.0, 0.7), "iron": ((0.36, 0.36, 0.38, 1), 1.0, 0.45),
+             "wicker": ((0.62, 0.45, 0.22, 1), 0.0, 0.85), "leather": ((0.22, 0.12, 0.06, 1), 0.0, 0.8),
+             "string": ((0.75, 0.72, 0.6, 1), 0.0, 0.9), "bark": ((0.30, 0.20, 0.10, 1), 0.0, 0.9)}
+
+
+def _prop_object(name, bm, mats):
+    """Finish a procedural prop: bmesh -> object with the listed materials (in index order)."""
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(obj)
+    for mname in mats:
+        col, metal, rough = PROP_MATS[mname]
+        mat = bpy.data.materials.new(f"{name}_{mname}")
+        mat.use_nodes = True
+        bsdf = mat.node_tree.nodes["Principled BSDF"]
+        bsdf.inputs["Base Color"].default_value = col
+        bsdf.inputs["Metallic"].default_value = metal
+        bsdf.inputs["Roughness"].default_value = rough
+        me.materials.append(mat)
+    for p in me.polygons:
+        p.use_smooth = False
+    return obj
+
+
+def _box(bm, cx, cy, cz, sx, sy, sz, mat):
+    import bmesh
+    res = bmesh.ops.create_cube(bm, size=1.0)
+    verts = res["verts"]
+    bmesh.ops.scale(bm, vec=(sx, sy, sz), verts=verts)
+    bmesh.ops.translate(bm, vec=(cx, cy, cz), verts=verts)
+    for f in bm.faces:
+        if all(v in verts for v in f.verts):
+            f.material_index = mat
+    return verts
+
+
+def _tube(bm, points, radii, mat, sides=6):
+    """Swept tube through `points` (list of Vector) with per-point radius; closed ends."""
+    rings = []
+    n = len(points)
+    for i, p in enumerate(points):
+        t = (points[min(i + 1, n - 1)] - points[max(i - 1, 0)]).normalized()
+        a = Vector((0, 0, 1)) if abs(t.z) < 0.9 else Vector((1, 0, 0))
+        u = t.cross(a).normalized(); v = t.cross(u).normalized()
+        ring = []
+        for k in range(sides):
+            ang = 2 * math.pi * k / sides
+            ring.append(bm.verts.new(p + radii[i] * (math.cos(ang) * u + math.sin(ang) * v)))
+        rings.append(ring)
+    faces = []
+    for r0, r1 in zip(rings[:-1], rings[1:]):
+        for k in range(sides):
+            faces.append(bm.faces.new((r0[k], r0[(k + 1) % sides], r1[(k + 1) % sides], r1[k])))
+    faces.append(bm.faces.new(rings[0][::-1]))
+    faces.append(bm.faces.new(rings[-1]))
+    for f in faces:
+        f.material_index = mat
+    return faces
+
+
+def _handle(bm, length, grip, r0, r1, mat=0):
+    """Straight wooden haft along local +Y, origin at the grip point (fraction `grip` from the
+    butt), radius r0 at the butt to r1 at the head end."""
+    y0, y1 = -grip * length, (1 - grip) * length
+    pts = [Vector((0, y0 + (y1 - y0) * t, 0)) for t in (0, 0.5, 1)]
+    _tube(bm, pts, [r0, (r0 + r1) / 2, r1], mat, sides=6)
+    return y1
+
+
+def build_prop(kind, name, size=None):
+    """Procedural props in the rig's units (4.2 = 1.8 m). Local +Y is the long axis (bow tip to tip,
+    tool butt to head, basket handle top to bottom), local +X the 'edge' (axe blade, hoe blade,
+    hammer face, basket handle arc plane). Materials: 0 wood, 1 iron/wicker, 2 extras."""
+    import bmesh
+    bm = bmesh.new()
+    if kind == "bow":                        # longbow, origin at the grip; back bulges to +X, string at -X
+        L = size or 4.0
+        depth = 0.32
+        n = 17
+        pts, radii = [], []
+        for i in range(n):
+            t = -1 + 2 * i / (n - 1)
+            pts.append(Vector((-depth * t * t, t * L / 2, 0)))
+            radii.append(0.06 - 0.035 * abs(t))
+        _tube(bm, pts, radii, 0, sides=6)
+        _box(bm, 0, 0, 0, 0.12, 0.42, 0.12, 2)                                   # leather grip
+        _box(bm, -depth, 0, 0, 0.02, L, 0.02, 1)                                 # string
+        return _prop_object(name, bm, ["wood", "string", "leather"])
+    if kind == "axe":                        # felling axe, handle 0.85 m, head beyond the far end
+        L = size or 2.0
+        y1 = _handle(bm, L, 0.25, 0.055, 0.045)
+        head = _box(bm, 0.16, y1 - 0.2, 0, 0.5, 0.36, 0.09, 1)                 # blade, edge at +X
+        for v in head:
+            if v.co.x > 0.3:
+                v.co.z *= 0.25; v.co.y *= 1.0
+            if v.co.x > 0.3 and v.co.y > y1 - 0.2:
+                v.co.y += 0.08
+        _box(bm, -0.08, y1 - 0.2, 0, 0.14, 0.2, 0.11, 1)                          # eye / poll
+        return _prop_object(name, bm, ["wood", "iron"])
+    if kind == "pickaxe":
+        L = size or 2.0
+        y1 = _handle(bm, L, 0.25, 0.055, 0.05)
+        head = _box(bm, 0, y1 - 0.08, 0, 1.2, 0.11, 0.11, 1)
+        for v in head:
+            if abs(v.co.x) > 0.5:
+                v.co.y = y1 - 0.08 + (v.co.y - (y1 - 0.08)) * 0.3
+                v.co.z *= 0.3
+                v.co.y -= 0.12 if v.co.x > 0 else 0.12
+        return _prop_object(name, bm, ["wood", "iron"])
+    if kind == "hoe":
+        L = size or 3.3
+        y1 = _handle(bm, L, 0.25, 0.045, 0.04)
+        blade = _box(bm, 0.22, y1 - 0.02, 0, 0.42, 0.04, 0.36, 1)              # flat blade pointing +X
+        for v in blade:
+            if v.co.x > 0.3:
+                v.co.y -= 0.12                                                 # angled ~75 deg to the haft
+        _box(bm, 0.0, y1 - 0.04, 0, 0.1, 0.16, 0.1, 1)
+        return _prop_object(name, bm, ["wood", "iron"])
+    if kind == "hammer":
+        L = size or 0.85
+        y1 = _handle(bm, L, 0.35, 0.045, 0.04)
+        head = _box(bm, 0.02, y1 - 0.07, 0, 0.5, 0.14, 0.14, 1)
+        for v in head:
+            if v.co.x < -0.2:
+                v.co.y = y1 - 0.07 + (v.co.y - (y1 - 0.07)) * 0.35            # peen
+                v.co.z *= 0.6
+        return _prop_object(name, bm, ["wood", "iron"])
+    if kind == "basket":                      # origin where the handle hangs; basket below along +Y
+        R, h = (size or 0.9) / 2, 0.5
+        n = 10
+        pts = [Vector((math.sin(a) * R * 0.95, (1 - math.cos(a)) * R * 0.95, 0))
+               for a in [-math.pi / 2 + math.pi * i / (n - 1) for i in range(n)]]
+        _tube(bm, pts, [0.035] * n, 1, sides=5)                                 # handle arc in X-Y
+        cy = R * 0.95 + h / 2
+        res = bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=12, radius1=R, radius2=R * 0.75,
+                                    depth=h)
+        bmesh.ops.rotate(bm, verts=res["verts"], cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 2, 3, "X"))
+        bmesh.ops.translate(bm, vec=(0, cy, 0), verts=res["verts"])
+        for f in bm.faces:
+            if all(v in res["verts"] for v in f.verts):
+                f.material_index = 1
+        return _prop_object(name, bm, ["wood", "wicker"])
+    if kind == "log":
+        L = size or 1.6
+        res = bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=8, radius1=0.2, radius2=0.18, depth=L)
+        bmesh.ops.rotate(bm, verts=res["verts"], cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 2, 3, "X"))
+        for f in bm.faces:
+            f.material_index = 1
+        return _prop_object(name, bm, ["wood", "bark"])
+    sys.exit(f"unknown prop kind {kind}")
+
+
+def parse_prop(spec):
+    d = {}
+    for item in spec.split(";"):
+        if item.strip():
+            k, v = item.split("=", 1)
+            d[k.strip()] = v.strip()
+    if "name" not in d or "bone" not in d:
+        sys.exit(f"--prop needs name= and bone=: {spec}")
+    return d
+
+
 def basis_matrix(origin, y_dir, x_hint):
     """World matrix whose local +Y points along y_dir and local +X as close to x_hint as possible."""
     y = Vector(y_dir).normalized()
@@ -871,19 +1047,81 @@ def main():
                                          ground_objs=[body], prop_objs=props)
         actions[name] = act
 
+    # ---- generic props (v1): built or imported, placed at a chosen clip/phase in world terms,
+    # bone-parented; `clips` is stamped on the object so bake_sprites.py renders each prop only
+    # in the clips that use it
+    for spec in a.prop:
+        d = parse_prop(spec)
+        kind = d["name"]
+        pname = d.get("as", kind if not kind.endswith(".glb") else os.path.splitext(os.path.basename(kind))[0])
+        if kind.endswith(".glb"):
+            obj, _ = import_textured(os.path.abspath(kind), pname)
+            if "size" in d:
+                lo2, hi2 = bounds(obj)
+                obj.data.transform(Matrix.Scale(float(d["size"]) / (hi2 - lo2).length, 4) @ Matrix.Translation(-(lo2 + hi2) / 2))
+        else:
+            obj = build_prop(kind, pname, float(d["size"]) if "size" in d else None)
+        obj.name = pname
+        if "clips" in d:
+            obj["clips"] = ",".join(d["clips"].split("|"))
+        # pose at the placement frame
+        if "at" in d:
+            cname, ph = d["at"].split(":")
+            act = actions[cname]
+            f0, f1 = act.frame_range
+            bind(act)
+            fr = f0 + float(ph) * (f1 - f0)
+            scene.frame_set(int(fr), subframe=fr - int(fr))
+        else:
+            bind(first)
+            scene.frame_set(1)
+        bpy.context.view_layer.update()
+        pb = rig.pose.bones[d["bone"]]
+        head = rig.matrix_world @ pb.head
+        tail = rig.matrix_world @ pb.tail
+        if d.get("dir", "hand") == "hand":
+            ydir = (tail - head).normalized()
+        else:
+            ydir = Vector(vec3(d["dir"])).normalized()
+        if "pitch" in d:    # rotation about world +X tips a forward-pointing axis down, so negate
+            ydir = Matrix.Rotation(math.radians(-float(d["pitch"])), 3, "X") @ ydir
+        edge = Vector(vec3(d.get("edge", "0,1,0")))
+        if abs(edge.normalized().dot(ydir)) > 0.95:
+            edge = Vector((1, 0, 0))
+        origin = head + (tail - head) * float(d.get("along", 0.0)) + Vector(vec3(d.get("pos", "0,0,0")))
+        m = basis_matrix(origin, ydir, edge)
+        bone_parent(obj, rig, d["bone"], m)
+        props.append(obj)
+        print(f"   prop {pname} ({kind}) on {d['bone']} at {d.get('at', 'base frame 1')}: origin "
+              f"{tuple(round(v, 2) for v in origin)}, dir {tuple(round(v, 2) for v in ydir)}, "
+              f"clips {obj.get('clips', 'all')}")
+
     # ---- diagnostics: rest, then first frame of each clip, then a filmstrip per video clip
+    # (props are shown only in the clips they belong to, as bake_sprites.py renders them)
+    def props_for(clip):
+        return [p for p in props if not p.get("clips") or clip in str(p["clips"]).split(",")]
+
+    def show_props(clip):
+        for p in props:
+            p.hide_render = p not in props_for(clip)
     if a.diag:
+        first_name = next(iter(actions))
         bind(first)
         scene.frame_set(1)
-        diag_render(os.path.join(a.diag, "clip0_f1"), [body] + props, rig, "clip frame 1")
+        show_props(first_name)
+        diag_render(os.path.join(a.diag, "clip0_f1"), [body] + props_for(first_name), rig, "clip frame 1")
         for name, act in actions.items():
             bind(act)
+            show_props(name)
             mid = int((act.frame_range[0] + act.frame_range[1]) / 2)
             scene.frame_set(mid)
-            diag_render(os.path.join(a.diag, f"{name}_mid"), [body] + props, rig, f"{name} mid")
+            diag_render(os.path.join(a.diag, f"{name}_mid"), [body] + props_for(name), rig, f"{name} mid")
         for name, _ in json_clips:
             bind(actions[name])
-            diag_strip(os.path.join(a.diag, f"{name}_strip"), [body] + props, rig, actions[name], a.strip_frames)
+            show_props(name)
+            diag_strip(os.path.join(a.diag, f"{name}_strip"), [body] + props_for(name), rig, actions[name], a.strip_frames)
+        for p in props:
+            p.hide_render = False
 
     # ---- prop GLBs per team (the sword is team-neutral; both files are written for symmetry)
     out_dir = os.path.dirname(os.path.abspath(a.out))

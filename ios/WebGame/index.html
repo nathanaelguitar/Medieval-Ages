@@ -172,6 +172,8 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 <script src="sprites/manifest.js"></script>
 <script src="sprites/manifest_man_at_arms.js"></script>
 <script src="sprites/manifest_archer.js"></script>
+<script src="sprites/manifest_villager_m.js"></script>
+<script src="sprites/manifest_villager_f.js"></script>
 <script src="sprites/manifest_buildings.js"></script>
 <script src="sprites/manifest_resources.js"></script>
 <script>
@@ -1163,10 +1165,15 @@ function loadArt(){
  if(manifest)for(const[k,v]of Object.entries(manifest)){
   if(v.group==='animation'&&Array.isArray(v.files)){
    const keys=v.files.map(f=>f.replace(/\.png$/,''));
+   /* Directional sets (key ..._d<k>) run to thousands of frames across units, teams, clips and
+      facings; decoding them all up front would swamp a phone's web view. Their frames load the
+      first time something plays that clip (dirFrame). */
+   if(/_d\d$/.test(k)){ANIM[k]={fps:v.fps||6,keys,loop:v.loop!==false,impact:v.impact_frame||0,frames:null};continue}
    ANIM[k]={fps:v.fps||6,keys,loop:v.loop!==false,impact:v.impact_frame||0,frames:keys.map(key=>{
     if(SPR[key])return SPR[key];const im=new Image();im.src='sprites/'+key+'.png';SPR[key]=im;return im})};
   }else if(v.file){
    SPRM[k]=[v.file,v.fp_w,v.fp_cx,v.fp_cy,v.w,v.h];
+   if(/_d\d_\d+$/.test(k))continue;     /* a directional frame: loaded lazily with its clip */
    if(!SPR[k]){const im=new Image();im.src='sprites/'+v.file;SPR[k]=im}
   }
  }
@@ -1282,7 +1289,9 @@ function dirIndex(a){const i=Math.round(a/(Math.PI/4));return(((1-i)%8)+8)%8}
    is not the feet). One-shot clips (death) clamp on their last frame. */
 function dirFrame(set,team,clip,d,ph){
  const a=ANIM[`${set}_${TEAM_COL[team]||'blue'}_${clip}_d${d}`];
- if(!a||!a.frames.length||!a.frames.every(f=>f.complete&&f.naturalWidth))return null;
+ if(!a)return null;
+ if(!a.frames)a.frames=a.keys.map(key=>{if(!SPR[key]){const im=new Image();im.src='sprites/'+(SPRM[key]?SPRM[key][0]:key+'.png');SPR[key]=im}return SPR[key]});
+ if(!a.frames.length||!a.frames.every(f=>f.complete&&f.naturalWidth))return null;
  const n=a.frames.length,i=a.loop?((ph%n)+n)%n:Math.max(0,Math.min(n-1,ph));
  return{img:a.frames[i],key:a.keys[i]}}
 function dirSprite(u){
@@ -1296,7 +1305,7 @@ function dirSprite(u){
     the hit or the arrow does, and one cycle matches the unit's cooldown. */
  const atkClip=has('attack')?'attack':has('chop')?'chop':null;
  if(atkClip&&!u.moving&&time-u.engaged<0.9&&u.fire>=0&&time-u.fire<def.cdr*1.6){
-  const a=has(atkClip);f=dirFrame(set,u.team,atkClip,d,Math.floor(a.impact+(time-u.fire)/def.cdr*a.frames.length))}
+  const a=has(atkClip);f=dirFrame(set,u.team,atkClip,d,Math.floor(a.impact+(time-u.fire)/def.cdr*a.keys.length))}
  /* Working: the job's own loop, offset per unit so a crew does not swing in lockstep. */
  if(!f&&!u.moving&&u.workClip&&time-(u.workT||-9)<0.3&&has(u.workClip)){
   const a=has(u.workClip);f=dirFrame(set,u.team,u.workClip,d,Math.floor((time+u.id*0.37)*a.fps))}

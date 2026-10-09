@@ -13,7 +13,7 @@ import os
 
 from PIL import Image, ImageDraw
 
-FACING = {1: "faces right (sword side)", 5: "faces left (shield side)", 7: "toward camera", 3: "away"}
+FACING = {1: "faces right", 5: "faces left", 7: "toward camera", 3: "away"}
 
 
 def main():
