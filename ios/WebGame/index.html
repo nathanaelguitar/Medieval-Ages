@@ -1159,7 +1159,7 @@ function trackHeading(u){
  if(u.hd===undefined)u.hd=u.face<0?Math.PI*0.75:Math.PI*0.25}
 /* Screen angle (y down) to bake direction, read off the renders themselves: d7 faces the camera,
    d1 faces right (sword side showing), d3 walks away, d5 faces left (shield side), and d0/d2/d4/d6
-   are the diagonals between them. The bake's own docstring table has left and right swapped, which
+   are the diagonals between them. The direction table reported with the bake had left and right swapped, which
    made every sideways step a moonwalk. */
 function dirIndex(a){const i=Math.round(a/(Math.PI/4));return(((1-i)%8)+8)%8}
 function dirSprite(u){
