@@ -342,7 +342,9 @@ function genResources(){
 function blockBorders(){for(let i=0;i<MAP;i++){grid[i]=0;grid[(MAP-1)*MAP+i]=0;grid[i*MAP]=0;grid[i*MAP+MAP-1]=0}}
 
 /* ============ entities ============ */
-function mkUnit(team,type,x,y){const d=DEFS[type];const u={kind:'unit',id:uid++,team,type,x,y,hp:d.hp,maxhp:d.hp,cd:rnd(0.3),order:{type:'idle'},lastTask:null,path:null,pi:0,dx:0,dy:0,carry:0,gt:0,gres:null,lastRes:null,face:1,anim:rnd(9),stuck:0,retries:0,lx:x,ly:y,flash:0,nT:0,fleeT:0,moving:false,engaged:-9,fire:-9};units.push(u);return u}
+function mkUnit(team,type,x,y){const d=DEFS[type];const u={kind:'unit',id:uid++,team,type,x,y,hp:d.hp,maxhp:d.hp,cd:rnd(0.3),order:{type:'idle'},lastTask:null,path:null,pi:0,dx:0,dy:0,carry:0,gt:0,gres:null,lastRes:null,face:1,anim:rnd(9),stuck:0,retries:0,lx:x,ly:y,flash:0,nT:0,fleeT:0,moving:false,engaged:-9,fire:-9};
+ if(type==='vill')u.sex=Math.random()<0.5?'f':'m';
+ units.push(u);return u}
 function gridBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++)grid[j*MAP+i]=on?0:1}
 /* A gate owns its tiles in gateAt rather than the shared grid, so only the owner passes. */
 function gateBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++){
@@ -678,6 +680,7 @@ function gatherStep(u,dt){
   else{navTo(u,r.gx,r.gy);followPath(u,dt)}
  }else if(o.phase==='work'){
   u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.anim+=dt*9;
+  u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';
   const take=Math.min(1.1*dt,r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
   if(r.animal){ /* wounded game bolts, so the villager has to give chase */
    r.flee=0.55;const dx=r.gx-u.x,dy=r.gy-u.y,d=Math.hypot(dx,dy)||1;
@@ -705,6 +708,7 @@ function buildStep(u,dt){
  const c=closestPoint(b,u.x,u.y);
  if(dist2(u.x,u.y,c[0],c[1])<2.6){
   u.path=null;u.face=(c[0]-u.x)>=0?1:-1;u.anim+=dt*8;
+  u.workT=time;u.workAt=c;u.workClip='build';
   b.progress+=dt/DEFS[b.type].t;
   b.hp=Math.min(b.maxhp,b.maxhp*(0.3+0.7*b.progress));
   if(Math.random()<dt*3){const[sx,sy]=w2s(c[0],c[1]);parts.push({x:sx+rnd(-10,10),y:sy-rnd(4,14),vx:rnd(-8,8),vy:-rnd(6,16),g:40,life:0,max:0.5,r:1.6,col:'#cbb27f'})}
@@ -1227,7 +1231,13 @@ const UNIT_ANIM={vill:{walk:'unit_vill_walk',idle:'unit_vill_idle'},
 /* Directional units are baked from eight camera yaws, so they turn instead of mirroring one
    view. The heading is the unit's screen-space direction of travel (or towards its target while
    fighting); DIR_UNIT names the baked set per unit type and the colour per team. */
-const DIR_UNIT={swords:'man_at_arms'};
+const DIR_UNIT={swords:'man_at_arms',archer:'archer',vill:'villager'};
+/* Baked set for a unit: villagers come as a man and a woman sharing every work clip. */
+function dirSet(u){const s=DIR_UNIT[u.type];return s==='villager'?'villager_'+(u.sex||'m'):s}
+/* Which work clip a villager plays at a job: an axe at trees, a pickaxe at ore, picking at
+   berry bushes, a hoe on farms, a hammer on a building site. Game animals are butchered with
+   the axe swing. */
+const WORK_CLIP={tree:'chop',gold:'mine',stone:'mine',berry:'berries',farm:'hoe',boar:'chop',sheep:'chop'};
 const TEAM_COL=['blue','red'];
 function trackHeading(u){
  if(u.lpx!==undefined){
@@ -1239,6 +1249,8 @@ function trackHeading(u){
     after the movement heading on purpose: separation keeps nudging melee units apart, and without
     the override a swing could face wherever the last shove pushed. Buildings are faced at their
     nearest edge, which is where the blow lands. */
+ if(time-(u.workT||-9)<0.3&&u.workAt){const tx=u.workAt[0],ty=u.workAt[1];
+  if((tx-u.x)**2+(ty-u.y)**2>1e-6)u.hd=Math.atan2((tx-u.x+ty-u.y)*TH2,(tx-u.x-(ty-u.y))*TW2)}
  const t=u.foe;
  if(time-u.engaged<0.9&&t&&!t.dead){
   const c=closestPoint(t,u.x,u.y),tx=c[0],ty=c[1];
@@ -1258,21 +1270,26 @@ function dirFrame(set,team,clip,d,ph){
  const n=a.frames.length,i=a.loop?((ph%n)+n)%n:Math.max(0,Math.min(n-1,ph));
  return{img:a.frames[i],key:a.keys[i]}}
 function dirSprite(u){
- const set=DIR_UNIT[u.type];if(!set)return null;
+ const set=dirSet(u);if(!set){u._dir=false;return null}
  trackHeading(u);
- const d=dirIndex(u.hd),def=DEFS[u.type];
- /* Swinging: standing in melee with a recent blow. The attack clip is phased off the last hit
-    (u.fire), so the frame where the blade lands -- the clip's impact_frame -- shows exactly when
-    the damage and blood do, and the cycle length matches the unit's cooldown. */
- const atk=ANIM[`${set}_${TEAM_COL[u.team]||'blue'}_attack_d${d}`];
- if(atk&&!u.moving&&time-u.engaged<0.9&&u.fire>=0&&time-u.fire<def.cdr*1.6){
-  const f=dirFrame(set,u.team,'attack',d,Math.floor(atk.impact+(time-u.fire)/def.cdr*atk.frames.length));
-  if(f)return f}
- const a=ANIM[`${set}_${TEAM_COL[u.team]||'blue'}_${u.moving?'walk':'idle'}_d${d}`];if(!a)return null;
- /* u.anim runs at 7/s while moving, tuned for the 8-frame 0 A.D. cycles; rescale it so a baked
-    walk plays at its own manifest fps and the stride matches the clip it was extracted from. */
- const ph=u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps);
- return dirFrame(set,u.team,u.moving?'walk':'idle',d,ph)}
+ const d=dirIndex(u.hd),def=DEFS[u.type],tc=TEAM_COL[u.team]||'blue';
+ const has=c=>ANIM[`${set}_${tc}_${c}_d${d}`];
+ let f=null;
+ /* Fighting: the attack clip (villagers swing their axe), phased off the last blow (u.fire) so the
+    clip's impact_frame -- the blade landing, the arrow leaving the string -- shows exactly when
+    the hit or the arrow does, and one cycle matches the unit's cooldown. */
+ const atkClip=has('attack')?'attack':has('chop')?'chop':null;
+ if(atkClip&&!u.moving&&time-u.engaged<0.9&&u.fire>=0&&time-u.fire<def.cdr*1.6){
+  const a=has(atkClip);f=dirFrame(set,u.team,atkClip,d,Math.floor(a.impact+(time-u.fire)/def.cdr*a.frames.length))}
+ /* Working: the job's own loop, offset per unit so a crew does not swing in lockstep. */
+ if(!f&&!u.moving&&u.workClip&&time-(u.workT||-9)<0.3&&has(u.workClip)){
+  const a=has(u.workClip);f=dirFrame(set,u.team,u.workClip,d,Math.floor((time+u.id*0.37)*a.fps))}
+ if(!f){
+  const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
+  /* u.anim runs at 7/s while moving, tuned for the 8-frame 0 A.D. cycles; rescale it so a baked
+     walk plays at its own manifest fps and the stride matches the clip it was extracted from. */
+  if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
+ u._dir=!!f;return f}
 /* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 28.6px tall. */
 const DIR_K=28.6/144;
 function drawDirFrame(f,sx,sy){
@@ -1283,12 +1300,12 @@ function drawDirFrame(f,sx,sy){
 let corpses=[];
 const CORPSE_LIFE=30;
 function addCorpse(u){
- if(!DIR_UNIT[u.type])return;
+ const set=dirSet(u);if(!set||!u._dir)return;
  if(u.hd===undefined)trackHeading(u);
- corpses.push({type:u.type,team:u.team,x:u.x,y:u.y,hd:u.hd,born:time});
+ corpses.push({set,team:u.team,x:u.x,y:u.y,hd:u.hd,born:time});
  if(corpses.length>40)corpses.shift()}
 function drawCorpse(c){
- const set=DIR_UNIT[c.type],d=dirIndex(c.hd),age=time-c.born;
+ const set=c.set,d=dirIndex(c.hd),age=time-c.born;
  const a=ANIM[`${set}_${TEAM_COL[c.team]||'blue'}_death_d${d}`];if(!a)return;
  const f=dirFrame(set,c.team,'death',d,Math.floor(age*a.fps));if(!f)return;
  const[sx,sy]=w2s(c.x,c.y);
@@ -1494,7 +1511,7 @@ function drawUnit(u){
  if(u.garrisoned)return;
  const[sx,sy]=w2s(u.x,u.y),tc=TEAMC[u.team];
  /* Directional units bake their own body bob into the walk, so the procedural one would double it. */
- const bob=DIR_UNIT[u.type]?0:u.moving?Math.abs(Math.sin(u.anim*2))*1.8:Math.sin(time*2+u.id)*0.5;
+ const bob=u._dir?0:u.moving?Math.abs(Math.sin(u.anim*2))*1.8:Math.sin(time*2+u.id)*0.5;
  const INK='#1b140d',SKIN='#e9ba8e';
  /* soft contact shadow: a flat ellipse reads as a sticker, a gradient reads as ground */
  const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
