@@ -662,7 +662,7 @@ function updAnimals(dt){
     const nk=Math.floor(ny)*MAP+Math.floor(nx);
     /* stay on open ground: never drift into water, trees, ore or a building footprint */
     if(nx>2&&ny>2&&nx<MAP-2&&ny<MAP-2&&tiles[nk]<2&&grid[nk]===1
-       &&dist2(nx,ny,r.hx,r.hy)<36){r.gx=nx;r.gy=ny;r.face=r.wax>=0?1:-1}
+       &&dist2(nx,ny,r.hx,r.hy)<36){r.gx=nx;r.gy=ny;r.face=(r.wax-r.way)>=0?1:-1}
     else{r.wax=-r.wax;r.way=-r.way}}}
   r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy)}
 }
@@ -681,7 +681,7 @@ function gatherStep(u,dt){
   const take=Math.min(1.1*dt,r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
   if(r.animal){ /* wounded game bolts, so the villager has to give chase */
    r.flee=0.55;const dx=r.gx-u.x,dy=r.gy-u.y,d=Math.hypot(dx,dy)||1;
-   r.fx=dx/d*1.8;r.fy=dy/d*1.8;r.face=dx>=0?1:-1}
+   r.fx=dx/d*1.8;r.fy=dy/d*1.8;r.face=(dx-dy)>=0?1:-1}
   if(u.gt>1.4){u.gt=0;const[sx,sy]=w2s(r.gx,r.gy);
    parts.push({x:sx+rnd(-5,5),y:sy-14,vx:rnd(-10,10),vy:-rnd(8,20),g:60,life:0,max:0.4,r:1.5,col:gatherCol(r)})}
   if(r.amt<=0)deplete(r);
@@ -1317,13 +1317,17 @@ function unitSprite(u){
   img=a.frames[((ph%n)+n)%n]}
  if(!img)img=spr(base);
  return img?(tinted(img,u.team)||img):null}
+const ANIMAL_FACES_LEFT={sheep:true};
 function drawAnimalSprite(r,sx,sy){
  const moving=r.flee>0||!!r.wax||!!r.way;
  const key=`animal_${r.kind}_${moving?'walk':'idle'}`;
  const a=ANIM[key]||ANIM[`animal_${r.kind}_idle`];
  const frame=a&&a.keys&&a.keys.length
   ?a.keys[Math.floor((time+r.hx*1.7+r.hy)*a.fps)%a.keys.length]:`animal_${r.kind}`;
- ctx.save();ctx.translate(sx,sy);ctx.scale(r.face<0?-1:1,1);
+ /* r.face is screen-space (+1 = heading right). The boar bake faces right, the sheep bake faces
+    left, so the sheep flips the other way round. */
+ const flip=(r.face<0)!==!!ANIMAL_FACES_LEFT[r.kind];
+ ctx.save();ctx.translate(sx,sy);ctx.scale(flip?-1:1,1);
  const drawn=drawSpr(frame,0,0,19)||drawSpr(`animal_${r.kind}`,0,0,19);
  ctx.restore();return drawn}
 /* A white-on-silhouette copy for hit feedback. source-atop fills only where the sprite is opaque,
