@@ -588,7 +588,7 @@ function combat(u,t,dt){
  const d=Math.hypot(c[0]-u.x,c[1]-u.y),def=DEFS[u.type];
  /* Anything within reach of a target counts as engaged, whether or not this frame lands a blow:
     the stance should hold through the whole exchange, not blink on each swing. */
- if(d<=def.rng+1.6)u.engaged=time;
+ if(d<=def.rng+1.6){u.engaged=time;u.foe=t}
  if(d<=def.rng+0.12){
   u.path=null;
   u.face=((c[0]-u.x)-(c[1]-u.y))>=0?1:-1;
@@ -1220,10 +1220,15 @@ function trackHeading(u){
   const dx=u.x-u.lpx,dy=u.y-u.lpy;
   if(dx*dx+dy*dy>1e-6)u.hd=Math.atan2((dx+dy)*TH2,(dx-dy)*TW2)}
  u.lpx=u.x;u.lpy=u.y;
- const t=u.order&&u.order.target;
+ /* While fighting, face the opponent. combat() records it as u.foe for every kind of order --
+    attack, attack-move and auto-acquire keep their targets in different fields -- and this runs
+    after the movement heading on purpose: separation keeps nudging melee units apart, and without
+    the override a swing could face wherever the last shove pushed. Buildings are faced at their
+    nearest edge, which is where the blow lands. */
+ const t=u.foe;
  if(time-u.engaged<0.9&&t&&!t.dead){
-  const tx=t.x!==undefined?t.x:t.cx,ty=t.y!==undefined?t.y:t.cy;
-  u.hd=Math.atan2((tx-u.x+ty-u.y)*TH2,(tx-u.x-(ty-u.y))*TW2)}
+  const c=closestPoint(t,u.x,u.y),tx=c[0],ty=c[1];
+  if((tx-u.x)**2+(ty-u.y)**2>1e-6)u.hd=Math.atan2((tx-u.x+ty-u.y)*TH2,(tx-u.x-(ty-u.y))*TW2)}
  if(u.hd===undefined)u.hd=u.face<0?Math.PI*0.75:Math.PI*0.25}
 /* Screen angle (y down) to bake direction, read off the renders themselves: d7 faces the camera,
    d1 faces right (sword side showing), d3 walks away, d5 faces left (shield side), and d0/d2/d4/d6
