@@ -1666,7 +1666,7 @@ const flocks=[{y:0.16,sp:0.030,ph:0},{y:0.30,sp:0.022,ph:2.4}];
 function drawBirds(){
  ctx.save();ctx.strokeStyle='rgba(30,34,26,.42)';ctx.lineWidth=1.5;ctx.lineCap='round';
  for(const f of flocks){
-  const t=(time*f.sp+f.ph)*cw,fx=t%1.25*cw-cw*0.12;
+  const t=time*f.sp+f.ph,fx=t%1.25*cw-cw*0.12;
   for(let i=0;i<5;i++){
    const bx=fx-i*13,by=f.y*ch+Math.sin(time*1.1+i)*4+i*3;
    if(bx<-20||bx>cw+20)continue;
