@@ -152,6 +152,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 </div>
 
 <script src="sprites/manifest.js"></script>
+<script src="sprites/manifest_man_at_arms.js"></script>
 <script>
 "use strict";
 /* ============ constants & helpers ============ */
@@ -179,7 +180,7 @@ const BLD={tc:{w1:'#dcbd82',w2:'#c2a468',roof:'#a06a35',trim:'#7c4f24'},
  gate:{w1:'#b3bac1',w2:'#8d949c',roof:'#8b6a42',trim:'#4c545b'}};
 const DEFS={
  vill:{name:'Villager',hp:40,atk:3,rng:1.05,cdr:1.1,spd:2.4,cost:{f:50},t:12},
- swords:{name:'Swordsman',hp:95,atk:9,rng:1.1,cdr:1.0,spd:2.1,cost:{f:60,g:20},t:9},
+ swords:{name:'Man-at-Arms',hp:95,atk:9,rng:1.1,cdr:1.0,spd:2.1,cost:{f:60,g:20},t:9},
  archer:{name:'Archer',hp:50,atk:6,rng:5.5,cdr:1.5,spd:2.25,ranged:true,cost:{w:40,g:30},t:9},
  house:{name:'House',hp:250,size:2,hh:26,t:10,cost:{w:30},pop:5},
  farm:{name:'Farm',hp:120,size:2,hh:9,t:12,cost:{w:60}},
@@ -984,7 +985,7 @@ function refreshPanel(force){
   if(selection.length===1&&first.kind==='bld'&&first.type==='tc'&&first.garrison.length)acts.push({l:'Unload '+first.garrison.length,s:'Unload',c:'',t:'ungarrison'});
   if(selection.length===1&&first.kind==='bld'&&first.type==='market'&&first.done){
    acts.push({l:'Food +125',s:'Food',c:'100w',t:'trade',pay:'w',amount:100,get:'f',gain:125},{l:'Wood +75',s:'Wood',c:'100f',t:'trade',pay:'f',amount:100,get:'w',gain:75},{l:'Gold +70',s:'Gold',c:'100f',t:'trade',pay:'f',amount:100,get:'g',gain:70},{l:'Stone +70',s:'Stone',c:'100f',t:'trade',pay:'f',amount:100,get:'s',gain:70})}
-  if(counts.barracks)acts.push({l:'Swordsman',s:'Sword',c:'60f 20g',t:'swords',q:1},{l:'Archer',s:'Archer',c:'40w 30g',t:'archer',q:1})}
+  if(counts.barracks)acts.push({l:'Man-at-Arms',s:'Man-at-Arms',c:'60f 20g',t:'swords',q:1},{l:'Archer',s:'Archer',c:'40w 30g',t:'archer',q:1})}
  if(acts.length){
   html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn" data-i="${i}" title="${a.l}" aria-label="${a.l}">${ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span></button>`).join('')+'</div>';
   if(acts.some(a=>a.q)&&selection.length===1&&first.kind==='bld')html+='<div class="pq"><div id="pqf"></div><span id="pqt">Idle</span></div>'}
@@ -1139,6 +1140,34 @@ const UNIT_ANIM={vill:{walk:'unit_vill_walk',idle:'unit_vill_idle'},
 /* Animated characters, baked from 0 A.D.'s own clips by scripts/blender_bake_animation.py.
    Walking units play the walk cycle, anyone in a fight plays the weapon-raised stance, and everyone
    else idles. */
+/* Directional units are baked from eight camera yaws, so they turn instead of mirroring one
+   view. The heading is the unit's screen-space direction of travel (or towards its target while
+   fighting); DIR_UNIT names the baked set per unit type and the colour per team. */
+const DIR_UNIT={swords:'man_at_arms'};
+const TEAM_COL=['blue','red'];
+function trackHeading(u){
+ if(u.lpx!==undefined){
+  const dx=u.x-u.lpx,dy=u.y-u.lpy;
+  if(dx*dx+dy*dy>1e-6)u.hd=Math.atan2((dx+dy)*TH2,(dx-dy)*TW2)}
+ u.lpx=u.x;u.lpy=u.y;
+ const t=u.order&&u.order.target;
+ if(time-u.engaged<0.9&&t&&!t.dead){
+  const tx=t.x!==undefined?t.x:t.cx,ty=t.y!==undefined?t.y:t.cy;
+  u.hd=Math.atan2((tx-u.x+ty-u.y)*TH2,(tx-u.x-(ty-u.y))*TW2)}
+ if(u.hd===undefined)u.hd=u.face<0?Math.PI*0.75:Math.PI*0.25}
+/* Screen angle (y down) to bake direction: d7 faces the camera, d1 faces left, d3 walks away,
+   d5 faces right, with the diagonals between (see the direction table in
+   art/pipeline/bake_sprites.py). */
+function dirIndex(a){const i=Math.round(a/(Math.PI/4));return(((i+5)%8)+8)%8}
+function dirSprite(u){
+ const set=DIR_UNIT[u.type];if(!set)return null;
+ trackHeading(u);
+ const key=`${set}_${TEAM_COL[u.team]||'blue'}_${u.moving?'walk':'idle'}_d${dirIndex(u.hd)}`;
+ const a=ANIM[key];
+ if(!a||!a.frames.length||!a.frames.every(f=>f.complete&&f.naturalWidth))return null;
+ const n=a.frames.length;
+ const ph=u.moving?Math.floor(u.anim):Math.floor((time+u.id*0.37)*a.fps);
+ return a.frames[((ph%n)+n)%n]}
 function unitSprite(u){
  const base=u.type==='vill'?'unit_vill':'unit_spear';
  let img=null;
@@ -1342,16 +1371,20 @@ function drawUnit(u){
  ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(sx,sy+1.5,9.5,4.2,0,0,7);ctx.fill();
  /* 0 A.D. character sprite. The game tracks only a mirrored facing (u.face), so the single baked
     view is flipped exactly as the vector art was -- there is no direction vector to select among
-    the eight facings bake_zeroad_art.py can produce. */
- const us=unitSprite(u);
+    the eight facings bake_zeroad_art.py can produce. Directional units (dirSprite) carry their
+    own facing and team colours, so they are drawn unflipped and untinted. */
+ const ds=dirSprite(u);
+ const us=ds||unitSprite(u);
  /* The firing kick: a short recoil away from the target plus a release flourish. There is no
     attack clip and no bow mesh to play -- the bundle ships neither -- so the shot is sold by
     motion and a flash instead of by a pose. KICK_SECONDS is the visible window; the flourish only
     shows on the release itself so it reads as a shot rather than a permanent glow. */
  const kick=u.fire>=0&&time-u.fire<KICK_SECONDS?(1-(time-u.fire)/KICK_SECONDS):0;
  if(us){
-  ctx.save();ctx.translate(sx-u.face*kick*2.6,sy-bob-kick*0.7);ctx.scale(u.face<0?-1:1,1);
-  const k=26/us.height;
+  ctx.save();ctx.translate(sx-u.face*kick*2.6,sy-bob-kick*0.7);if(!ds)ctx.scale(u.face<0?-1:1,1);
+  /* The directional bake frames the sword and shield sweep too, so its body fills less of the
+     canvas than the 0 A.D. sprites (56 vs 62px of 72); scale it up to the same ground size. */
+  const k=(ds?28.6:26)/us.height;
   ctx.drawImage(us,-us.width*k/2,-us.height*k,us.width*k,us.height*k);
   ctx.restore();
   if(kick>0.25){
