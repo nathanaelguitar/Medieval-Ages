@@ -1810,7 +1810,11 @@ function followCamera(dt){
  const hw=cw/(2*zoom),hh=ch/(2*zoom);
  const mx=hw*0.24,my=hh*0.24;                       /* the margin units may cross for free */
  let lox=Infinity,hix=-Infinity,loy=Infinity,hiy=-Infinity;
- for(const u of own){if(u.x<lox)lox=u.x;if(u.x>hix)hix=u.x;if(u.y<loy)loy=u.y;if(u.y>hiy)hiy=u.y}
+ /* camX/camY are screen-space pixels while units live in tile coordinates, so project each unit
+    first. Comparing the raw tile numbers against the camera dragged the view to the map's top
+    corner whenever anything was selected. */
+ for(const u of own){const[sx,sy]=w2s(u.x,u.y);
+  if(sx<lox)lox=sx;if(sx>hix)hix=sx;if(sy<loy)loy=sy;if(sy>hiy)hiy=sy}
  const cxAvg=(lox+hix)/2,cyAvg=(loy+hiy)/2;
  let tx=camX,ty=camY;
  if(hix-lox>2*(hw-mx))tx=cxAvg;                     /* cannot all fit: just centre on them */
