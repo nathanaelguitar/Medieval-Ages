@@ -856,8 +856,27 @@ joyZone.addEventListener('pointerdown',e=>{
  joy.mode=selection.some(s=>s.kind==='unit'&&s.team===0&&!s.dead&&!s.garrisoned)?'units':'camera';
  joy.id=e.pointerId;joyZone.setPointerCapture(e.pointerId);joyUpdate(e)});
 joyZone.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyUpdate(e)});
-const joyEnd=e=>{if(e.pointerId===joy.id){joy.id=null;joy.mode=null;joy.vx=0;joy.vy=0;joyNub.style.transform='translate(0px,0px)';selection.forEach(u=>{if(u.kind==='unit'&&u.team===0&&u.order.type==='drive')u.order={type:'idle'}})}};
+function joyRelease(){
+ if(joy.id===null)return;
+ joy.id=null;joy.mode=null;joy.vx=0;joy.vy=0;joyNub.style.transform='translate(0px,0px)';
+ selection.forEach(u=>{if(u.kind==='unit'&&u.team===0&&u.order.type==='drive')u.order={type:'idle'}})}
+const joyEnd=e=>{if(e.pointerId===joy.id)joyRelease()};
+/* The lift has to be caught wherever it lands. In the iOS web view, pointer capture on the stick can
+   lapse (a second finger, an edge gesture, the thumb sliding off), and the pointerup then goes to
+   the canvas or nowhere -- the stick stayed pushed and panned the camera into the map's corner.
+   So listen on the window in the capture phase, on lost capture, and fall back to the raw touch
+   list: if no remaining touch is on the stick, it is released. */
 joyZone.addEventListener('pointerup',joyEnd);joyZone.addEventListener('pointercancel',joyEnd);
+joyZone.addEventListener('lostpointercapture',joyEnd);
+addEventListener('pointerup',joyEnd,true);addEventListener('pointercancel',joyEnd,true);
+const joyTouchCheck=e=>{
+ if(joy.id===null)return;
+ const r=joyZone.getBoundingClientRect(),pad=120;   /* the thumb may wander past the base */
+ const held=[...e.touches].some(t=>t.clientX>r.left-pad&&t.clientX<r.right+pad&&t.clientY>r.top-pad&&t.clientY<r.bottom+pad);
+ if(!held)joyRelease()};
+addEventListener('touchend',joyTouchCheck,true);addEventListener('touchcancel',joyTouchCheck,true);
+addEventListener('blur',joyRelease);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)joyRelease()});
 
 cv.addEventListener('pointerdown',e=>{
  e.preventDefault();
