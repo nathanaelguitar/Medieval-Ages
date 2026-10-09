@@ -677,7 +677,9 @@ function spawnFrom(b,type){
 
 /* ============ unit update ============ */
 function updUnit(u,dt){
- u.moving=false;u.cd-=dt;if(u.flash>0)u.flash-=dt;
+ /* applyJoy runs earlier in the same tick and has already moved stick-driven units, so keep its
+    verdict instead of clearing it -- otherwise they glide across the map in their idle pose. */
+ u.moving=!!u.drove;u.drove=false;u.cd-=dt;if(u.flash>0)u.flash-=dt;
  const o=u.order;
  switch(o.type){
   case 'idle':if(u.type!=='vill'){const e=acquire(u,4.2);if(e)u.order={type:'attack',target:e}}break;
@@ -1155,10 +1157,11 @@ function trackHeading(u){
   const tx=t.x!==undefined?t.x:t.cx,ty=t.y!==undefined?t.y:t.cy;
   u.hd=Math.atan2((tx-u.x+ty-u.y)*TH2,(tx-u.x-(ty-u.y))*TW2)}
  if(u.hd===undefined)u.hd=u.face<0?Math.PI*0.75:Math.PI*0.25}
-/* Screen angle (y down) to bake direction: d7 faces the camera, d1 faces left, d3 walks away,
-   d5 faces right, with the diagonals between (see the direction table in
-   art/pipeline/bake_sprites.py). */
-function dirIndex(a){const i=Math.round(a/(Math.PI/4));return(((i+5)%8)+8)%8}
+/* Screen angle (y down) to bake direction, read off the renders themselves: d7 faces the camera,
+   d1 faces right (sword side showing), d3 walks away, d5 faces left (shield side), and d0/d2/d4/d6
+   are the diagonals between them. The bake's own docstring table has left and right swapped, which
+   made every sideways step a moonwalk. */
+function dirIndex(a){const i=Math.round(a/(Math.PI/4));return(((1-i)%8)+8)%8}
 function dirSprite(u){
  const set=DIR_UNIT[u.type];if(!set)return null;
  trackHeading(u);
@@ -1852,7 +1855,7 @@ function applyJoy(dt){
     const b=u.type==='vill'?nearbyBuild(u):null;
     if(b){assignBuild(u,b);continue}
     if(Math.abs(vx)>0.2)u.face=vx>0?1:-1;
-    u.moving=true;u.anim+=dt*7}
+    u.moving=true;u.drove=true;u.anim+=dt*7}
  }else if(m<=0.14)for(const u of selection)if(u.kind==='unit'&&u.order.type==='drive')u.order={type:'idle'}}
 /* Follow camera. The units you are commanding can roam the middle of the screen freely; the view
    only starts moving once one would otherwise cross the comfort margin, and then it glides rather
