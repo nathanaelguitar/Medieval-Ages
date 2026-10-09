@@ -120,6 +120,18 @@ BUILDINGS = {
     "med_gate": ("bld_gate", 1, "wall"),
 }
 
+# ``--set resources``: trees and resource nodes, each on a 1x1 grass patch (same camera and stages).
+RESOURCES = {
+    "res_oak_a": ("res_oak_a", 1, "bld"),
+    "res_oak_b": ("res_oak_b", 1, "bld"),
+    "res_pine": ("res_pine", 1, "bld"),
+    "res_birch": ("res_birch", 1, "bld"),
+    "res_gold": ("res_gold", 1, "bld"),
+    "res_stone": ("res_stone", 1, "bld"),
+    "res_berry": ("res_berry", 1, "bld"),
+}
+SET = "buildings"
+
 FEATHER_START = 0.55     # alpha ramp starts here (fraction of the half-diagonal) ...
 FEATHER_END = 1.02       # ... and reaches 0 here (just past the edge, to kill the slab lip)
 
@@ -711,8 +723,9 @@ def stage_build(names_filter=None, debug=False):
             x += t.width + 8
         y += max(t.height for t in r) + 8
     sheet.save(os.path.join(prev, "sheet.png"))
-    draw_village(man1, out1, os.path.join(prev, "village.png"), tw=GAME_TW)
-    draw_village(man1, out1, os.path.join(prev, "village_small.png"), tw=44)
+    if SET == "buildings":
+        draw_village(man1, out1, os.path.join(prev, "village.png"), tw=GAME_TW)
+        draw_village(man1, out1, os.path.join(prev, "village_small.png"), tw=44)
 
 
 def main():
@@ -721,7 +734,17 @@ def main():
     ap.add_argument("--only", nargs="*", help="sprite names (med_*) to build")
     ap.add_argument("--force", action="store_true", help="redo mattes / SAM masks that already exist")
     ap.add_argument("--debug", action="store_true", help="write the warped ground masks to art/out/buildings/debug/")
+    ap.add_argument("--set", choices=["buildings", "resources"], default="buildings",
+                    help="resources: art/source/resources/gen -> art/out/resources (trees, ore, berries)")
     a = ap.parse_args()
+    if a.set == "resources":
+        global SRC, OUT, MATTE, SPARK_DIR, BUILDINGS, SET
+        SET = "resources"
+        SRC = os.path.join(ROOT, "art", "source", "resources", "gen")
+        OUT = os.path.join(ROOT, "art", "out", "resources")
+        MATTE = os.path.join(OUT, "matte")
+        SPARK_DIR = "~/medieval/resources"
+        BUILDINGS = RESOURCES
     src_names = sorted({v[0] for v in BUILDINGS.values()})
     if a.stage in ("matte", "all"):
         stage_matte(src_names, a.force)

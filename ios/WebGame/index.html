@@ -172,6 +172,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 <script src="sprites/manifest.js"></script>
 <script src="sprites/manifest_man_at_arms.js"></script>
 <script src="sprites/manifest_buildings.js"></script>
+<script src="sprites/manifest_resources.js"></script>
 <script>
 "use strict";
 /* ============ constants & helpers ============ */
@@ -1439,6 +1440,11 @@ function drawRes(r){
   const sway=Math.sin(time*0.9+r.tx*1.7+r.ty*2.3)*1.4;
   /* 0 A.D. oak and aleppo pine, chosen by the same tile hash the vector art used. A tree has no
      grid footprint of its own, so this scales its canopy spread to roughly one tile. */
+  /* Photoreal oak, oak, Scots pine and birch matching the medieval buildings, chosen and sized by
+     tile hash so a wood reads as mixed growth. Their sprites map one tile to TW at full size
+     (about three villagers tall); the 0 A.D. trees remain as a fallback. */
+  const h4=(r.tx*7+r.ty*13)%4,sz=0.82+((r.tx*31+r.ty*17)%7)*0.04;
+  if(drawSpr(['res_oak_a','res_oak_b','res_pine','res_birch'][h4],sx+sway*0.6,sy,TW*sz))return;
   if(drawSpr(['tree_oak_1','tree_oak_2','tree_pine_1'][v],sx+sway*0.6,sy,28))return;
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(sx,sy+1,9,4,0,0,7);ctx.fill();
   ctx.fillStyle='#6b4a2b';ctx.fillRect(sx-1.8,sy-12,3.6,12);
@@ -1446,6 +1452,8 @@ function drawRes(r){
   ctx.beginPath();ctx.arc(sx-5+sway,sy-13,6.5,0,7);ctx.arc(sx+5+sway,sy-14,6,0,7);ctx.fill();
   ctx.fillStyle=['#387033','#3f7a39','#468140'][v];
   ctx.beginPath();ctx.arc(sx+sway,sy-19,7.5,0,7);ctx.fill();
+ }else if((r.kind==='gold'||r.kind==='stone'||r.kind==='berry')&&drawSpr('res_'+r.kind,sx,sy,TW*0.9)){
+  /* photoreal ore outcrops and berry bush; the vector art below is the fallback */
  }else if(r.kind==='gold'){
   ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(sx,sy+1,10,4,0,0,7);ctx.fill();
   ctx.fillStyle='#8f8f98';ctx.beginPath();ctx.moveTo(sx-9,sy);ctx.lineTo(sx-2,sy-9);ctx.lineTo(sx+5,sy);ctx.closePath();ctx.fill();
