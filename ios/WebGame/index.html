@@ -469,6 +469,20 @@ function tryMove(u,nx,ny){
  if(passableAt(nx,u.y,u.team)){u.x=nx;return true}
  if(passableAt(u.x,ny,u.team)){u.y=ny;return true}
  return false}
+/* Stick steering. The stick only gives a heading, so a straight shove into a tree or a building
+   corner used to pin the unit (tryMove can only slide along the grid axes). Look a little ahead
+   and, when that way is blocked, fan out to wider angles until one is clear, keeping to one side
+   for a moment so the unit walks around the obstacle instead of dithering in front of it. */
+const STEER_ANGLES=[0.45,0.9,1.3,1.75,2.2];
+function clearAhead(u,ax,ay,step){
+ return passableAt(u.x+ax*step,u.y+ay*step,u.team)&&passableAt(u.x+ax*0.55,u.y+ay*0.55,u.team)}
+function steerMove(u,ax,ay,step){
+ if(clearAhead(u,ax,ay,step)){u.x+=ax*step;u.y+=ay*step;if(time>u.steerT)u.steer=0;return true}
+ const sides=u.steer&&time<u.steerT?[u.steer]:[1,-1];
+ for(const a of STEER_ANGLES)for(const sd of sides){
+  const c=Math.cos(a*sd),s=Math.sin(a*sd),bx=ax*c-ay*s,by=ax*s+ay*c;
+  if(clearAhead(u,bx,by,step)){u.x+=bx*step;u.y+=by*step;u.steer=sd;u.steerT=time+0.6;return true}}
+ return tryMove(u,u.x+ax*step,u.y+ay*step)}
 function stepMove(u,tx,ty,dt){const dx=tx-u.x,dy=ty-u.y;const d=Math.hypot(dx,dy);
  if(d<1e-4)return true;
  const sp=DEFS[u.type].spd;u.moving=true;u.anim+=dt*7;
@@ -908,7 +922,7 @@ joyZone.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyUpdate(e)}
 function joyRelease(){
  if(joy.id===null)return;
  joy.id=null;joy.mode=null;joy.vx=0;joy.vy=0;joyNub.style.transform='translate(0px,0px)';
- selection.forEach(u=>{if(u.kind==='unit'&&u.team===0&&u.order.type==='drive')u.order={type:'idle'}})}
+ selection.forEach(u=>{if(u.kind==='unit'&&u.team===0&&u.order.type==='drive'){u.order={type:'idle'};u.path=null;u.detour=null}})}
 const joyEnd=e=>{if(e.pointerId===joy.id)joyRelease()};
 /* The lift has to be caught wherever it lands. In the iOS web view, pointer capture on the stick can
    lapse (a second finger, an edge gesture, the thumb sliding off), and the pointerup then goes to
@@ -1960,14 +1974,27 @@ function applyJoy(dt){
    const l=Math.hypot(ax,ay)||1;ax/=l;ay/=l;
    for(const u of own){
     if(u.order.type!=='drive')rememberTask(u);
-    u.order={type:'drive'};u.path=null;
+    u.order={type:'drive'};
     const sp=DEFS[u.type].spd*Math.min(1,m*1.4);
-    tryMove(u,u.x+ax*sp*dt,u.y+ay*sp*dt);
+    /* Steering handles single obstacles; a pocket (a clump of trees, the inside corner of two
+       buildings) needs a real path. If steering makes no headway for a quarter second, plan a
+       route to a point a few tiles ahead along the stick and follow it for as long as the stick
+       keeps pointing the same way (to within 22.5 degrees). */
+    const key=Math.round(Math.atan2(ay,ax)/(Math.PI/8));
+    if(u.detour===key&&u.path){followPath(u,dt);if(!u.path)u.detour=null}
+    else{
+     u.path=null;u.detour=null;
+     const x0=u.x,y0=u.y;
+     steerMove(u,ax,ay,sp*dt);
+     u.jstuck=Math.hypot(u.x-x0,u.y-y0)<sp*dt*0.25?(u.jstuck||0)+dt:0;
+     if(u.jstuck>0.25){u.jstuck=0;
+      for(let r=7;r>=2;r--){const gx=u.x+ax*r,gy=u.y+ay*r;
+       if(passableAt(gx,gy,u.team)){setPath(u,gx,gy);if(u.path)u.detour=key;break}}}}
     const b=u.type==='vill'?nearbyBuild(u):null;
     if(b){assignBuild(u,b);continue}
     if(Math.abs(vx)>0.2)u.face=vx>0?1:-1;
     u.moving=true;u.drove=true;u.anim+=dt*7}
- }else if(m<=0.14)for(const u of selection)if(u.kind==='unit'&&u.order.type==='drive')u.order={type:'idle'}}
+ }else if(m<=0.14)for(const u of selection)if(u.kind==='unit'&&u.order.type==='drive'){u.order={type:'idle'};u.path=null;u.detour=null}}
 /* Follow camera. The units you are commanding can roam the middle of the screen freely; the view
    only starts moving once one would otherwise cross the comfort margin, and then it glides rather
    than snapping, so a march pulls the camera along at a readable pace instead of yanking it. If the
