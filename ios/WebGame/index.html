@@ -480,6 +480,36 @@ function hitFx(wx,wy){const[sx,sy]=w2s(wx,wy);for(let i=0;i<4;i++){const a=rnd(M
  /* A puff of dust under the sparks. Sparks alone read as a glint; sparks plus ground kicked up
     read as an impact, which is what sells a hit at phone scale. */
  for(let i=0;i<3;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy+1,vx:Math.cos(a)*rnd(8,26),vy:-rnd(4,16),g:26,life:0,max:rnd(0.35,0.6),r:rnd(2,3.4),col:'rgba(198,182,150,.65)'})}}
+/* Blood. A hit throws a short spray of droplets from chest height that falls back to earth, and
+   now and then leaves a spatter on the ground; a death spreads a pool under the body. Stains are
+   world-anchored ground decals that fade after a while, so a battlefield keeps its history for a
+   minute without the map turning permanently red. */
+let stains=[];
+function bleed(t,amt){
+ if(t.kind!=='unit')return;
+ const[sx,sy]=w2s(t.x,t.y);
+ const n=Math.min(12,3+Math.round(amt*0.6));
+ for(let i=0;i<n;i++){const a=rnd(-Math.PI*0.95,-Math.PI*0.05);const v=rnd(18,58);
+  parts.push({x:sx+rnd(-2,2),y:sy-14+rnd(-3,3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:190,life:0,
+   max:rnd(0.35,0.6),r:rnd(0.9,1.8),col:Math.random()<0.5?'#9e1016':'#6d0a0e'})}
+ if(Math.random()<0.35)addStain(t.x+rnd(-0.3,0.3),t.y+rnd(-0.3,0.3),rnd(1.6,2.8),0.25)}
+function addStain(x,y,r,grow){
+ stains.push({x,y,r,grow,born:time,seed:Math.random()*100});
+ if(stains.length>70)stains.shift()}
+const STAIN_LIFE=55;
+function drawStains(){
+ for(const st of stains){
+  const age=time-st.born;if(age>STAIN_LIFE)continue;
+  const g=Math.min(1,age/st.grow),fade=age>STAIN_LIFE-8?(STAIN_LIFE-age)/8:1;
+  const[sx,sy]=w2s(st.x,st.y),r=st.r*(0.35+0.65*g);
+  ctx.globalAlpha=0.78*fade;ctx.fillStyle='#5e0a0d';
+  /* three offset ellipses squashed into the 2:1 ground plane make an irregular pool */
+  for(let k=0;k<3;k++){const a=st.seed+k*2.1,o=r*0.35;
+   ctx.beginPath();ctx.ellipse(sx+Math.cos(a)*o,sy+Math.sin(a)*o*0.5,r*(0.75+0.2*k),r*(0.75+0.2*k)*0.5,0,0,7);ctx.fill()}
+  ctx.globalAlpha=0.5*fade;ctx.fillStyle='#8c1218';
+  ctx.beginPath();ctx.ellipse(sx-r*0.15,sy-r*0.08,r*0.45,r*0.22,0,0,7);ctx.fill()}
+ ctx.globalAlpha=1;
+ stains=stains.filter(st=>time-st.born<STAIN_LIFE)}
 function burst(wx,wy,col,n=8,sp=50){const[sx,sy]=w2s(wx,wy);for(let i=0;i<n;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy-8,vx:Math.cos(a)*rnd(sp*0.3,sp),vy:Math.sin(a)*rnd(sp*0.3,sp)-20,g:70,life:0,max:rnd(0.4,0.8),r:rnd(1.5,3),col})}}
 function ping(wx,wy,col){const[sx,sy]=w2s(wx,wy);parts.push({ring:1,x:sx,y:sy,life:0,max:0.6,col})}
 function spawnArrow(src,target,dmg){
@@ -499,6 +529,7 @@ function updArrow(a,dt){
 function damage(t,amt,fromTeam){
  if(t.dead||t.hp<=0)return;
  t.hp-=amt;t.flash=0.15;
+ bleed(t,amt);
  /* floating damage numbers, but only for fights the player is part of, and throttled so a
     big melee does not turn into a wall of text */
  if((t.team===0||fromTeam===0)&&Math.random()<0.45){
@@ -518,7 +549,8 @@ function hitStop(seconds){hitStopT=Math.max(hitStopT,seconds)}
 function kill(t){
  t.dead=true;t.hp=0;
  hitStop(t.kind==='unit'?0.12:0.2);
- if(t.kind==='unit'){burst(t.x,t.y,TEAMC[t.team].m,10,55);shake=Math.max(shake,2.4);hitFx(t.x,t.y)}
+ if(t.kind==='unit'){burst(t.x,t.y,TEAMC[t.team].m,10,55);shake=Math.max(shake,2.4);hitFx(t.x,t.y);
+  bleed(t,14);addStain(t.x,t.y,rnd(7,9.5),1.6)}
  else{if(t.type==='gate')gateBlock(t,false);else gridBlock(t,false);
   if(t.garrison&&t.garrison.length)releaseGarrison(t);recalcPop();burst(t.cx,t.cy,'#9a9a9a',24,80);burst(t.cx,t.cy,'#d9b36a',10,60);
   shake=Math.max(shake,t.type==='tc'?7:5);sfx('crash');if(t.type==='tc')checkEnd()}}
@@ -1768,6 +1800,7 @@ function render(){
   if(sx+TW2<L||sx-TW2>R||sy+TH<T||sy>B)continue;
   drawTile(x,y,sx,sy)}
  drawMotes();
+ drawStains();
  // ground marks
  for(const s of selection){if(s.dead)continue;
   if(s.kind==='unit'){const[sx,sy]=w2s(s.x,s.y);
