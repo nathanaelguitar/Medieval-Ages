@@ -32,6 +32,26 @@ Two stages in one file, so later units (archer, villager; attack/death clips) re
    ``--previews``: ``landmarks_overlay.gif`` (skeleton over the source frames), ``joint_angles.png``
    (every frame, trim and chosen cycle marked) and ``cycle_curves.png`` (the loop, raw vs. gained).
 
+   ``oneshot`` (v4: attack, death) is the non-cyclic variant: no gait period, an explicit trim,
+   both legs as tracked (a lunge does not alternate), and a piecewise-linear time warp given as
+   ``--keys src_seconds=phase,...`` so a slow Veo wind-up and a fast slash each get the screen
+   time they need and the impact lands on a known bake sample. Beyond the last tracked key the
+   pose is synthesized from ``--synth phase:curve=value,...`` keys (smoothstep between keys;
+   ``*=start`` copies the phase-0 pose, which is how the attack recovers into a seamless loop and
+   the death is carried from the tracked hit reaction through a buckle and fall to the supine
+   end pose). Side-plane angles that pass through "straight up" (an overhead sword) are unwrapped
+   so 180 deg is no discontinuity. Legs whose MediaPipe left/right labels swap for a frame are
+   swapped back (nearest ankle continuity), spikes are median-filtered before smoothing.
+   Extra synthesized curves (``--phase-curve name=phase:value,...``): ``wrist_R`` (sword pitch
+   relative to the forearm), ``arm_yaw_R`` (sword arm swung outward about the vertical, for the
+   front/back views), ``chest_yaw`` / ``pelvis_yaw`` (torso twist), ``upperarm_L`` / ``elbow_L``
+   as a shield-arm raise, ``root_fwd`` (horizontal root travel in rig units).
+
+       python3 art/pipeline/video_to_clip.py oneshot \\
+           --video art/source/man_at_arms/video/veo_attack_side.mp4 --start 0.9 --end 3.05 \\
+           --keys 0.95=0,1.1=0.14,2.05=0.3,2.3=0.36,2.54=0.5,3.0=0.64 --synth "1.0:*=start" \\
+           --cycle 1.0 --impact-phase 0.5 --loop --out art/out/man_at_arms_v4/motion/attack_clip.json
+
 2. ``build_action`` (inside Blender; called by rig_body.py for ``--clip name=path.json``):
    retargets the curves onto the 0 A.D. biped ``Source`` armature as a new action, in place.
    Legs and torso are set to the absolute planar angles (world-X rotations through each joint,
@@ -41,6 +61,16 @@ Two stages in one file, so later units (archer, villager; attack/death clips) re
    each frame so the lowest body vertex sits on the same ground as the idle (no sinking, and the
    vertical bob falls out of the stance-leg geometry). Every bone is keyed on every frame
    (linear) so switching clips in the bake never carries a pose over.
+
+   The clip's ``retarget`` block selects the v4 variants: ``arm_mode`` "relative" (walk) or
+   "absolute" (sword arm set to the unwrapped planar angles, plus ``wrist_R`` and ``arm_yaw_R``);
+   ``shield_mode`` "relative", "offset" (raise from the base pose by the curve values) or
+   "absolute"; ``torso_mode`` "oscillation" (about the mean) or "absolute" (about ``torso_ref``,
+   the video's standing lean) with ``head_counter`` keeping the head level; ``foot_lock`` shifts
+   the root horizontally so the planted feet do not slide (weighted by how low each foot is),
+   until ``foot_lock_until`` (phase); ``loop`` false pads ``hold_s`` of the final pose instead of
+   closing the cycle. Yaw curves in the clip replace the walk's cosine model. ``impact_phase``
+   and ``loop`` are stored on the action for bake_sprites.py.
 """
 import argparse
 import json
@@ -448,6 +478,293 @@ def write_overlay(a, frames, P, vis, fps, near, far, cyc, i0, T_fr, width=640, s
 
 
 # ----------------------------------------------------------------------------------------------
+# stage 1b: one-shot clips (attack, death)
+# ----------------------------------------------------------------------------------------------
+LEG_LM = ("knee", "ankle", "heel", "toe")
+
+
+def unswap_legs(P, i0, i1):
+    """MediaPipe occasionally swaps the left/right leg labels for a frame or two when the legs
+    overlap. Inside the trim, swap a frame's leg landmarks back when that keeps the ankles closer
+    to the previous (corrected) frame's. Returns the number of frames swapped."""
+    n = 0
+    for i in range(i0 + 1, i1 + 1):
+        aR, aL = P[i, LM["ankle_R"]], P[i, LM["ankle_L"]]
+        pR, pL = P[i - 1, LM["ankle_R"]], P[i - 1, LM["ankle_L"]]
+        keep = np.hypot(*(aR - pR)) + np.hypot(*(aL - pL))
+        swap = np.hypot(*(aL - pR)) + np.hypot(*(aR - pL))
+        if swap + 1e-6 < keep * 0.6:
+            for j in LEG_LM:
+                r, l = LM[f"{j}_R"], LM[f"{j}_L"]
+                P[i, r], P[i, l] = P[i, l].copy(), P[i, r].copy()
+            n += 1
+    return n
+
+
+def arm_angles_unwrapped(P, facing, side):
+    """Upper arm and forearm absolute side-plane angles (deg, 0 = hanging, + forward, continuing
+    through 180 = straight up and 270 = pointing back), unwrapped over time so an overhead
+    wind-up is continuous. Returns (upperarm, forearm)."""
+    sgn = 1.0 if facing == "right" else -1.0
+    x, y = P[:, :, 0] * sgn, P[:, :, 1]
+    sho, elb, wri = LM[f"shoulder_{side}"], LM[f"elbow_{side}"], LM[f"wrist_{side}"]
+    ua = np.arctan2(x[:, elb] - x[:, sho], y[:, elb] - y[:, sho])
+    fa = np.arctan2(x[:, wri] - x[:, elb], y[:, wri] - y[:, elb])
+    return np.degrees(np.unwrap(ua)), np.degrees(np.unwrap(fa))
+
+
+def despike(a, k=5):
+    from scipy.signal import medfilt
+    return medfilt(a, k)
+
+
+def smoothstep(t):
+    t = np.clip(t, 0.0, 1.0)
+    return t * t * (3 - 2 * t)
+
+
+def parse_keys(s):
+    """'0.95=0,1.1=0.14,...' -> [(src_s, phase), ...] sorted by phase."""
+    out = []
+    for item in s.split(","):
+        a, b = item.split("=")
+        out.append((float(a), float(b)))
+    return sorted(out, key=lambda kv: kv[1])
+
+
+def parse_synth(items):
+    """['0.55:thigh_R=60,knee_R=120', '1.0:*=start'] -> [(phase, {curve: value|'start'})]."""
+    out = []
+    for s in items or []:
+        ph, rest = s.split(":", 1)
+        vals = {}
+        for kv in rest.split(","):
+            if kv.strip():
+                k, v = kv.split("=")
+                vals[k.strip()] = v.strip() if v.strip() in ("start", "hold") else float(v)
+        out.append((float(ph), vals))
+    return sorted(out, key=lambda kv: kv[0])
+
+
+def parse_phase_curve(s):
+    """'wrist_R=0:0,0.3:45,1:0' -> (name, [(phase, value), ...])."""
+    name, rest = s.split("=", 1)
+    pts = sorted((float(p), float(v)) for p, v in (kv.split(":") for kv in rest.split(",")))
+    return name.strip(), pts
+
+
+def eval_phase_curve(pts, phs, loop=True):
+    """Smoothstep interpolation between (phase, value) keys; constant outside the key range."""
+    out = np.empty(len(phs))
+    for i, p in enumerate(phs):
+        if p <= pts[0][0]:
+            out[i] = pts[0][1]
+        elif p >= pts[-1][0]:
+            out[i] = pts[-1][1]
+        else:
+            for (p0, v0), (p1, v1) in zip(pts[:-1], pts[1:]):
+                if p0 <= p <= p1:
+                    out[i] = v0 + (v1 - v0) * smoothstep((p - p0) / max(p1 - p0, 1e-9))
+                    break
+    return out
+
+
+def extract_oneshot(a):
+    """Attack / death: tracked segment with a time warp, then synthesized keys (see docstring)."""
+    t0 = time.time()
+    pts, vis, fps, W, H, frames = track(a.video, a.model, a.start, a.end, a.min_conf)
+    n = len(pts)
+    print(f"== tracked {n} frames at {fps:.0f} fps ({W}x{H}) in {time.time()-t0:.1f}s; "
+          f"{int(np.sum(~np.isnan(pts[:, 0, 0])))} with a pose")
+    i0, i1 = int(math.ceil(a.start * fps)), min(n - 1, int(math.floor(a.end * fps)))
+    near = "R" if a.facing == "right" else "L"
+    far = "L" if near == "R" else "R"
+    vr = {name: float(np.nanmean(vis[i0:i1 + 1, idx])) for name, idx in LM.items()}
+    print("   mean visibility in trim:", {k: round(v, 2) for k, v in vr.items()})
+    P = fill_nan(pts.reshape(n, -1)).reshape(n, 33, 2)
+    nsw = unswap_legs(P, max(1, i0 - 2), i1)
+    print(f"   leg label swaps undone: {nsw}")
+    raw, leg_px = planar_angles(P, a.facing)
+    ua_n, fa_n = arm_angles_unwrapped(P, a.facing, near)
+    raw[f"upperarm_{near}"] = ua_n
+    raw[f"elbow_{near}"] = fa_n - ua_n
+    win = a.smooth_s
+    sm = {k: smooth(despike(v), fps, window_s=win) for k, v in raw.items()}
+    tt = np.arange(n) / fps
+
+    keys = parse_keys(a.keys)
+    synth = parse_synth(a.synth)
+    if a.loop and not any(p >= 1.0 for p, _ in synth):
+        synth.append((1.0, {"*": "start"}))
+    ks, kp = [k[0] for k in keys], [k[1] for k in keys]
+    if not (a.start <= min(ks) and max(ks) <= a.end):
+        sys.exit(f"--keys must lie inside --start/--end ({a.start}..{a.end}): {keys}")
+    p_track = kp[-1]
+    S = a.samples
+    phs = np.arange(S) / S
+    tracked = phs <= p_track + 1e-9
+    src_t = np.interp(phs[tracked], kp, ks)       # piecewise-linear time warp
+    print(f"== warp keys (src s -> phase): {[(round(s, 2), round(p, 3)) for s, p in keys]}; "
+          f"{int(tracked.sum())}/{S} samples tracked, synth keys at {[p for p, _ in synth]}")
+
+    names = ([f"{j}_{s}" for j in ("thigh", "knee", "foot") for s in SIDES]
+             + [f"upperarm_{near}", f"elbow_{near}", "torso"])
+    curves = {k: np.zeros(S) for k in names}
+    for k in names:
+        curves[k][tracked] = np.interp(src_t, tt, sm[k])
+    # the unwrapped arm angles may sit on any 360-degree branch: bring the phase-0 values into
+    # (-180, 180] so synthesized keys (plain degrees) do not make the arm spin a full turn
+    ua = curves[f"upperarm_{near}"]
+    fa = ua + curves[f"elbow_{near}"]
+    ua = ua - 360.0 * np.round(ua[0] / 360.0)
+    fa = fa - 360.0 * np.round(fa[0] / 360.0)
+    curves[f"upperarm_{near}"], curves[f"elbow_{near}"] = ua, fa - ua
+    # foot pitch: zero = the pitch at the phase-0 stance (planted feet), per foot
+    for s in SIDES:
+        curves[f"foot_{s}"] -= curves[f"foot_{s}"][0]
+    for s in SIDES:
+        curves[f"knee_{s}"] = np.maximum(curves[f"knee_{s}"], 0)
+    # torso reference: the standing lean (first --torso-ref-window seconds of the video)
+    if a.torso_ref == "auto":
+        w = int(a.torso_ref_window * fps)
+        torso_ref = float(np.mean(sm["torso"][:max(w, 1)]))
+    else:
+        torso_ref = float(a.torso_ref)
+    raw_curves = {k: v.copy() for k, v in curves.items()}
+
+    # ---- readability gains, about the phase-0 pose (the guard)
+    g = {"arm": 1.0, "crouch": 1.0, "stance": 1.0, "foot": 1.0, "torso": 1.0}
+    g.update(parse_kv(a.gain))
+    for s in SIDES:
+        for j in ("thigh", "knee"):
+            c = curves[f"{j}_{s}"] * g["stance"]          # whole stance about standing straight
+            curves[f"{j}_{s}"] = c[0] + g["crouch"] * (c - c[0])   # excursion about the phase-0 stance
+        curves[f"foot_{s}"] = g["foot"] * curves[f"foot_{s}"]
+    for j in ("upperarm", "elbow"):
+        c = curves[f"{j}_{near}"]; curves[f"{j}_{near}"] = c[0] + g["arm"] * (c - c[0])
+    c = curves["torso"]; curves["torso"] = torso_ref + g["torso"] * (c - torso_ref)
+    for s in SIDES:
+        curves[f"knee_{s}"] = np.maximum(curves[f"knee_{s}"], 0)
+
+    # ---- synthesized keys after the tracked range (smoothstep between consecutive keys)
+    extra = {}
+    for spec in a.phase_curve or []:
+        name, pts_ = parse_phase_curve(spec)
+        extra[name] = pts_
+    last_vals = {k: float(curves[k][tracked][-1]) for k in names}
+    key_list = [(p_track, dict(last_vals))]
+    for ph, vals in synth:
+        prev = dict(key_list[-1][1])
+        if vals.get("*") == "start":
+            prev = {k: float(curves[k][0]) for k in names}
+        for k, v in vals.items():
+            if k == "*":
+                continue
+            if k not in names:
+                if k not in extra:
+                    sys.exit(f"--synth: unknown curve {k}")
+                continue
+            prev[k] = float(curves[k][0]) if v == "start" else (prev[k] if v == "hold" else v)
+        key_list.append((ph, prev))
+    for k in names:
+        pts_ = [(ph, vals[k]) for ph, vals in key_list]
+        if len(pts_) > 1:
+            curves[k][~tracked] = eval_phase_curve(pts_, phs[~tracked])
+    for name, pts_ in extra.items():
+        curves[name] = eval_phase_curve(pts_, phs)
+
+    def stats(cv):
+        return {k: {"min": round(float(v.min()), 1), "max": round(float(v.max()), 1),
+                    "range": round(float(v.max() - v.min()), 1)} for k, v in cv.items()}
+    st = stats(curves)
+    print("== output curve ranges (deg; root_fwd in units):")
+    for k, v in st.items():
+        print(f"   {k:12s} {v['min']:7.1f}..{v['max']:6.1f} (range {v['range']:5.1f})")
+    print(f"   torso ref {torso_ref:.1f} deg; gains {g}")
+
+    retarget = {"near": near, "sword_arm": near, "shield_arm": far, "arm_mode": a.arm_mode,
+                "shield_mode": a.shield_mode, "torso_mode": "absolute", "torso_ref": torso_ref,
+                "head_counter": a.head_counter, "foot_lock": a.foot_lock, "foot_lock_until": a.foot_lock_until,
+                "bob_gain": 1.0, "clamp_props": a.clamp_props, "hold_s": a.hold_s}
+    clip = {"mode": "oneshot", "source": os.path.relpath(a.video), "trim_s": [a.start, a.end],
+            "facing": a.facing, "video_fps": fps, "cycle_s": a.cycle, "loop": bool(a.loop),
+            "impact_phase": a.impact_phase, "keys": keys, "synth": [[p, v] for p, v in synth],
+            "samples": S, "gains": g, "retarget": retarget,
+            "curves": {k: [round(float(x), 3) for x in v] for k, v in curves.items()},
+            "curves_raw": {k: [round(float(x), 3) for x in v] for k, v in raw_curves.items()},
+            "stats": st, "visibility": {k: round(v, 2) for k, v in vr.items()}}
+    os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
+    with open(a.out, "w") as fh:
+        json.dump(clip, fh, indent=1)
+    print(f"== wrote {a.out}")
+    if a.previews:
+        os.makedirs(a.previews, exist_ok=True)
+        write_oneshot_plots(a, sm, i0, i1, fps, near, far, keys, phs, curves, tracked, torso_ref)
+        write_overlay(a, frames, P, vis, fps, near, far, (0, i1 - i0), i0, (i1 - i0) / 2.0)
+    print(f"== oneshot done in {time.time()-t0:.1f}s")
+
+
+def write_oneshot_plots(a, sm, i0, i1, fps, near, far, keys, phs, curves, tracked, torso_ref):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    n = len(next(iter(sm.values())))
+    tt = np.arange(n) / fps
+    rows = [("thigh", "hip flexion (deg, + forward)"), ("knee", "knee flexion (deg)"),
+            ("foot", "foot pitch (deg, + toes up)")]
+    fig, axes = plt.subplots(len(rows) + 2, 1, figsize=(13, 2.2 * (len(rows) + 2)), sharex=True)
+    for ax, (j, label) in zip(axes, rows):
+        ax.plot(tt, sm[f"{j}_{near}"], color="#1f77b4", lw=1.4, label=f"{j}_{near} (near)")
+        ax.plot(tt, sm[f"{j}_{far}"], color="#d62728", lw=1.0, alpha=0.8, label=f"{j}_{far} (far, tracked)")
+        ax.set_ylabel(label, fontsize=8)
+        ax.legend(loc="upper right", fontsize=7)
+    axes[-2].plot(tt, sm[f"upperarm_{near}"], color="#1f77b4", lw=1.4, label=f"upper arm {near} (abs, unwrapped)")
+    axes[-2].plot(tt, sm[f"upperarm_{near}"] + sm[f"elbow_{near}"], color="#ff7f0e", lw=1.2, label="forearm (abs)")
+    axes[-2].set_ylabel("sword arm (deg; 90 fwd, 180 up, 270 back)", fontsize=8)
+    axes[-2].legend(loc="upper right", fontsize=7)
+    axes[-1].plot(tt, sm["torso"], color="#2ca02c", lw=1.2, label="torso pitch (deg, + forward)")
+    axes[-1].axhline(torso_ref, color="#2ca02c", lw=0.6, ls="--", label="torso ref")
+    axes[-1].plot(tt, sm["pelvis_y"] * 100, color="#9467bd", lw=1.2, label="pelvis height (% leg)")
+    axes[-1].legend(loc="upper right", fontsize=7)
+    axes[-1].set_xlabel("video time (s)")
+    for ax in axes:
+        ax.axvspan(0, i0 / fps, color="k", alpha=0.08)
+        ax.axvspan(i1 / fps, tt[-1], color="k", alpha=0.08)
+        for s, p in keys:
+            ax.axvline(s, color="k", lw=0.6, ls=":")
+            ax.text(s, ax.get_ylim()[1], f"{p:.2f}", fontsize=6, va="top")
+        ax.grid(alpha=0.3)
+    fig.suptitle(f"{os.path.basename(a.video)}: planar joint angles (median + Savitzky-Golay); "
+                 f"grey = outside trim, dotted = warp keys (labelled with the output phase)")
+    fig.tight_layout()
+    p = os.path.join(a.previews, "joint_angles.png")
+    fig.savefig(p, dpi=110)
+    plt.close(fig)
+    print("   plot", p)
+
+    items = [k for k in curves]
+    cols = 4
+    rws = int(math.ceil(len(items) / cols))
+    fig, axes = plt.subplots(rws, cols, figsize=(15, 2.6 * rws))
+    for ax, k in zip(axes.flat, items):
+        ax.plot(phs, curves[k], "o-", ms=3, lw=1, color="#1f77b4")
+        ax.axvspan(phs[tracked][-1], 1.0, color="#ffcc00", alpha=0.18)
+        if a.impact_phase is not None:
+            ax.axvline(a.impact_phase, color="#d62728", lw=0.8, ls="--")
+        ax.set_title(k, fontsize=9)
+        ax.grid(alpha=0.3)
+    for ax in list(axes.flat)[len(items):]:
+        ax.axis("off")
+    fig.suptitle(f"{os.path.basename(a.out)}: {a.samples} samples over {a.cycle:.2f} s; yellow = synthesized, "
+                 f"red = impact phase {a.impact_phase}; gains {a.gain}")
+    fig.tight_layout()
+    p = os.path.join(a.previews, "cycle_curves.png")
+    fig.savefig(p, dpi=110)
+    plt.close(fig)
+    print("   plot", p)
+
+
+# ----------------------------------------------------------------------------------------------
 # stage 2: Blender-side retarget (imported by rig_body.py; needs bpy)
 # ----------------------------------------------------------------------------------------------
 def _interp_loop(samples, phase):
@@ -459,8 +776,18 @@ def _interp_loop(samples, phase):
     return float(s[i] * (1 - f) + s[(i + 1) % n] * f)
 
 
+def _interp_hold(samples, phase):
+    """Like _interp_loop but the last sample holds (non-looping clips)."""
+    s = np.asarray(samples, dtype=np.float64)
+    n = len(s)
+    x = min(max(phase, 0.0), 1.0) * (n - 1)
+    i = min(int(math.floor(x)), n - 2)
+    f = x - i
+    return float(s[i] * (1 - f) + s[i + 1] * f)
+
+
 def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24, ground_objs=(),
-                 ground_z=None, log=print):
+                 ground_z=None, log=print, prop_objs=()):
     """Create action ``name`` on the Source armature from a clip JSON (see module docstring).
     ``base_action``/``base_frame``: pose whose arm, neck and head transforms are the starting
     point (props were placed there). ``ground_objs``: meshes whose lowest evaluated vertex is
@@ -473,6 +800,15 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
     rt = clip.get("retarget", {})
     near = rt.get("near", "R")
     shield = rt.get("shield_arm", "L")
+    sword = rt.get("sword_arm", "R")
+    arm_mode = rt.get("arm_mode", "relative")          # sword arm: relative | absolute
+    shield_mode = rt.get("shield_mode", "relative")    # relative | offset | absolute
+    torso_mode = rt.get("torso_mode", "oscillation")
+    head_counter = rt.get("head_counter", 0.0)
+    foot_lock = rt.get("foot_lock", False)
+    foot_lock_until = rt.get("foot_lock_until", 1.0)
+    loop = clip.get("loop", True)
+    hold_s = rt.get("hold_s", 0.0) if not loop else 0.0
     arm_gain = {"L": 1.0, "R": 1.0}
     arm_gain[shield] = rt.get("shield_arm_gain", 0.3)
     elbow_gain = {"L": rt.get("elbow_gain", 0.5), "R": rt.get("elbow_gain", 0.5)}
@@ -480,8 +816,14 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
     pelvis_yaw = rt.get("pelvis_yaw_deg", 0.0)
     chest_yaw = rt.get("chest_yaw_deg", 0.0)
     bob_gain = rt.get("bob_gain", 1.0)
+    for k in (f"upperarm_{shield}", f"elbow_{shield}", "wrist_R", "wrist_L", "arm_yaw_R", "arm_yaw_L",
+              "root_fwd", "chest_yaw", "pelvis_yaw"):
+        cv.setdefault(k, None)
     F = max(4, int(round(clip["cycle_s"] * fps)))
-    log(f"== clip {name} from {os.path.basename(clip_path)}: cycle {clip['cycle_s']:.3f} s -> {F} frames @ {fps}")
+    H = int(round(hold_s * fps))
+    log(f"== clip {name} from {os.path.basename(clip_path)}: cycle {clip['cycle_s']:.3f} s -> {F} frames @ {fps}"
+        f"{'' if loop else f' + {H} hold frames (non-looping)'}; arm {arm_mode}, shield {shield_mode}, "
+        f"torso {torso_mode}, foot lock {foot_lock}")
 
     scene = bpy.context.scene
     mw = source.matrix_world
@@ -519,10 +861,17 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
 
     def rotate_world(pb, axis, deg):
         """Rotate a pose bone (and children) about a world axis through its head."""
+        if abs(deg) < 1e-6:
+            return
         head = mw @ pb.head
         R = Matrix.Translation(head) @ Matrix.Rotation(math.radians(deg), 4, axis) @ Matrix.Translation(-head)
         pb.matrix = mw.inverted() @ R @ mw @ pb.matrix
         dep_update()
+
+    def cvi(key, ph, default=0.0):
+        if cv.get(key) is None:
+            return default
+        return _interp_loop(cv[key], ph) if loop else _interp_hold(cv[key], ph)
 
     def direction(pb):
         d = (mw @ pb.tail) - (mw @ pb.head)
@@ -557,68 +906,118 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
     rest_foot = {s: abs_angle(source.pose.bones[f"Biped_foot_{s}"], "fwd") for s in SIDES}
     rest_thigh = {s: abs_angle(source.pose.bones[f"Biped_thigh_{s}"], "down") for s in SIDES}
     log(f"   rest: thigh {rest_thigh}, foot pitch {rest_foot}, ground z {ground_z:.3f}")
-    ua_mean = {s: float(np.mean(cv[f"upperarm_{s}"])) for s in SIDES}
-    el_mean = {s: float(np.mean(cv[f"elbow_{s}"])) for s in SIDES}
-    torso_mean = float(np.mean(cv["torso"]))
+    ua_mean = {s: float(np.mean(cv[f"upperarm_{s}"])) if cv.get(f"upperarm_{s}") else 0.0 for s in SIDES}
+    el_mean = {s: float(np.mean(cv[f"elbow_{s}"])) if cv.get(f"elbow_{s}") else 0.0 for s in SIDES}
+    torso_ref = float(np.mean(cv["torso"])) if torso_mode == "oscillation" else float(rt.get("torso_ref", 0.0))
+    yaw_curves = cv.get("chest_yaw") is not None
 
     def pose(frame):
         ph = frame / F
         reset()
         hip = source.pose.bones["Biped_hip"]
-        # pelvis yaw: the leg that is forward brings its hip forward. Sign: right thigh forward
-        # at phase 0 (near = R) -> rotate so the -X (right) side moves to -Y (forward):
-        # about +Z, (-1,0,0) -> (-cos, -sin, 0): y goes negative for +yaw. Good.
-        yaw_phase = math.cos(2 * math.pi * ph) * (1 if near == "R" else -1)
-        if pelvis_yaw:
-            rotate_world(hip, "Z", pelvis_yaw * yaw_phase)
-        if chest_yaw:
-            rotate_world(source.pose.bones["Biped_spine1"], "Z", chest_yaw * yaw_phase)
-        tor = _interp_loop(cv["torso"], ph) - torso_mean
-        if abs(tor) > 1e-6:
-            rotate_world(source.pose.bones["Biped_spine"], "X", tor)    # +X rotation tips an up vector forward (-Y)
+        if yaw_curves:
+            # synthesized twist curves (one-shot clips): + brings the right shoulder forward
+            rotate_world(hip, "Z", cvi("pelvis_yaw", ph))
+            rotate_world(source.pose.bones["Biped_spine1"], "Z", cvi("chest_yaw", ph))
+        else:
+            # pelvis yaw: the leg that is forward brings its hip forward. Sign: right thigh forward
+            # at phase 0 (near = R) -> rotate so the -X (right) side moves to -Y (forward):
+            # about +Z, (-1,0,0) -> (-cos, -sin, 0): y goes negative for +yaw. Good.
+            yaw_phase = math.cos(2 * math.pi * ph) * (1 if near == "R" else -1)
+            if pelvis_yaw:
+                rotate_world(hip, "Z", pelvis_yaw * yaw_phase)
+            if chest_yaw:
+                rotate_world(source.pose.bones["Biped_spine1"], "Z", chest_yaw * yaw_phase)
+        tor = cvi("torso", ph) - torso_ref
+        rotate_world(source.pose.bones["Biped_spine"], "X", tor)    # +X rotation tips an up vector forward (-Y)
+        if head_counter:
+            rotate_world(source.pose.bones["Biped_head"], "X", -tor * head_counter)
         for s in SIDES:
-            th = _interp_loop(cv[f"thigh_{s}"], ph)
-            kn = max(0.0, _interp_loop(cv[f"knee_{s}"], ph))
-            ft = _interp_loop(cv[f"foot_{s}"], ph)
+            th = cvi(f"thigh_{s}", ph)
+            kn = max(0.0, cvi(f"knee_{s}", ph))
+            ft = cvi(f"foot_{s}", ph)
             set_abs(source.pose.bones[f"Biped_thigh_{s}"], "down", th)
             set_abs(source.pose.bones[f"Biped_leg_{s}"], "down", th - kn)
             set_abs(source.pose.bones[f"Biped_foot_{s}"], "fwd", rest_foot[s] + ft)
-            ua = (_interp_loop(cv[f"upperarm_{s}"], ph) - ua_mean[s]) * arm_gain[s]
-            el = (_interp_loop(cv[f"elbow_{s}"], ph) - el_mean[s]) * elbow_gain[s]
-            if abs(ua) > 1e-6:
+            mode = arm_mode if s == sword else shield_mode
+            if mode == "relative":
+                ua = (cvi(f"upperarm_{s}", ph) - ua_mean[s]) * arm_gain[s]
+                el = (cvi(f"elbow_{s}", ph) - el_mean[s]) * elbow_gain[s]
                 rotate_world(source.pose.bones[f"Biped_arm_{s}"], "X", -ua)   # -X swings a hanging bone forward
-            if abs(el) > 1e-6:
                 rotate_world(source.pose.bones[f"Biped_forearm_{s}"], "X", -el)
+            elif mode == "offset":
+                rotate_world(source.pose.bones[f"Biped_arm_{s}"], "X", -cvi(f"upperarm_{s}", ph))
+                rotate_world(source.pose.bones[f"Biped_forearm_{s}"], "X", -cvi(f"elbow_{s}", ph))
+            else:   # absolute planar angles, as the legs
+                ua = cvi(f"upperarm_{s}", ph)
+                set_abs(source.pose.bones[f"Biped_arm_{s}"], "down", ua)
+                set_abs(source.pose.bones[f"Biped_forearm_{s}"], "down", ua + cvi(f"elbow_{s}", ph))
+            # sword pitch relative to the forearm (+ continues the forearm's angle: forward->up->back)
+            rotate_world(source.pose.bones[f"Biped_hand_{s}"], "X", -cvi(f"wrist_{s}", ph))
+            # whole arm swung about the vertical through the shoulder (+ = the arm's far end moves
+            # to the figure's right when it points back, to its left when it points forward)
+            rotate_world(source.pose.bones[f"Biped_arm_{s}"], "Z", cvi(f"arm_yaw_{s}", ph))
 
-    # ---- pass 1: pose every frame, measure how far the feet are from the ground
-    dz = []
+    def ankles():
+        return {s: (mw @ source.pose.bones[f"Biped_foot_{s}"].head) for s in SIDES}
+
+    # ---- pass 1: pose every frame, measure how far the feet are from the ground (and, with
+    # the foot lock, how far the planted feet drift horizontally)
+    dz, lock = [], []
+    clamp_objs = list(ground_objs) + (list(prop_objs) if rt.get("clamp_props") else [])
+    ank0 = None
     for f in range(F):
         pose(f)
-        low = _lowest_z(ground_objs) if ground_objs else ground_z
+        low = _lowest_z(clamp_objs) if clamp_objs else ground_z
         dz.append(ground_z - low)
+        if foot_lock:
+            an = ankles()
+            zmin = min(v.z for v in an.values())
+            w = {s: math.exp(-(an[s].z - zmin) / 0.15) for s in SIDES}
+            y = sum(w[s] * an[s].y for s in SIDES) / sum(w.values())
+            if ank0 is None:
+                ank0 = y
+            lock.append(ank0 - y if f / F <= foot_lock_until + 1e-9 else lock[-1])
+        else:
+            lock.append(0.0)
     dz = np.array(dz)
+    dy = np.array(lock) - np.array([cvi("root_fwd", f / F) for f in range(F)])    # forward is -Y
     bob = dz - dz.mean()
     dz = dz.mean() + bob * bob_gain
     log(f"   ground clamp: root shift {dz.min():+.3f}..{dz.max():+.3f} (bob amplitude "
-        f"{(bob.max()-bob.min())/2:.3f} units peak, gain {bob_gain})")
+        f"{(bob.max()-bob.min())/2:.3f} units peak, gain {bob_gain}); horizontal root shift "
+        f"{dy.min():+.3f}..{dy.max():+.3f}")
 
     # ---- pass 2: pose again with the root shift and record every bone's basis
     rec = {b: [] for b in bones}
+    tip_log = []
     for f in range(F):
         pose(f)
         hip = source.pose.bones["Biped_hip"]
-        hip.matrix = mw.inverted() @ Matrix.Translation((0, 0, float(dz[f]))) @ mw @ hip.matrix
+        hip.matrix = mw.inverted() @ Matrix.Translation((0, float(dy[f]), float(dz[f]))) @ mw @ hip.matrix
         dep_update()
         for b in bones:
             pb = source.pose.bones[b]
             rec[b].append((tuple(pb.location), tuple(pb.rotation_quaternion)))
-        if f in (0, F // 4, F // 2):
+        if f in (0, F // 4, F // 2, 3 * F // 4, F - 1):
             th = {s: round(abs_angle(source.pose.bones[f"Biped_thigh_{s}"], "down"), 1) for s in SIDES}
             kn = {s: round(abs_angle(source.pose.bones[f"Biped_thigh_{s}"], "down")
                            - abs_angle(source.pose.bones[f"Biped_leg_{s}"], "down"), 1) for s in SIDES}
-            log(f"   frame {f}: thigh {th} knee {kn} root dz {dz[f]:+.3f}")
+            an = ankles()
+            log(f"   frame {f} (phase {f/F:.2f}): thigh {th} knee {kn} root dz {dz[f]:+.3f} dy {dy[f]:+.3f} "
+                f"ankle y R {an['R'].y:+.2f} L {an['L'].y:+.2f}")
+        if prop_objs:
+            tip_log.append((f, _prop_extent(prop_objs)))
+    if tip_log:
+        lo = min(t[1][0] for t in tip_log)
+        hi = max(t[1][1] for t in tip_log)
+        log(f"   props: lowest point {lo:+.3f} (ground {ground_z:+.3f}), highest {hi:.3f} over the clip")
+        for f, (zlo, zhi, ymin) in tip_log:
+            if zlo < ground_z - 0.05:
+                log(f"      frame {f}: a prop dips {ground_z - zlo:.2f} below the ground")
 
-    # ---- write the action (linear keys on every frame, key F repeats key 0 so the loop closes)
+    # ---- write the action (linear keys on every frame; looping: key F repeats key 0 so the
+    # loop closes; non-looping: H hold frames of the final pose so the bake's last sample is it)
     act = bpy.data.actions.new(name)
     if hasattr(act, "slots"):
         slot = act.slots.new(id_type="OBJECT", name="Biped")
@@ -627,15 +1026,16 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
         curves = strip.channelbag(slot, ensure=True).fcurves
     else:
         curves = act.fcurves
-    frames_x = np.arange(F + 1, dtype=np.float64)
+    N = F + 1 if loop else F + H
+    frames_x = np.arange(N, dtype=np.float64)
     nk = 0
     for b in bones:
-        vals = rec[b] + [rec[b][0]]
+        vals = rec[b] + ([rec[b][0]] if loop else [rec[b][-1]] * H)
         for path, width, idx in (("location", 3, 0), ("rotation_quaternion", 4, 1)):
             for c in range(width):
                 fc = curves.new(f'pose.bones["{b}"].{path}', index=c)
-                fc.keyframe_points.add(F + 1)
-                co = np.empty(2 * (F + 1))
+                fc.keyframe_points.add(N)
+                co = np.empty(2 * N)
                 co[0::2] = frames_x
                 co[1::2] = [v[idx][c] for v in vals]
                 fc.keyframe_points.foreach_set("co", co)
@@ -644,13 +1044,36 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
                 fc.update()
                 nk += 1
     act.use_fake_user = True
+    act["loop"] = bool(loop)
+    act["cycle_frames"] = F
+    if clip.get("impact_phase") is not None:
+        act["impact_phase"] = float(clip["impact_phase"])
     source.animation_data.action = act
     if hasattr(source.animation_data, "action_slot"):
         slots = list(getattr(act, "slots", []))
         if slots:
             source.animation_data.action_slot = slots[0]
-    log(f"== action {name}: frames 0..{F}, {nk} curves, {len(bones)} bones keyed")
+    log(f"== action {name}: frames 0..{N-1}, {nk} curves, {len(bones)} bones keyed, loop={loop}")
     return act
+
+
+def _prop_extent(objs):
+    """(lowest z, highest z, min y) over the evaluated prop meshes (sword tip checks)."""
+    import bpy
+    dg = bpy.context.evaluated_depsgraph_get()
+    zlo, zhi, ymin = 1e9, -1e9, 1e9
+    for o in objs:
+        ev = o.evaluated_get(dg)
+        me = ev.to_mesh()
+        n = len(me.vertices)
+        arr = np.empty(n * 3)
+        me.vertices.foreach_get("co", arr)
+        arr = arr.reshape(n, 3)
+        m = np.array(ev.matrix_world)
+        w = arr @ m[:3, :3].T + m[:3, 3]
+        ev.to_mesh_clear()
+        zlo, zhi, ymin = min(zlo, w[:, 2].min()), max(zhi, w[:, 2].max()), min(ymin, w[:, 1].min())
+    return float(zlo), float(zhi), float(ymin)
 
 
 def _lowest_z(objs):
@@ -699,9 +1122,42 @@ def main():
     e.add_argument("--chest-yaw", type=float, default=-6.0, help="degrees relative to the pelvis")
     e.add_argument("--out", required=True)
     e.add_argument("--previews")
+
+    o = sub.add_parser("oneshot", help="video segment -> one-shot clip JSON (attack, death)")
+    o.add_argument("--video", required=True)
+    o.add_argument("--model", required=True)
+    o.add_argument("--start", type=float, required=True, help="trim in (s)")
+    o.add_argument("--end", type=float, required=True, help="trim out (s)")
+    o.add_argument("--facing", choices=("right", "left"), default="right")
+    o.add_argument("--min-conf", type=float, default=0.3)
+    o.add_argument("--smooth-s", type=float, default=0.17, help="Savitzky-Golay window (s)")
+    o.add_argument("--keys", required=True, help="time warp: src_seconds=phase,... (phase 0 first)")
+    o.add_argument("--synth", action="append", help="phase:curve=value,...  ('*=start' copies the phase-0 pose)")
+    o.add_argument("--phase-curve", action="append",
+                   help="synthesized curve: name=phase:value,phase:value,... (wrist_R, arm_yaw_R, chest_yaw, "
+                        "pelvis_yaw, upperarm_L, elbow_L, root_fwd)")
+    o.add_argument("--cycle", type=float, required=True, help="clip length (s)")
+    o.add_argument("--hold-s", type=float, default=0.2, help="non-looping: hold of the final pose appended")
+    o.add_argument("--loop", action="store_true", help="cycle back to the phase-0 pose (attack)")
+    o.add_argument("--impact-phase", type=float, default=None)
+    o.add_argument("--samples", type=int, default=40)
+    o.add_argument("--gain", default="arm=1.0,crouch=1.0,foot=0.7,torso=1.0",
+                   help="about the phase-0 pose: sword arm excursion, leg crouch, foot pitch, torso lean")
+    o.add_argument("--torso-ref", default="auto", help="standing torso lean (deg) or 'auto' (video start)")
+    o.add_argument("--torso-ref-window", type=float, default=0.5)
+    o.add_argument("--arm-mode", choices=("relative", "absolute"), default="absolute")
+    o.add_argument("--shield-mode", choices=("relative", "offset", "absolute"), default="offset")
+    o.add_argument("--head-counter", type=float, default=0.6, help="fraction of the torso lean undone at the head")
+    o.add_argument("--foot-lock", action="store_true")
+    o.add_argument("--foot-lock-until", type=float, default=1.0, help="phase after which the lock holds")
+    o.add_argument("--clamp-props", action="store_true", help="keep the props above the ground too (death)")
+    o.add_argument("--out", required=True)
+    o.add_argument("--previews")
     a = ap.parse_args()
     if a.cmd == "extract":
         extract(a)
+    elif a.cmd == "oneshot":
+        extract_oneshot(a)
 
 
 if __name__ == "__main__":

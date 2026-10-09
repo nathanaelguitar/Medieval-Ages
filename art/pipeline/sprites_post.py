@@ -8,6 +8,10 @@ manifest snippet, and preview strips. Runs in the system python (needs Pillow).
 ``--contrast a`` (v3: 0.35) applies a gentle S-curve to the character's sRGB values,
 ``x - a*sin(2*pi*x)/(2*pi)``, which deepens quarter-tones by about a/6 and leaves black and white
 where they are, so bright steel highlights do not clip; ``--saturation`` scales chroma about luma.
+
+v4: a tile may carry its own ``size`` (attack and death use an 88px cell at the same scale), and
+a clip entry gains ``loop: false`` (play once, hold the last frame) and ``impact_frame`` (the
+frame the game times its damage flash to) when the bake recorded them.
 """
 import argparse
 import json
@@ -82,6 +86,7 @@ def main():
     manifest, manifest2x = {}, {}
     clips = {}
     for fr in meta["frames"]:
+        size = fr.get("size", meta["size"])        # v4: a clip may use a larger cell (attack, death)
         src = tone(Image.open(os.path.join(a.tiles, fr["file"])).convert("RGBA"), a.contrast, a.saturation)
         if fr.get("shadow"):
             src = composite_shadow(src, os.path.join(a.tiles, fr["shadow"]), fr["fp_cx"], fr["fp_cy"],
@@ -101,13 +106,18 @@ def main():
             "file": fn, "w": size * 2, "h": size * 2, "fill": round(opaque / (size * size), 4),
             "fp_w": round(fr["fp_w"] * 2, 2), "fp_cx": round(fr["fp_cx"] * 2, 2), "fp_cy": round(fr["fp_cy"] * 2, 2)}
         c = clips.setdefault(key, {"clip": fr["clip"], "duration": fr["duration"], "files": [],
-                                   "team": fr["team"], "dir": fr["dir"]})
+                                   "team": fr["team"], "dir": fr["dir"], "loop": fr.get("loop", True),
+                                   "impact_frame": fr.get("impact_frame"), "size": size})
         c["files"].append((fr["frame"], fn))
     for key, c in clips.items():
         files = [fn for _, fn in sorted(c["files"])]
         entry = {"group": "animation", "frames": len(files), "files": files, "clip": c["clip"],
                  "duration": c["duration"], "fps": round(len(files) / c["duration"], 3),
                  "team": c["team"], "dir": c["dir"]}
+        if not c["loop"]:
+            entry["loop"] = False          # play once and hold the last frame (death)
+        if c["impact_frame"] is not None:
+            entry["impact_frame"] = c["impact_frame"]   # the frame the game times its damage flash to
         manifest[key] = entry
         manifest2x[key] = dict(entry)
     # a small header describing the direction convention
@@ -138,16 +148,23 @@ def main():
             if not keys:
                 continue
             nf = max(len(clips[k]["files"]) for k in keys)
+            size = clips[keys[0]]["size"]
             W, H = size * z * nf + 60, size * z * len(keys) + 24
             sheet = Image.new("RGBA", (W, H), (96, 118, 76, 255))
             d = ImageDraw.Draw(sheet)
-            d.text((6, 4), f"{name} {team} {clip}: rows = direction d0..d{len(keys)-1}, columns = frames; shown {z}x", fill=(255, 255, 255))
+            imp = clips[keys[0]].get("impact_frame")
+            d.text((6, 4), f"{name} {team} {clip}: rows = direction d0..d{len(keys)-1}, columns = frames; shown {z}x"
+                   + (f"; impact frame {imp} outlined" if imp is not None else ""), fill=(255, 255, 255))
             for r, k in enumerate(keys):
                 d.text((6, 24 + r * size * z + 4), f"d{clips[k]['dir']}", fill=(255, 255, 255))
                 for cidx, (_, fn) in enumerate(sorted(clips[k]["files"])):
                     im = Image.open(os.path.join(sprites, fn)).convert("RGBA")
                     im = im.resize((size * z, size * z), Image.NEAREST)
                     sheet.alpha_composite(im, (60 + cidx * size * z, 24 + r * size * z))
+                    if imp is not None and cidx == imp:
+                        d.rectangle((60 + cidx * size * z, 24 + r * size * z,
+                                     60 + (cidx + 1) * size * z - 1, 24 + (r + 1) * size * z - 1),
+                                    outline=(255, 220, 80), width=2)
             out = os.path.join(prev_dir, f"sprites_{team}_{clip}.png")
             sheet.save(out)
             print("preview", out)

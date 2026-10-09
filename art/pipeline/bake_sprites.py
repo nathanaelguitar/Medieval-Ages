@@ -42,6 +42,13 @@ system-python step (Blender's python has no PIL), which also writes the manifest
 
 Lighting: one warm, low sun (late afternoon) with a soft angular size plus a dim cool sky fill; a
 shadow-catcher ground plane puts a soft contact shadow into the alpha channel.
+
+v4: ``--px-per-unit`` pins the shared scale (so idle/walk stay the size v3 baked them at) and a
+clip may ask for a larger cell, ``--clip attack=10:88``: same scale, same footprint disc, more
+canvas for a sword wound up overhead or a body lying on the ground. The game draws every frame
+from its own w/h/fp_cx/fp_cy, so cells of different sizes mix freely. The camera is also placed
+per clip (x centred on that clip's frames, its lowest point 2px above the bottom), and
+``--dry-run`` reports the tightest cell margin per clip without rendering.
 """
 import argparse
 import json
@@ -64,7 +71,7 @@ def parse_args():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--name", required=True)
     ap.add_argument("--teams", default="blue,red")
-    ap.add_argument("--clip", action="append", required=True, help="clipname=frames")
+    ap.add_argument("--clip", action="append", required=True, help="clipname=frames[:cellsize]")
     ap.add_argument("--dirs", type=int, default=8)
     ap.add_argument("--size", type=int, default=72)
     ap.add_argument("--supersample", type=int, default=2)
@@ -91,6 +98,10 @@ def parse_args():
     ap.add_argument("--shadow-blur", type=float, default=0.75, help="shadow blur in sprite pixels")
     ap.add_argument("--contrast", type=float, default=0.0, help="sprites_post.py S-curve strength (v3: 0.35)")
     ap.add_argument("--saturation", type=float, default=1.0, help="sprites_post.py chroma scale")
+    ap.add_argument("--dry-run", action="store_true", help="sample, report scale and margins, render nothing")
+    ap.add_argument("--px-per-unit", type=float, default=None,
+                    help="pin the shared scale (v3 baked at 14.34) instead of fitting the largest frame; "
+                         "frames that then exceed the cell are reported per clip")
     return ap.parse_args(argv)
 
 
@@ -251,8 +262,17 @@ def main():
     clips = []
     for spec in a.clip:
         name, n = spec.split("=")
+        n, _, cell = n.partition(":")
         act = bpy.data.actions[f"clip_{name}"]
-        clips.append((name, int(n), act))
+        clips.append((name, int(n), act, int(cell) if cell else a.size))
+    # per-clip metadata written by video_to_clip.build_action (one-shot clips)
+    clip_meta = {}
+    for name, n, act, cell in clips:
+        loop = bool(act.get("loop", True))
+        imp = act.get("impact_phase", None)
+        clip_meta[name] = {"loop": loop, "size": cell,
+                           "impact_frame": int(round(float(imp) * n)) % n if imp is not None else None}
+        print(f"   clip {name}: {n} frames, {cell}px cell, loop={loop}, impact_frame={clip_meta[name]['impact_frame']}")
     scene, cam, ground = setup_render(a)
     full_samples = scene.cycles.samples
     size, ss = a.size, a.supersample
@@ -261,7 +281,7 @@ def main():
 
     # ---- sample every frame once: deformed points for framing and footprints
     samples = []   # (clip, i, frame_float, points, duration)
-    for name, n, act in clips:
+    for name, n, act, _ in clips:
         bind(source, act)
         start, end = action_range(act)
         span = end - start
@@ -273,6 +293,26 @@ def main():
                             evaluated_points([body])))
     allpts = np.concatenate([s[3] for s in samples])
     ground_z = float(allpts[:, 2].min())
+    # sword tip per frame of the one-shot clips (forward is -Y): a check that the designed impact
+    # frame is where the blade is furthest forward / lowest
+    sword = bpy.data.objects.get("Sword")
+    if sword is not None:
+        tip_i = int(np.argmax([v.co.y for v in sword.data.vertices]))
+        for name, n, act, _ in clips:
+            if clip_meta[name]["impact_frame"] is None and clip_meta[name]["loop"]:
+                continue
+            bind(source, act)
+            start, end = action_range(act)
+            rows = []
+            for i in range(n):
+                f = start + i * (end - start) / n
+                scene.frame_set(int(f), subframe=f - int(f))
+                bpy.context.view_layer.update()
+                dg = bpy.context.evaluated_depsgraph_get()
+                ev = sword.evaluated_get(dg)
+                tip = ev.matrix_world @ ev.data.vertices[tip_i].co
+                rows.append(f"{i}:(fwd {-tip.y:+.2f}, z {tip.z:.2f})")
+            print(f"   sword tip, clip {name}: " + " ".join(rows))
     body0 = samples[0][5]
     foot_d = float(max(body0[:, 0].max() - body0[:, 0].min(), body0[:, 1].max() - body0[:, 1].min()))
     print(f"== {len(samples)} frames sampled, {len(allpts)} points, ground z={ground_z:.3f}, "
@@ -287,30 +327,63 @@ def main():
         p = allpts @ R.T
         span = max(span, p[:, 0].max() - p[:, 0].min(), p[:, 1].max() - p[:, 1].min())
     px_per_unit = size * FILL / span
-    ortho = size / px_per_unit            # world units across the whole cell
+    if a.px_per_unit:
+        print(f"   span {span:.3f} units would give {px_per_unit:.2f} px/unit; pinned to {a.px_per_unit:.2f}")
+        px_per_unit = a.px_per_unit
+    ortho = size / px_per_unit            # world units across the default cell
     cam.data.ortho_scale = ortho
     print(f"   span {span:.3f} units -> {px_per_unit:.2f} px/unit, ortho_scale {ortho:.3f}")
+    cell_of = {name: cell for name, n, act, cell in clips}
+    ortho_of = {name: cell / px_per_unit for name, cell in cell_of.items()}
 
-    # ---- per-direction camera placement: x centred, lowest point 2px above the bottom edge
-    placements = []
-    for k, (right, up, back) in enumerate(bases):
-        R = np.array([right, up])
-        p = allpts @ R.T
-        ox = (p[:, 0].max() + p[:, 0].min()) / 2
-        oy = p[:, 1].min() - 2.0 / px_per_unit + ortho / 2     # camera centre in the up axis
-        centre = Vector(right) * ox + Vector(up) * oy
-        cam_pos = centre + Vector(back) * 60.0
-        rot = Matrix((right, up, back)).transposed().to_4x4().to_euler()
-        placements.append((cam_pos, rot, right, up))
+    # ---- per-direction camera placement, per CLIP (v4): x centred on the clip's frames, the
+    # clip's lowest projected point 2px above the bottom edge. v3 placed every clip together; a
+    # corpse lying toward the camera or a sword wound up behind the head would push the other
+    # clips off centre or over the top. The game places every frame by its own fp_cx/fp_cy, so
+    # the cell position may differ per clip.
+    placements = {}
+    for name, n, act, cell in clips:
+        cpts = np.concatenate([s[3] for s in samples if s[0] == name])
+        for k, (right, up, back) in enumerate(bases):
+            R = np.array([right, up])
+            p = cpts @ R.T
+            ox = (p[:, 0].max() + p[:, 0].min()) / 2
+            oy = p[:, 1].min() - 2.0 / px_per_unit + ortho_of[name] / 2     # camera centre in the up axis
+            centre = Vector(right) * ox + Vector(up) * oy
+            cam_pos = centre + Vector(back) * 60.0
+            rot = Matrix((right, up, back)).transposed().to_4x4().to_euler()
+            placements[(name, k)] = (cam_pos, rot, right, up)
 
-    def project(points, k):
-        _, _, right, up = placements[k]
+    def project(points, name, k):
+        cam_pos, _, right, up = placements[(name, k)]
         R = np.array([right, up])
         p = points @ R.T
-        cp = np.array(placements[k][0]) @ R.T
-        x = (p[:, 0] - cp[0]) / ortho * size + size / 2
-        y = size / 2 - (p[:, 1] - cp[1]) / ortho * size
+        cp = np.array(cam_pos) @ R.T
+        cell = cell_of[name]
+        x = (p[:, 0] - cp[0]) * px_per_unit + cell / 2
+        y = cell / 2 - (p[:, 1] - cp[1]) * px_per_unit
         return x, y
+
+    # ---- per clip: how close every frame comes to the cell edge in every direction (a sword
+    # overhead or a lying body can exceed a pinned scale; report rather than silently clip)
+    clipped = False
+    for name, n, act, cell in clips:
+        margin, where = 1e9, None
+        for (cname, i, f, pts, _, _) in [s for s in samples if s[0] == name]:
+            for k in range(a.dirs):
+                x, y = project(pts, name, k)
+                edges = {"left": x.min(), "top": y.min(), "right": cell - x.max(), "bottom": cell - y.max()}
+                e = min(edges, key=edges.get)
+                if edges[e] < margin:
+                    j = int(np.argmin(x) if e == "left" else np.argmax(x) if e == "right"
+                            else np.argmin(y) if e == "top" else np.argmax(y))
+                    margin, where = edges[e], (i, k, e, pts[j])
+        clipped |= margin < 0
+        print(f"   clip {name}: tightest margin {margin:.1f} px of a {cell}px cell (frame {where[0]}, d{where[1]}, {where[2]} edge, "
+              f"point {tuple(round(float(v), 2) for v in where[3])}){'  ** CLIPS THE CELL **' if margin < 0 else ''}")
+    if a.dry_run:
+        print("== dry run: stopping before the render" + (" (something clips)" if clipped else ""))
+        return
 
     # ---- render
     meta = {"name": a.name, "size": size, "supersample": ss, "dirs": a.dirs, "yaw0": ISO_YAW,
@@ -321,8 +394,10 @@ def main():
         set_texture(body, team)
         for p in props:
             set_texture(p, team)
-        for name, n, act in clips:
+        for name, n, act, cell in clips:
             bind(source, act)
+            scene.render.resolution_x = scene.render.resolution_y = cell * ss
+            cam.data.ortho_scale = ortho_of[name]
             dur = next(s[4] for s in samples if s[0] == name)
             for (cname, i, f, pts, _, bpts) in [s for s in samples if s[0] == name]:
                 scene.frame_set(int(f), subframe=f - int(f))
@@ -336,9 +411,9 @@ def main():
                 for k in range(a.dirs):
                     if only and [team, name, str(k), str(i)] != only:
                         continue
-                    cam_pos, rot, _, _ = placements[k]
+                    cam_pos, rot, _, _ = placements[(name, k)]
                     cam.location, cam.rotation_euler = cam_pos, rot
-                    fx, fy = project(corners, k)
+                    fx, fy = project(corners, name, k)
                     fn = f"{a.name}_{team}_{name}_d{k}_{i}.png"
                     shadow_fn = fn[:-4] + "_shadow.png" if a.shadow_pass else None
                     scene.render.filepath = os.path.join(tiles_dir, fn)
@@ -366,6 +441,8 @@ def main():
                         "team": team, "clip": name, "dir": k, "frame": i, "file": fn,
                         "shadow": shadow_fn,
                         "duration": round(dur, 4), "nframes": n,
+                        "loop": clip_meta[name]["loop"], "impact_frame": clip_meta[name]["impact_frame"],
+                        "size": cell,
                         "fp_w": round(float(fx.max() - fx.min()), 2),
                         "fp_cx": round(float((fx.max() + fx.min()) / 2), 2),
                         "fp_cy": round(float((fy.max() + fy.min()) / 2), 2)})

@@ -46,6 +46,10 @@ of the first (.dae) clip, so give the idle first. v3 man-at-arms:
         --out art/models/man_at_arms_v3/man_at_arms_rig.blend --diag art/out/man_at_arms_v3/previews/rig_diag
 
 (copy v2's ``_cache/*.glb`` next to the new .blend first: assimp 5.3 cannot convert the idle).
+v4 adds one-shot clips from video_to_clip.py's ``oneshot`` mode (``--clip attack=...json
+--clip death=...json``; see art/pipeline/run_v4.sh) and, with ``--diag``, a Workbench filmstrip
+per video clip (``<clip>_strip.png``: ``--strip-frames`` frames x side/front/3-4 views) so the
+motion is judged before any Cycles bake.
 To move to Mixamo, export Mixamo FBX clips to glTF, import them as the Source armature instead
 (``to_glb`` is skipped for .glb paths once added) and map bone names Biped_* -> mixamorig:* in
 the COPY_TRANSFORMS block below.
@@ -98,6 +102,7 @@ def parse_args():
     ap.add_argument("--clip", action="append", required=True, help="name=path.dae")
     ap.add_argument("--out", required=True, help=".blend to write")
     ap.add_argument("--diag", help="directory for diagnostic renders")
+    ap.add_argument("--strip-frames", type=int, default=12, help="frames per video-clip filmstrip in --diag")
     ap.add_argument("--height", type=float, default=4.2, help="body height in 0 A.D. units")
     ap.add_argument("--arm-delta", type=float, default=None,
                     help="degrees to swing the rig's upper arms outward (default: measured from the mesh)")
@@ -441,6 +446,32 @@ def nearest_bone_weights(body, rig, bone_names, k=2, power=4.0, smooth=4):
         bpy.ops.object.vertex_group_normalize_all(lock_active=False)
 
 
+def weight_loose_to_nearest(body, rig, bone_names, indices):
+    """Give the listed (unweighted) vertices weight 1 on the bone whose rest segment is nearest.
+    Returns how many were bound."""
+    bpy.context.view_layer.update()
+    V = world_verts(body).astype(np.float64)[indices]
+    heads, tails = [], []
+    for n in bone_names:
+        b = rig.pose.bones[n]
+        heads.append(np.array(rig.matrix_world @ b.head)); tails.append(np.array(rig.matrix_world @ b.tail))
+    H, T = np.array(heads), np.array(tails)
+    D = np.empty((len(V), len(H)))
+    for i in range(len(H)):
+        d = T[i] - H[i]
+        L2 = max(float(d @ d), 1e-9)
+        t = np.clip(((V - H[i]) @ d) / L2, 0, 1)
+        D[:, i] = np.linalg.norm(V - (H[i] + t[:, None] * d), axis=1)
+    nearest = np.argmin(D, axis=1)
+    groups = {g.name: g for g in body.vertex_groups}
+    for vi, bi in zip(indices, nearest):
+        name = bone_names[bi]
+        if name not in groups:
+            groups[name] = body.vertex_groups.new(name=name)
+        groups[name].add([int(vi)], 1.0, "REPLACE")
+    return len(indices)
+
+
 def pose_rotate_world(arm, pbone, axis, degrees):
     """Rotate a pose bone about a world axis through its head; children follow."""
     bpy.context.view_layer.update()
@@ -552,6 +583,64 @@ def diag_render(path, objs, arm, label, size=640):
     bpy.data.objects.remove(cam, do_unlink=True)
     print(f"   diag {label}: {tiles}")
     return tiles
+
+
+def diag_strip(path, objs, arm, act, n, size=320):
+    """Workbench filmstrip of a clip: n evenly spaced frames (the bake's sampling, start inclusive)
+    as columns, side / front / 3-4 views as rows, so motion is judged before any Cycles render.
+    Writes <path>.png."""
+    scene = bpy.context.scene
+    scene.render.engine = "BLENDER_WORKBENCH"
+    scene.display.shading.light = "STUDIO"
+    scene.display.shading.color_type = "TEXTURE"
+    scene.render.resolution_x = scene.render.resolution_y = size
+    scene.render.film_transparent = False
+    arm.show_in_front = True
+    arm.data.display_type = "STICK"
+    start, end = act.frame_range
+    frames = [start + i * (end - start) / n for i in range(n)]
+    # one framing for the whole strip: union of bounds over the sampled frames, ground at the bottom
+    lo, hi = None, None
+    for f in frames:
+        scene.frame_set(int(f), subframe=f - int(f))
+        bpy.context.view_layer.update()
+        for o in objs:
+            l2, h2 = bounds(o)
+            lo = l2 if lo is None else Vector((min(lo.x, l2.x), min(lo.y, l2.y), min(lo.z, l2.z)))
+            hi = h2 if hi is None else Vector((max(hi.x, h2.x), max(hi.y, h2.y), max(hi.z, h2.z)))
+    ext = max(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z) * 1.1
+    c = (lo + hi) / 2
+    cam_d = bpy.data.cameras.new("strip"); cam_d.type = "ORTHO"; cam_d.ortho_scale = ext
+    cam = bpy.data.objects.new("strip_cam", cam_d); scene.collection.objects.link(cam); scene.camera = cam
+    views = (("side", (c.x + 20, c.y, c.z), (math.pi / 2, 0, math.pi / 2)),
+             ("front", (c.x, c.y - 20, c.z), (math.pi / 2, 0, 0)),
+             ("3/4", (c.x - 14, c.y - 14, c.z), (math.pi / 2, 0, -math.pi / 4)))
+    tmp = os.path.join(os.path.dirname(path), "_strip_tmp.png")
+    tiles = {}
+    for vname, pos, rot in views:
+        cam.location = pos; cam.rotation_euler = rot
+        for i, f in enumerate(frames):
+            scene.frame_set(int(f), subframe=f - int(f))
+            scene.render.filepath = tmp
+            bpy.ops.render.render(write_still=True)
+            img = bpy.data.images.load(tmp)
+            px = np.array(img.pixels[:], dtype=np.float32).reshape(size, size, 4)
+            bpy.data.images.remove(img)
+            tiles[(vname, i)] = px[::-1]
+    bpy.data.objects.remove(cam, do_unlink=True)
+    sheet = np.zeros((size * len(views), size * n, 4), dtype=np.float32)
+    for r, (vname, _, _) in enumerate(views):
+        for i in range(n):
+            sheet[r * size:(r + 1) * size, i * size:(i + 1) * size] = tiles[(vname, i)]
+    out = bpy.data.images.new("strip_out", width=size * n, height=size * len(views), alpha=True)
+    out.pixels = sheet[::-1].ravel().tolist()
+    out.filepath_raw = path + ".png"
+    out.file_format = "PNG"
+    out.save()
+    bpy.data.images.remove(out)
+    if os.path.exists(tmp):
+        os.remove(tmp)
+    print(f"   strip {path}.png: {n} frames x {len(views)} views (frames {[round(f, 1) for f in frames]})")
 
 
 def main():
@@ -714,6 +803,13 @@ def main():
                              smooth=a.weight_smooth)
         nz = sum(1 for v in body.data.vertices if v.groups)
         print(f"== nearest-bone weights: {nz}/{len(body.data.vertices)} vertices weighted")
+    # bone heat leaves a few hundred vertices of the TRELLIS body unweighted (loose slivers); they
+    # would stay at their rest position and float as specks once the body crouches or lies down
+    # (v4 attack/death), so bind each to its nearest bone
+    loose = [v.index for v in body.data.vertices if not v.groups]
+    if loose:
+        n_loose = weight_loose_to_nearest(body, rig, sorted(rig_bones), loose)
+        print(f"   {n_loose} unweighted vertices bound to their nearest bone")
 
     # ---- constraints: Rig bones follow Source bones in world space
     for pb in rig.pose.bones:
@@ -772,10 +868,10 @@ def main():
     for name, path in json_clips:
         import video_to_clip
         act = video_to_clip.build_action(source, path, f"clip_{name}", base_action=first, base_frame=1,
-                                         ground_objs=[body])
+                                         ground_objs=[body], prop_objs=props)
         actions[name] = act
 
-    # ---- diagnostics: rest, then first frame of each clip
+    # ---- diagnostics: rest, then first frame of each clip, then a filmstrip per video clip
     if a.diag:
         bind(first)
         scene.frame_set(1)
@@ -785,6 +881,9 @@ def main():
             mid = int((act.frame_range[0] + act.frame_range[1]) / 2)
             scene.frame_set(mid)
             diag_render(os.path.join(a.diag, f"{name}_mid"), [body] + props, rig, f"{name} mid")
+        for name, _ in json_clips:
+            bind(actions[name])
+            diag_strip(os.path.join(a.diag, f"{name}_strip"), [body] + props, rig, actions[name], a.strip_frames)
 
     # ---- prop GLBs per team (the sword is team-neutral; both files are written for symmetry)
     out_dir = os.path.dirname(os.path.abspath(a.out))
