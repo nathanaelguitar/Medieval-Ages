@@ -171,6 +171,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 
 <script src="sprites/manifest.js"></script>
 <script src="sprites/manifest_man_at_arms.js"></script>
+<script src="sprites/manifest_buildings.js"></script>
 <script>
 "use strict";
 /* ============ constants & helpers ============ */
@@ -1193,12 +1194,25 @@ function drawSpr(k,sx,sy,targetW){
    gate is a prop authored to sit inside a fortress wall rather than a standalone gateway, and it has
    no mill at all. Mapping the Mill to bld_store -- as the other drop-offs do -- made four different
    buildings look identical. */
-const BLDSPR={tc:'bld_tc',barracks:'bld_barracks',woodyard:'bld_store',mine:'bld_store',market:'bld_store',tower:'bld_tower'};
-const HOUSES=['bld_house_a','bld_house_b','bld_house_c','bld_house_d','bld_house_e'];
+/* Medieval set (art/pipeline/buildings_from_images.py), cut out of photoreal renders and warped so
+   each footprint lands on the tile diamond. Every structure now has its own sprite, the Mill,
+   farms and walls included. The 0 A.D. bld_* sprites remain in the manifest as a fallback. */
+const BLDSPR={tc:'med_tc',barracks:'med_barracks',woodyard:'med_woodyard',mine:'med_mine',market:'med_market',
+ tower:'med_tower',mill:'med_mill',farm:'med_farm',palisade:'med_palisade',stonewall:'med_stonewall',gate:'med_gate'};
+const HOUSES=['med_house_a','med_house_b','med_house_c'];
+/* Wall segments are baked running along world x; the _b mirrors run along y. A segment follows
+   its neighbours so a line of them reads as one wall. */
+const WALLS={palisade:1,stonewall:1,gate:1};
+function wallAxis(b){
+ const at=(x,y)=>buildings.some(o=>!o.dead&&o!==b&&WALLS[o.type]&&o.tx===x&&o.ty===y);
+ const xs=at(b.tx-1,b.ty)||at(b.tx+1,b.ty),ys=at(b.tx,b.ty-1)||at(b.tx,b.ty+1);
+ return ys&&!xs?'y':'x'}
 function buildingSprite(b){
  if(!ART)return null;
  if(b.type==='house')return HOUSES[(b.tx*7+b.ty*13)%HOUSES.length];
- return BLDSPR[b.type]||null}
+ const k=BLDSPR[b.type];if(!k)return null;
+ if(WALLS[b.type]&&wallAxis(b)==='y')return SPRM[k+'_b']?k+'_b':k;
+ return SPRM[k]?k:null}
 /* 0 A.D. marks ownership with a player-colour tint on the material. Baking that would double the
    sprite count for a cosmetic difference, so it is applied once here and cached per frame. Multiply
    tints the sprite but also paints the transparent surround, so the original alpha is restored. */
@@ -1672,7 +1686,7 @@ function drawBuilding(b,ghost){
    if(f){ctx.save();ctx.globalAlpha=Math.min(0.55,b.flash*4);ctx.drawImage(f,dx,dy,dw,dh);ctx.restore()}}
   /* Banner on the sprite path too, planted on the sprite's own top edge rather than the tile
      footprint, so it sits on the roof instead of floating over the middle of the model. */
-  if(!ghost)drawBanner(b,ccx,dy+3);
+  if(!ghost&&!WALLS[b.type]&&b.type!=='farm')drawBanner(b,ccx,dy+3);
   if(selection.includes(b)||b.hp<b.maxhp)drawBar((A[0]+C[0])/2,A[1]-b.hh-12,34,b.hp/b.maxhp);
   return}
  ctx.save();if(ghost)ctx.globalAlpha=0.55;
@@ -1927,7 +1941,8 @@ function render(){
  for(const b of buildings){if(b.dead)continue;
   const sx=(b.cx-b.cy)*TW2,sy=(b.cx+b.cy)*TH2;
   if(sx<L-120||sx>R+120||sy<T-120||sy>B+120)continue;
-  dl.push([b.tx+b.ty+b.size+0.6,1,b])}
+  /* farms are flat ground, so they sort behind whoever is working them */
+  dl.push([b.type==='farm'?b.tx+b.ty-0.5:b.tx+b.ty+b.size+0.6,1,b])}
  for(const u of units){if(u.dead)continue;
   const sx=(u.x-u.y)*TW2,sy=(u.x+u.y)*TH2;
   if(sx<L||sx>R||sy<T||sy>B)continue;
