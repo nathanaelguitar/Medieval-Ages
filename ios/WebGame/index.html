@@ -46,7 +46,11 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .picon svg{width:15px;height:15px}
 .picon i{position:absolute;right:-4px;bottom:-4px;font-style:normal;background:#d9b36a;color:#1c1608;font-size:9px;font-weight:800;border-radius:7px;padding:0 3px}
 .pname{flex:1;font-size:11px;color:#ece6d4;margin-left:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pclose{background:none;border:none;color:#9a9a90;font-size:13px;padding:1px 4px;font-weight:700;line-height:1}
+/* Deselect: a big red target, since a thumb has to find it mid-fight. The negative margins let it
+   overhang the header row instead of making the whole panel taller. */
+.pclose{position:relative;flex:none;width:34px;height:34px;margin:-6px -3px -6px 4px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e5534b,#a61b1b 75%);border:2px solid rgba(255,255,255,.85);color:#fff;font-size:17px;font-weight:800;line-height:1;padding:0;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.5);cursor:pointer;touch-action:manipulation}
+.pclose:active{transform:scale(.92);filter:brightness(.9)}
+.pclose::before{content:"";position:absolute;inset:-8px}
 .php{height:4px;background:rgba(255,255,255,.12);border-radius:3px;margin:5px 0 1px;overflow:hidden}
 .php>div{height:100%;background:#68c05a;border-radius:3px}
 .pq{position:relative;height:14px;background:rgba(255,255,255,.1);border-radius:5px;margin-top:5px;overflow:hidden}
@@ -656,7 +660,14 @@ function spawnFrom(b,type){
  const u=mkUnit(b.team,type,s[0]+0.5,s[1]+0.5);
  const r=b.rally;
  if(r){
-  if(type==='vill'&&b.rallyRes&&!b.rallyRes.dead&&b.rallyRes.amt>0)setGather(u,b.rallyRes);
+  /* A flagged resource that has run out hands over to the nearest one of the same kind near the
+     flag, so a felled tree does not leave new villagers standing on its stump. */
+  let rr=b.rallyRes;
+  if(type==='vill'&&rr&&(rr.dead||rr.amt<=0)&&KCT[rr.kind]){
+   let best=null,bd=49;
+   for(const q of resources){if(q.dead||q.amt<=0||q.kind!==rr.kind)continue;const d=dist2(q.gx,q.gy,r.x,r.y);if(d<bd){bd=d;best=q}}
+   rr=b.rallyRes=best}
+  if(type==='vill'&&rr&&!rr.dead&&rr.amt>0)setGather(u,rr);
   else{u.order={type:'move'};setPath(u,r.x+rnd(-0.5,0.5),r.y+rnd(-0.5,0.5))}
  }else if(type==='vill'){
   let best=null,bd=144;
@@ -766,6 +777,15 @@ function tap(px,py){
  const now=performance.now();
  if(placing){tryPlace(wx,wy);return}
  const e=entityAt(wx,wy);
+ /* With a Town Center or Barracks selected, tapping a resource (or one of your farms) plants the
+    rally flag on it, so villagers trained there walk straight out to work instead of just being
+    told how much wood is left. */
+ const rb=selection.length===1&&selection[0].kind==='bld'&&selection[0].team===0&&(selection[0].type==='tc'||selection[0].type==='barracks')&&selection[0].done?selection[0]:null;
+ if(rb&&e&&(KCT[e.kind]||(e.kind==='bld'&&e.team===0&&e.type==='farm'&&e.done))){
+  lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
+  rb.rally={x:e.gx,y:e.gy};rb.rallyRes=e;ping(e.gx,e.gy,'#7fd4ff');sfx('ok');
+  toast(rb.type==='tc'?'New villagers will gather here':'Rally point set');
+  refreshPanel(true);return}
  if(e){
   if(e.kind==='unit'&&e.team===0){
    const dbl=lastTap.ty===e.type&&now-lastTap.t<350&&Math.hypot(px-lastTap.x,py-lastTap.y)<50;
