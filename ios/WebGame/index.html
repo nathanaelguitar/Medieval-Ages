@@ -1166,7 +1166,9 @@ function dirSprite(u){
  const a=ANIM[key];
  if(!a||!a.frames.length||!a.frames.every(f=>f.complete&&f.naturalWidth))return null;
  const n=a.frames.length;
- const ph=u.moving?Math.floor(u.anim):Math.floor((time+u.id*0.37)*a.fps);
+ /* u.anim runs at 7/s while moving, tuned for the 8-frame 0 A.D. cycles; rescale it so a baked
+    walk plays at its own manifest fps and the stride matches the clip it was extracted from. */
+ const ph=u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps);
  return a.frames[((ph%n)+n)%n]}
 function unitSprite(u){
  const base=u.type==='vill'?'unit_vill':'unit_spear';
@@ -1363,7 +1365,8 @@ function drawRes(r){
 function drawUnit(u){
  if(u.garrisoned)return;
  const[sx,sy]=w2s(u.x,u.y),tc=TEAMC[u.team];
- const bob=u.moving?Math.abs(Math.sin(u.anim*2))*1.8:Math.sin(time*2+u.id)*0.5;
+ /* Directional units bake their own body bob into the walk, so the procedural one would double it. */
+ const bob=DIR_UNIT[u.type]?0:u.moving?Math.abs(Math.sin(u.anim*2))*1.8:Math.sin(time*2+u.id)*0.5;
  const INK='#1b140d',SKIN='#e9ba8e';
  /* soft contact shadow: a flat ellipse reads as a sticker, a gradient reads as ground */
  const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
