@@ -18,7 +18,14 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
    thing to do is come back, and one tap on the dimmed map does it. z-index sits under #hud so the
    pause pill itself stays tappable (it toggles the same state). */
 #pauseOv{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,10,5,.42);backdrop-filter:blur(1.5px);z-index:9;cursor:pointer}
-#pauseCard{font-size:15px;letter-spacing:.06em;padding:9px 18px}
+/* Settings menu: opening it pauses the board. Resign sits behind a confirm step so a stray tap
+   cannot end a match. */
+#pauseCard{min-width:220px;padding:14px 16px 12px;border-radius:14px;background:rgba(14,18,11,.94);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#efe8d6;text-align:center;cursor:default}
+.pmTitle{font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;color:#e6dcc4}
+.pmBtn{display:block;width:100%;margin:7px 0 0;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#efe8d6;font-weight:700;font-size:15px;line-height:1;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.pmBtn:active{transform:scale(.97)}
+.pmDanger{background:linear-gradient(#b5302a,#86201b);border-color:rgba(255,190,180,.45);color:#fff}
+.pmAsk{margin:0 0 4px;font-size:13px;line-height:1.35;color:#d9d1bd}
 #hud{position:absolute;inset:0;pointer-events:none;color:#fff;z-index:10}
 .ui{pointer-events:auto;touch-action:none}
 /* top resources */
@@ -122,7 +129,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 <div id="vig"></div>
 <div id="hud">
  <div id="resbar">
-  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Pause"></div>
+  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Settings"></div>
  </div>
  <div id="mmWrap" class="ui"><canvas id="mm" width="150" height="84"></canvas></div>
  <div id="panel" class="ui"></div>
@@ -130,7 +137,18 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
  <div id="joyZone" class="ui"><div id="joyBase"><div id="joyNub"></div></div></div>
  <div id="toasts"></div>
 </div>
-<div id="pauseOv"><div class="pill" id="pauseCard"></div></div>
+<div id="pauseOv"><div id="pauseCard">
+  <div class="pmTitle">Paused</div>
+  <div id="pmMain">
+   <button class="pmBtn" id="pmResume">Resume</button>
+   <button class="pmBtn pmDanger" id="pmResign">Resign</button>
+  </div>
+  <div id="pmConfirm" style="display:none">
+   <p class="pmAsk">Resign this match? It counts as a defeat.</p>
+   <button class="pmBtn pmDanger" id="pmResignYes">Resign</button>
+   <button class="pmBtn" id="pmResignNo">Keep fighting</button>
+  </div>
+ </div></div>
 <div id="startOv" class="ov ui">
  <h1>POCKET<span>EMPIRES</span></h1>
  <p class="sub">a tiny Age-of-Empires–style skirmish</p>
@@ -204,8 +222,7 @@ const ICO={
  s:'<svg viewBox="0 0 14 14"><path d="m7 1.5 4.6 3.2-1.7 6-5.8 1.1-2.1-5.5z" fill="#aeb6bd" stroke="#68717a" stroke-width="1"/></svg>',
  p:'<svg viewBox="0 0 14 14"><circle cx="7" cy="4.8" r="2.5" fill="#cfd6e4"/><path d="M2.8 12.6c0-2.7 1.9-4.3 4.2-4.3s4.2 1.6 4.2 4.3z" fill="#cfd6e4"/></svg>',
  i:'<svg viewBox="0 0 14 14"><circle cx="7" cy="4.8" r="2.5" fill="#cfd6e4"/><path d="M2.8 12.6c0-2.7 1.9-4.3 4.2-4.3s4.2 1.6 4.2 4.3z" fill="#cfd6e4"/><circle cx="11.2" cy="11" r="1.7" fill="#d9b36a" stroke="#1c1608" stroke-width=".7"/></svg>'};
-const ICO_PAUSE='<svg viewBox="0 0 14 14"><rect x="3.4" y="2.6" width="2.6" height="8.8" rx="1.1" fill="#e6dcc4"/><rect x="8" y="2.6" width="2.6" height="8.8" rx="1.1" fill="#e6dcc4"/></svg>';
-const ICO_PLAY='<svg viewBox="0 0 14 14"><path d="M4.2 2.6 11.4 7l-7.2 4.4z" fill="#e6dcc4"/></svg>';
+const ICO_GEAR='<svg viewBox="0 0 24 24"><path fill="#e6dcc4" fill-rule="evenodd" d="M18.4 13a6.6 6.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L14 3.5h-4l-.4 2.5a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L5.6 11a6.6 6.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM12 15.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4z"/></svg>';
 const ICON={
  vill:'<svg viewBox="0 0 20 20"><circle cx="10" cy="5.4" r="2.6" fill="#e8e2d2"/><path d="M4.6 16.6c0-3.4 2.4-5.4 5.4-5.4s5.4 2 5.4 5.4z" fill="#e8e2d2"/></svg>',
  swords:'<svg viewBox="0 0 20 20"><path d="M16.5 3.5 8 12" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round"/><path d="M6.4 10.4l3.2 3.2" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round"/><path d="M6.6 14.6l-2.4 2.4" stroke="#c89b52" stroke-width="2.6" stroke-linecap="round"/></svg>',
@@ -557,8 +574,8 @@ function kill(t){
 function checkEnd(){if(over)return;
  if(!buildings.some(b=>!b.dead&&b.team===1&&b.type==='tc'))end(true);
  else if(!buildings.some(b=>!b.dead&&b.team===0&&b.type==='tc'))end(false)}
-function end(win){over=true;sfx(win?'done':'crash');
- setTimeout(()=>{$('endTitle').textContent=win?'Victory':'Defeat';$('endSub').textContent=win?'The enemy Town Center lies in ruins.':'Your Town Center has been destroyed.';$('endOv').style.display='flex'},900)}
+function end(win,resigned){if(over)return;over=true;sfx(win?'done':'crash');
+ setTimeout(()=>{$('endTitle').textContent=win?'Victory':'Defeat';$('endSub').textContent=win?'The enemy Town Center lies in ruins.':resigned?'You laid down your arms.':'Your Town Center has been destroyed.';$('endOv').style.display='flex'},900)}
 function acquire(u,r){
  let best=null,bd=r*r;
  for(const t of units){if(t.dead||t.garrisoned||t.team===u.team)continue;const d=dist2(u.x,u.y,t.x,t.y);if(d<bd){bd=d;best=t}}
@@ -2013,8 +2030,8 @@ function setPaused(on){
  paused=on;
  const b=$('ppause');
  b.classList.toggle('on',paused);
- b.innerHTML=paused?ICO_PLAY:ICO_PAUSE;
- b.title=paused?'Resume':'Pause';
+ b.innerHTML=ICO_GEAR;b.title='Settings';
+ $('pmMain').style.display='';$('pmConfirm').style.display='none';
  $('pauseOv').style.display=paused?'flex':'none';
  if(paused){if(AC&&AC.suspend)AC.suspend()}else if(AC&&AC.resume)AC.resume();
  lastT=0}
@@ -2051,9 +2068,13 @@ function scheduleTut(){
  .forEach(([t,m])=>setTimeout(()=>{if(started&&!over)toast(m)},t*1000))}
  $('pli').addEventListener('click',e=>{e.stopPropagation();selectIdle()});
  $('ppause').addEventListener('click',e=>{e.stopPropagation();if(!started||over)return;setPaused(!paused)});
- $('pauseOv').addEventListener('click',()=>{if(paused)setPaused(false)});
- $('pauseCard').innerHTML=ICO_PAUSE+'<b>PAUSED</b>';   /* the overlay's own label, not the pill's */
- $('ppause').innerHTML=ICO_PAUSE;
+ $('pauseOv').addEventListener('click',()=>{if(paused)setPaused(false)});   /* tap outside the card */
+ $('pauseCard').addEventListener('click',e=>e.stopPropagation());
+ $('pmResume').addEventListener('click',()=>setPaused(false));
+ $('pmResign').addEventListener('click',()=>{$('pmMain').style.display='none';$('pmConfirm').style.display=''});
+ $('pmResignNo').addEventListener('click',()=>{$('pmMain').style.display='';$('pmConfirm').style.display='none'});
+ $('pmResignYes').addEventListener('click',()=>{setPaused(false);end(false,true)});
+ $('ppause').innerHTML=ICO_GEAR;
  /* Space toggles pause on the web build, the way every RTS does it. */
  addEventListener('keydown',e=>{
   if(e.key!==' '&&e.key!=='Space')return;
