@@ -143,6 +143,37 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 #introSkip{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));
  padding:9px 18px;border-radius:20px;border:1px solid rgba(227,194,122,.6);background:rgba(0,0,0,.45);
  color:#e3c27a;font:600 15px Palatino,Georgia,serif;letter-spacing:.06em}
+/* First-play tutorial: coach marks over the live game rather than dialogs. The layer itself lets
+   every touch through; only its buttons take input. The ring's huge box-shadow dims everything but
+   the thing to press, without blocking it. It sits under #pauseOv so the gear menu still covers it. */
+#tut{position:absolute;inset:0;pointer-events:none;z-index:10}
+#tut[hidden]{display:none}
+#tutRing{position:absolute;display:none;border:3px solid #e3c27a;border-radius:14px;pointer-events:none;
+ box-shadow:0 0 0 9999px rgba(0,0,0,.28),0 0 16px 2px rgba(227,194,122,.75);animation:tutPulse 1.1s ease-in-out infinite}
+#tutRing.round{border-radius:50%}
+#tutRing.nodim{box-shadow:0 0 16px 2px rgba(227,194,122,.75)}
+@keyframes tutPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+#tutCap{position:absolute;left:50%;top:calc(44px + env(safe-area-inset-top));transform:translateX(-50%);
+ width:max-content;max-width:min(460px,calc(100vw - 370px));min-width:240px;display:flex;align-items:center;gap:10px;
+ padding:7px 8px 7px 14px;border-radius:14px;background:rgba(10,13,8,.9);border:1px solid rgba(227,194,122,.6);
+ box-shadow:0 6px 18px rgba(0,0,0,.5);color:#f0e9d7;pointer-events:auto}
+#tutTxt{flex:1;font:600 13.5px/1.3 Palatino,'Palatino Linotype',Georgia,serif;letter-spacing:.01em}
+#tutTxt small{display:block;font:700 9.5px -apple-system,system-ui,sans-serif;letter-spacing:.12em;color:#b98f47;margin-bottom:1px}
+.tutBtn{padding:6px 14px;border-radius:20px;border:1px solid rgba(227,194,122,.6);background:rgba(0,0,0,.45);
+ color:#e3c27a;font:600 14px Palatino,Georgia,serif;letter-spacing:.05em;pointer-events:auto;touch-action:manipulation;cursor:pointer;white-space:nowrap}
+.tutBtn:active{transform:scale(.95)}
+#tutNext{flex:none;background:linear-gradient(#ecd29a,#c9a253);color:#241a08;border-color:#8a6a2c;font-weight:700}
+#tutNext.late{background:rgba(0,0,0,.45);color:#e3c27a;border-color:rgba(227,194,122,.6)}
+#tutBar{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(106px + env(safe-area-inset-top));display:flex;gap:6px}
+#tutVoice{padding:6px 10px}
+/* While the tutorial talks, status toasts drop below its caption instead of stacking on it. */
+body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
+/* Build / Redraw for a drawn wall line: top centre, clear of the panel and the joystick. */
+#wallBar{position:absolute;top:calc(58px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9;display:flex;gap:10px}
+#wallBar[hidden]{display:none}
+#wallBar button{padding:9px 18px;border-radius:20px;font:700 15px Palatino,Georgia,serif;letter-spacing:.03em;
+ border:1px solid rgba(227,194,122,.65);background:rgba(20,16,10,.82);color:#e3c27a}
+#wallBar #wallOk{background:rgba(52,96,40,.92);color:#eaf6dc;border-color:#9fe08a}
 #startOv{align-items:flex-start;justify-content:center;text-align:left;
  padding-left:max(36px,calc(env(safe-area-inset-left) + 22px));
  background:linear-gradient(90deg,rgba(7,9,5,.92) 0%,rgba(7,9,5,.72) 30%,rgba(7,9,5,.15) 62%,rgba(7,9,5,0) 80%),
@@ -200,6 +231,9 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
  <div id="joyZone" class="ui"><div id="joyBase"><div id="joyNub"></div></div></div>
  <div id="toasts"></div>
 </div>
+<div id="tut" hidden><div id="tutRing"></div>
+ <div id="tutCap"><div id="tutTxt" aria-live="polite"><small id="tutN"></small><span id="tutS"></span></div><button class="tutBtn" id="tutNext">Next</button></div>
+ <div id="tutBar"><button class="tutBtn" id="tutVoice" aria-label="Narration on or off"></button><button class="tutBtn" id="tutSkip">Skip &#9654;</button></div></div>
 <div id="pauseOv"><div id="pauseCard">
   <div class="pmTitle">Paused</div>
   <div id="pmMain">
@@ -207,6 +241,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
    <label class="pmSlider"><span>Sound</span><input type="range" id="pmVolSfx" min="0" max="100" step="1"></label>
    <label class="pmSlider"><span>Music</span><input type="range" id="pmVolMusic" min="0" max="100" step="1"></label>
    <button class="pmBtn" id="pmMusic">Music: On</button>
+   <button class="pmBtn" id="pmTut">Replay tutorial</button>
    <button class="pmBtn pmDanger" id="pmResign">Resign</button>
   </div>
   <div id="pmConfirm" style="display:none">
@@ -217,6 +252,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
  </div></div>
 <div id="introOv"><video id="introVid" src="intro.mp4" playsinline webkit-playsinline preload="auto"></video>
  <button id="introSkip" hidden>Skip &#9654;</button></div>
+<div id="wallBar" class="ui" hidden><button id="wallOk">&#10003; Build</button><button id="wallRedo">&#8634; Redraw</button></div>
 <div id="startOv" class="ov ui">
  <div class="hero">
   <h1 class="title">MEDIEVAL<span>AGES</span></h1>
@@ -369,6 +405,9 @@ level=unlocked;
 try{const n=parseInt(localStorage.getItem('pe_level_next'),10);localStorage.removeItem('pe_level_next');
  if(n>=1&&n<=unlocked)level=n}catch(_){}
 const ai={t:0,wave:5,next:240};
+/* First-play tutorial state (driven by the tutorial block near init). While it runs the enemy AI
+   does not think at all, so a new player is never raided mid-lesson. */
+const T={on:false,i:0};
 const selMil=()=>selection.filter(s=>s.kind==='unit'&&s.team===0&&s.type!=='vill'&&!s.dead&&!s.garrisoned);
 const selUnits=t=>selection.filter(s=>s.kind==='unit'&&s.team===t&&!s.dead&&!s.garrisoned);
 const popOf=t=>units.reduce((n,u)=>n+(u.team===t&&!u.dead?1:0),0);
@@ -507,6 +546,7 @@ function genResources(){
     them) and no resMap slot. They are found by proximity via findResByKind. */
  function putAnimal(kind,x,y,amt){const r={kind,tx:x,ty:y,gx:x+0.5,gy:y+0.5,amt,amt0:amt,dead:false,
   animal:true,hx:x+0.5,hy:y+0.5,wt:rnd(1,4),wax:0,way:0,face:Math.random()<0.5?1:-1,flee:0,fx:0,fy:0};
+  if(kind==='boar'){r.hp=r.maxhp=60;r.bite=0}
   resources.push(r)}
  const forests=[[16,38,16],[6,35,16],[20,42,14],[38,17,16],[46,20,18],[34,12,16],[27,27,26],[31,34,18],[22,20,16],[40,30,18],[12,20,16],[46,34,18],[8,25,14],[50,28,14]];
  for(const[cx,cy,n]of forests){let placed=0;
@@ -530,7 +570,6 @@ function genResources(){
  [[11,24],[12,24],[11,25],[12,25],[33,44],[34,44],[33,45],[34,45],[21,17],[22,17],[21,18],
   [43,33],[44,33],[43,34],[44,34]].forEach(([x,y])=>{if(ok(x,y))putAnimal('sheep',x,y,120)});
 }
-function blockBorders(){for(let i=0;i<MAP;i++){grid[i]=0;grid[(MAP-1)*MAP+i]=0;grid[i*MAP]=0;grid[i*MAP+MAP-1]=0}}
 
 /* ============ entities ============ */
 function mkUnit(team,type,x,y){const d=DEFS[type];const u={kind:'unit',id:uid++,team,type,x,y,hp:d.hp,maxhp:d.hp,cd:rnd(0.3),order:{type:'idle'},lastTask:null,path:null,pi:0,dx:0,dy:0,carry:0,gt:0,gres:null,lastRes:null,face:1,anim:rnd(9),stuck:0,retries:0,lx:x,ly:y,flash:0,nT:0,fleeT:0,moving:false,engaged:-9,fire:-9};
@@ -635,7 +674,7 @@ function tradeMarket(m,a){
  sfx('coin');refreshPanel(true)
 }
 function canPlace(tx,ty,size){for(let j=0;j<size;j++)for(let i=0;i<size;i++){const x=tx+i,y=ty+j;
- if(x<1||y<1||x>MAP-2||y>MAP-2)return false;const k=y*MAP+x;
+ if(x<0||y<0||x>MAP-1||y>MAP-1)return false;const k=y*MAP+x;
  if(tiles[k]===2||grid[k]!==1||resMap.has(k)||gateAt.has(k))return false}return true}
 
 /* ============ pathfinding & movement ============ */
@@ -721,7 +760,7 @@ function separation(){
    else if(d2<=1e-6)b.x+=0.01}}}
 
 /* ============ combat ============ */
-function closestPoint(t,x,y){if(t.kind==='bld')return[clamp(x,t.tx,t.tx+t.size),clamp(y,t.ty,t.ty+t.size)];return[t.x,t.y]}
+function closestPoint(t,x,y){if(t.animal)return[t.gx,t.gy];if(t.kind==='bld')return[clamp(x,t.tx,t.tx+t.size),clamp(y,t.ty,t.ty+t.size)];return[t.x,t.y]}
 function hitFx(wx,wy){const[sx,sy]=w2s(wx,wy);for(let i=0;i<4;i++){const a=rnd(Math.PI*2);parts.push({x:sx,y:sy-8,vx:Math.cos(a)*rnd(10,40),vy:Math.sin(a)*rnd(10,40)-15,g:80,life:0,max:0.35,r:1.6,col:'#ffd28a'})}
  /* A puff of dust under the sparks. Sparks alone read as a glint; sparks plus ground kicked up
     read as an impact, which is what sells a hit at phone scale. */
@@ -784,6 +823,7 @@ function updArrow(a,dt){
 const leash=u=>u.team===0?4.5:9;
 function damage(t,amt,fromTeam,src){
  if(t.dead||t.hp<=0)return;
+ if(t.animal){hurtGame(t,amt,src);return}
  /* Return fire. A soldier that is idle, or marching with no unit to fight, turns on whoever hit
     it -- arrows included. Without this, idle troops only noticed enemies within 4.2 tiles, so
     archers (range 5.5) could stand just outside and shoot them down unanswered. Villagers flee
@@ -795,7 +835,7 @@ function damage(t,amt,fromTeam,src){
   const reach=leash(t)+DEFS[t.type].rng;
   if(o.type==='idle'&&dist2(t.x,t.y,src.x,src.y)<=reach*reach){t.order={type:'attack',target:src,auto:true,ax:t.x,ay:t.y};t.path=null;t.nT=0}
   else if(o.type==='amove'&&(!o.tgt||o.tgt.dead||o.tgt.kind==='bld'))o.tgt=src}
- t.hp-=amt;t.flash=0.15;
+ t.hp-=amt;t.flash=0.15;if(fromTeam===0)t.myHitT=time;
  bleed(t,amt);
  /* floating damage numbers, but only for fights the player is part of, and throttled so a
     big melee does not turn into a wall of text */
@@ -877,8 +917,12 @@ function deplete(r){r.amt=0;
     either: clearing the tile they happen to stand on would unblock real terrain. */
  else if(r.animal){r.dead=true}
  else{r.dead=true;resMap.delete(r.ty*MAP+r.tx);grid[r.ty*MAP+r.tx]=1}}
-function setGather(u,r){u.lastTask={type:'gather',res:r};u.order={type:'gather',res:r,kind:r.kind==='bld'?'farm':r.kind,ctype:KCT[r.kind]||'f',phase:'go'};u.path=null;u.nT=0;setPath(u,r.gx,r.gy)}
-function afterBuild(u){const r=u.lastRes;
+function setGather(u,r){u.wallQ=null;u.lastTask={type:'gather',res:r};u.order={type:'gather',res:r,kind:r.kind==='bld'?'farm':r.kind,ctype:KCT[r.kind]||'f',phase:'go'};u.path=null;u.nT=0;setPath(u,r.gx,r.gy)}
+function afterBuild(u){
+ /* a wall crew works its way along the line, nearest unfinished section next */
+ if(u.wallQ){const n=u.wallQ.filter(w=>!w.dead&&!w.done).sort((p,q)=>dist2(u.x,u.y,p.cx,p.cy)-dist2(u.x,u.y,q.cx,q.cy))[0];
+  if(n){assignBuild(u,n);return}u.wallQ=null}
+ const r=u.lastRes;
  if(r&&!r.dead&&r.amt>0)setGather(u,r);
  else{u.order={type:'idle'};u.lastTask=null}}
 function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
@@ -905,29 +949,64 @@ function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
     const r=findResByKind(near.kind,u.x,u.y,3)||near;setGather(u,r)}
    else afterBuild(u)}})}
 const DROP_SERVES={woodyard:['tree'],mine:['gold','stone'],mill:['berry']};
-/* Animals graze in place, drift within a short leash of where they spawned, and bolt
-   away from whoever is currently harvesting them. */
+/* Game. A boar is not a deer: shot, it turns and charges whoever hit it and gores them until it
+   drops, then lies as a 300-food carcass. Sheep are livestock: the first side to walk a unit up to
+   a stray claims it (an enemy who gets close to an unguarded one steals it), and the owner can tap
+   the flock and lead it home to the Town Center or a Mill. Unclaimed and idle animals graze and
+   drift within a short leash of where they spawned. */
+let sheepSel=[];
+function hurtGame(r,amt,src){
+ if(r.slain)return;
+ r.hp-=amt;r.flash=0.15;burst(r.gx,r.gy,'#8a1d14',4,30);
+ if(r.hp<=0){r.hp=0;r.slain=true;r.foe=null;r.wax=r.way=0;r.mv=false;burst(r.gx,r.gy,'#8a1d14',10,40);addStain(r.gx,r.gy,5,1.2);return}
+ if(src&&src.kind==='unit'&&!src.dead&&(!r.foe||r.foe.dead))r.foe=src}
+function animalStep(r,dx,dy,sp,dt){
+ const d=Math.hypot(dx,dy)||1,nx=r.gx+dx/d*sp*dt,ny=r.gy+dy/d*sp*dt;
+ if(passableAt(nx,ny)){r.gx=nx;r.gy=ny}else if(passableAt(nx,r.gy))r.gx=nx;else if(passableAt(r.gx,ny))r.gy=ny;else return false;
+ r.face=(dx-dy)>=0?1:-1;return true}
 function updAnimals(dt){
  for(const r of resources){
   if(!r.animal||r.dead)continue;
+  r.mv=false;if(r.flash>0)r.flash-=dt;
+  if(r.slain){r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}
+  if(r.kind==='boar'&&r.foe){
+   const f=r.foe;
+   if(f.dead||f.garrisoned||dist2(f.x,f.y,r.gx,r.gy)>144)r.foe=null;
+   else{const d2=dist2(f.x,f.y,r.gx,r.gy);r.bite-=dt;
+    if(d2>0.6){r.mv=animalStep(r,f.x-r.gx,f.y-r.gy,2.1,dt)}
+    else if(r.bite<=0){r.bite=1.4;r.face=(f.x-r.gx-(f.y-r.gy))>=0?1:-1;damage(f,2,-1,null);playAt('sword_hit',r.gx,r.gy,0.35)}
+    r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}}
+  if(r.kind==='sheep'){
+   /* claim: a unit of either side within two tiles takes a stray; an owned sheep changes hands
+      only when the enemy is beside it and none of the owner's units are */
+   let near=null,nd=4.8,mine=false;
+   for(const u of units){if(u.dead||u.garrisoned)continue;const d=dist2(u.x,u.y,r.gx,r.gy);
+    if(r.owner===u.team&&d<9)mine=true;if(d<nd){nd=d;near=u}}
+   if(near&&r.owner!==near.team&&!mine){r.owner=near.team;r.goal=null;sheepSel=sheepSel.filter(q=>q!==r);
+    if(near.team===0)ping(r.gx,r.gy,'#cfd6e4')}
+   if(r.goal){const dx=r.goal[0]-r.gx,dy=r.goal[1]-r.gy;
+    if(dx*dx+dy*dy<0.3||!animalStep(r,dx,dy,1.3,dt))r.goal=null;else r.mv=true;
+    r.hx=r.gx;r.hy=r.gy;r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}
+   if(r.owner!==undefined){r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}}   /* owned sheep stand where they are put */
   r.wt-=dt;
-  if(r.flee>0){
-   r.flee-=dt;
-   r.gx+=r.fx*dt;r.gy+=r.fy*dt;
-  }else{
-   if(r.wt<=0){r.wt=rnd(2.5,6.5);
-    if(Math.random()<0.42){r.wax=0;r.way=0}                 // mostly stand and graze
-    else{const a=rnd(Math.PI*2);r.wax=Math.cos(a);r.way=Math.sin(a)}}
-   if(r.wax||r.way){
-    const sp=r.kind==='boar'?0.58:0.42;
-    const nx=r.gx+r.wax*sp*dt,ny=r.gy+r.way*sp*dt;
-    const nk=Math.floor(ny)*MAP+Math.floor(nx);
-    /* stay on open ground: never drift into water, trees, ore or a building footprint */
-    if(nx>2&&ny>2&&nx<MAP-2&&ny<MAP-2&&tiles[nk]<2&&grid[nk]===1
-       &&dist2(nx,ny,r.hx,r.hy)<36){r.gx=nx;r.gy=ny;r.face=(r.wax-r.way)>=0?1:-1}
-    else{r.wax=-r.wax;r.way=-r.way}}}
+  if(r.wt<=0){r.wt=rnd(2.5,6.5);
+   if(Math.random()<0.42){r.wax=0;r.way=0}                 // mostly stand and graze
+   else{const a=rnd(Math.PI*2);r.wax=Math.cos(a);r.way=Math.sin(a)}}
+  if(r.wax||r.way){
+   const sp=r.kind==='boar'?0.58:0.42;
+   const nx=r.gx+r.wax*sp*dt,ny=r.gy+r.way*sp*dt;
+   const nk=Math.floor(ny)*MAP+Math.floor(nx);
+   /* stay on open ground: never drift into water, trees, ore or a building footprint */
+   if(nx>2&&ny>2&&nx<MAP-2&&ny<MAP-2&&tiles[nk]<2&&grid[nk]===1
+      &&dist2(nx,ny,r.hx,r.hy)<36){r.gx=nx;r.gy=ny;r.face=(r.wax-r.way)>=0?1:-1}
+   else{r.wax=-r.wax;r.way=-r.way}}
   r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy)}
 }
+/* Lead the selected flock to a spot or a building, fanned out so they do not stack. */
+function leadSheep(wx,wy,b){
+ const tgt=b?(()=>{const c=closestPoint(b,b.cx+b.size,b.cy+b.size);return[c[0]+0.6,c[1]+0.6]})():[wx,wy];
+ sheepSel.forEach((r,i)=>{const a=i*2.4,rr=i?0.55+0.25*Math.sqrt(i):0;r.goal=[tgt[0]+Math.cos(a)*rr,tgt[1]+Math.sin(a)*rr]});
+ ping(tgt[0],tgt[1],'#cfd6e4');sfx('ok')}
 function gatherStep(u,dt){
  const o=u.order;let r=o.res;
  if(!r||r.dead||r.amt<=0){
@@ -936,15 +1015,19 @@ function gatherStep(u,dt){
   else if(u.carry>=1)o.phase='ret';
   else{u.order={type:'idle'};return}}
  if(o.phase==='go'){
-  if(dist2(u.x,u.y,r.gx,r.gy)<2.1){u.path=null;o.phase='work'}
-  else{navTo(u,r.gx,r.gy);followPath(u,dt)}
+  /* a live boar is shot from a few tiles off; everything else (and the boar's carcass) is worked up close */
+  const hunt=r.kind==='boar'&&!r.slain;
+  if(dist2(u.x,u.y,r.gx,r.gy)<(hunt?9:2.1)){u.path=null;o.phase=hunt?'hunt':'work';u.cd=0.3}
+  else{if(hunt&&u.path&&time>u.nT)u.path=null;navTo(u,r.gx,r.gy);followPath(u,dt)}
+ }else if(o.phase==='hunt'){
+  if(r.slain||dist2(u.x,u.y,r.gx,r.gy)>16){o.phase='go';u.path=null}
+  else{u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.cd-=dt;
+   if(u.cd<=0){u.cd=1.1;spawnArrow(u,r,7);playAt('bow_release',u.x,u.y,0.5)}}
  }else if(o.phase==='work'){
   u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.anim+=dt*9;
   u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';
   const take=Math.min(1.1*dt*(u.team===1?LV.gather:1),r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
-  if(r.animal){ /* wounded game bolts, so the villager has to give chase */
-   r.flee=0.55;const dx=r.gx-u.x,dy=r.gy-u.y,d=Math.hypot(dx,dy)||1;
-   r.fx=dx/d*1.8;r.fy=dy/d*1.8;r.face=(dx-dy)>=0?1:-1}
+  if(r.animal&&!r.slain){r.slain=true;r.wax=r.way=0;r.goal=null;sheepSel=sheepSel.filter(q=>q!==r)}   /* butchered where it stands */
   if(u.gt>1.4){u.gt=0;const[sx,sy]=w2s(r.gx,r.gy);
    parts.push({x:sx+rnd(-5,5),y:sy-14,vx:rnd(-10,10),vy:-rnd(8,20),g:60,life:0,max:0.4,r:1.5,col:gatherCol(r)})}
   if(r.amt<=0)deplete(r);
@@ -1107,11 +1190,35 @@ function startPlace(type){
  if(placing&&placing.type===type){placing=null;refreshPanel(true);return}
  if(!canAfford(0,DEFS[type].cost)){toast('Not enough resources');sfx('no');return}
  placing={type,ghost:scr2w(cw/2,ch*0.42)};
- toast('Tap the map to place the '+DEFS[type].name);
  refreshPanel(true)}
+/* Walls are drawn, not stamped: drag across the tiles (or tap one), then Build or Redraw. The
+   line steps tile to tile through shared edges so the sections join up. Approving lays every
+   section that fits and that the stockpile pays for, and the selected villagers work along it. */
+const WALL_LINE={palisade:1,stonewall:1};
+const wTile=w=>[clamp(Math.round(w[0]-0.5),0,MAP-1),clamp(Math.round(w[1]-0.5),0,MAP-1)];
+function wallLine(a,b){
+ const out=[[a[0],a[1]]];let x=a[0],y=a[1],ix=0,iy=0;
+ const dx=Math.abs(b[0]-a[0]),dy=Math.abs(b[1]-a[1]),sx=b[0]>a[0]?1:-1,sy=b[1]>a[1]?1:-1;
+ while((ix<dx||iy<dy)&&out.length<80){if((0.5+ix)/dx<(0.5+iy)/dy){x+=sx;ix++}else{y+=sy;iy++}out.push([x,y])}
+ return out}
+function approveWall(){
+ if(!placing||!placing.line)return;
+ const type=placing.type,d=DEFS[type],made=[];let short=0;
+ for(const[x,y]of wallLine(placing.line[0],placing.line[1])){
+  if(!canPlace(x,y,1))continue;
+  if(!canAfford(0,d.cost)){short++;continue}
+  pay(0,d.cost);made.push(mkBuilding(0,type,x,y,false))}
+ if(!made.length){toast(short?'Not enough resources':"Can't build there");sfx('no');return}
+ const vills=selUnits(0).filter(u=>u.type==='vill');
+ /* spread the crew along the line rather than piling everyone on one end */
+ vills.forEach((u,i)=>{u.wallQ=made;assignBuild(u,made[Math.min(made.length-1,Math.floor((i+0.5)*made.length/vills.length))])});
+ toast(made.length+' wall section'+(made.length===1?'':'s')+(short?' · short by '+short:''));
+ ping(made[0].cx,made[0].cy,'#9fe08a');sfx('ok');placing=null;refreshPanel(true)}
+function redrawWall(){if(placing){placing.line=null;placing.pend=false}}
 function tryPlace(wx,wy){
  const d=DEFS[placing.type];
- const tx=Math.round(wx-d.size/2),ty=Math.round(wy-d.size/2);
+ /* snap inside the map so a tap on the last row still fits the whole footprint */
+ const tx=clamp(Math.round(wx-d.size/2),0,MAP-d.size),ty=clamp(Math.round(wy-d.size/2),0,MAP-d.size);
  if(!canPlace(tx,ty,d.size)){toast("Can't build there");sfx('no');return}
  pay(0,d.cost);
  const b=mkBuilding(0,placing.type,tx,ty,false);
@@ -1165,8 +1272,21 @@ function entityAt(wx,wy){
 function tap(px,py){
  const[wx,wy]=scr2w(px,py);
  const now=performance.now();
+ if(placing&&WALL_LINE[placing.type]){const t=wTile([wx,wy]);placing.line=[t,t];placing.pend=true;return}
  if(placing){tryPlace(wx,wy);return}
  const e=unitAtScreen(px,py)||entityAt(wx,wy);
+ /* Livestock: with no villagers selected, tapping one of your sheep selects it and the flock
+    around it; with sheep selected, another of yours adds to the flock, a building of yours or open
+    ground leads them there, and tapping a unit drops the flock and selects as usual. */
+ if(!selUnits(0).some(u=>u.type==='vill')&&e&&e.kind==='sheep'&&e.owner===0&&!e.slain){
+  if(sheepSel.length&&!sheepSel.includes(e))sheepSel.push(e);
+  else sheepSel=resources.filter(q=>q.kind==='sheep'&&q.owner===0&&!q.dead&&!q.slain&&dist2(q.gx,q.gy,e.gx,e.gy)<9);
+  selection=[];refreshPanel(true);sfx('sel');toast(sheepSel.length+' sheep · tap where to lead them');return}
+ if(sheepSel.length){sheepSel=sheepSel.filter(q=>!q.dead&&!q.slain);
+  if(e&&e.kind==='bld'&&e.team===0){leadSheep(0,0,e);return}
+  if(!e||(e.animal&&e.kind!=='sheep')||(!e.kind)){leadSheep(wx,wy);return}
+  if(e.kind!=='unit'){leadSheep(wx,wy);return}
+  sheepSel=[]}
  /* With a Town Center or Barracks selected, tapping a resource (or one of your farms) plants the
     rally flag on it, so villagers trained there walk straight out to work instead of just being
     told how much wood is left. */
@@ -1212,7 +1332,7 @@ function tap(px,py){
   if(f.length){orderMove(f,wx,wy);ping(wx,wy,'#9fe08a');sfx('ok');voice(f[0].type==='vill'?'ack':'select',f[0])}
   else selection=[]}
  refreshPanel(true)}
-function doBox(){
+function doBox(){sheepSel=[];
  const x0=Math.min(box.x0,box.x1),x1=Math.max(box.x0,box.x1);
  const y0=Math.min(box.y0,box.y1),y1=Math.max(box.y0,box.y1);
  const found=[];
@@ -1226,7 +1346,7 @@ function doBox(){
 /* ============ input ============ */
 function scr2wS(px,py){return[(px-cw/2)/zoom+camX,(py-ch/2)/zoom+camY]}
 function scr2w(px,py){const w=scr2wS(px,py);return[(w[1]/TH2+w[0]/TW2)/2,(w[1]/TH2-w[0]/TW2)/2]}
-function clampCam(){camX=clamp(camX,-MAP*TW2+180,MAP*TW2-180);camY=clamp(camY,140,MAP*TH-60)}
+function clampCam(){camX=clamp(camX,-MAP*TW2+60,MAP*TW2-60);camY=clamp(camY,40,MAP*TH+70)}
 const joyZone=$('joyZone'),joyNub=$('joyNub'),joyBase=$('joyBase');
 function joyUpdate(e){
  const r=joyBase.getBoundingClientRect();
@@ -1295,7 +1415,8 @@ cv.addEventListener('pointermove',e=>{
   p.moved=true;return}
  if(Math.hypot(p.x-p.sx,p.y-p.sy)>11)p.moved=true;
  if(p.moved){
-  if(placing)placing.ghost=scr2w(p.x,p.y);
+  if(placing){placing.ghost=scr2w(p.x,p.y);
+   if(WALL_LINE[placing.type]){placing.line=[wTile(scr2w(p.sx,p.sy)),wTile(placing.ghost)];placing.pend=false}}
   else if(box){box.x1=p.x;box.y1=p.y;box.active=true}
   else if(ptrs.size===1){camX-=(p.x-ox)/zoom;camY-=(p.y-oy)/zoom;clampCam()}}});
 const ptrUp=e=>{
@@ -1304,11 +1425,15 @@ const ptrUp=e=>{
  if(pinch){if(ptrs.size<2){pinch=null;const r=ptrs.values().next().value;
   if(r){r.sx=r.x;r.sy=r.y;r.t=performance.now();r.moved=false}}return}
  if(p.moved){
-  if(placing){const g=scr2w(p.x,p.y);tryPlace(g[0],g[1])}
+  if(placing&&WALL_LINE[placing.type]){if(placing.line)placing.pend=true}
+  else if(placing){const g=scr2w(p.x,p.y);tryPlace(g[0],g[1])}
   else if(box&&box.active){box.x1=p.x;box.y1=p.y;doBox()}}
  else tap(p.x,p.y);
  box=null};
-cv.addEventListener('pointerup',ptrUp);cv.addEventListener('pointercancel',ptrUp);
+cv.addEventListener('pointerup',ptrUp);
+const wallBarEl=document.getElementById('wallBar');
+document.getElementById('wallOk').addEventListener('click',e=>{e.stopPropagation();approveWall()});
+document.getElementById('wallRedo').addEventListener('click',e=>{e.stopPropagation();redrawWall()});cv.addEventListener('pointercancel',ptrUp);
 /* Mouse-wheel zoom for the web build: keep the world point under the cursor fixed while the zoom
    changes, so the map grows out of (or shrinks toward) where the cursor is -- the way every other
    RTS/map view behaves. A notch of a real mouse wheel is ~100px; a trackpad pinch reports smaller
@@ -1693,7 +1818,7 @@ function unitSprite(u){
  return img?(tinted(img,u.team)||img):null}
 const ANIMAL_FACES_LEFT={sheep:true};
 function drawAnimalSprite(r,sx,sy){
- const moving=r.flee>0||!!r.wax||!!r.way;
+ const moving=r.mv||r.flee>0||!!r.wax||!!r.way;
  const key=`animal_${r.kind}_${moving?'walk':'idle'}`;
  const a=ANIM[key]||ANIM[`animal_${r.kind}_idle`];
  const frame=a&&a.keys&&a.keys.length
@@ -1842,7 +1967,10 @@ function drawRes(r){
   ctx.fillStyle='#cbd0d3';ctx.beginPath();ctx.moveTo(sx-4,sy-7);ctx.lineTo(sx+3,sy-9);ctx.lineTo(sx+7,sy-4);ctx.lineTo(sx-1,sy-3);ctx.closePath();ctx.fill();
  }else if(r.animal){
   const boar=r.kind==='boar',f=r.face||1,INK='#1b140d';
-  const down=r.amt<r.amt0*0.42;                       // wounded game slumps into a carcass
+  const down=!!r.slain;                               // killed game lies as a carcass
+  if(sheepSel.includes(r)){ctx.strokeStyle='#e8f0ff';ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(sx,sy+1,10,4.6,0,0,7);ctx.stroke()}
+  if(r.kind==='sheep'&&r.owner!==undefined&&!down){ctx.fillStyle=TEAMC[r.owner].m;ctx.beginPath();ctx.ellipse(sx,sy+2.5,4,1.6,0,0,7);ctx.fill()}
+  if(r.kind==='boar'&&!down&&r.hp<r.maxhp)drawBar(sx,sy-16,14,r.hp/r.maxhp);
   const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
   sg.addColorStop(0,'rgba(0,0,0,.32)');sg.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(sx,sy+1.5,9.5,4.2,0,0,7);ctx.fill();
@@ -1906,6 +2034,12 @@ function drawRes(r){
   ctx.fillStyle='#356a31';ctx.beginPath();ctx.ellipse(sx-3,sy-1,5,4,0,0,7);ctx.fill();
   const n=Math.max(1,Math.ceil(r.amt/40));ctx.fillStyle='#c9364b';
   for(let i=0;i<n;i++){const a=i*2.4;ctx.beginPath();ctx.arc(sx+Math.cos(a)*4.5,sy-4+Math.sin(a)*3,1.6,0,7);ctx.fill()}}}
+const TEAMR=['#3d8bff','#ff3b30'];
+/* Health bars: your own units when selected or hurt; an enemy only while your units are fighting
+   it (targeted, or hit by you in the last few seconds), so the enemy camp is not a sea of bars. */
+function showHP(u){
+ if(u.team===0)return selection.includes(u)||u.hp<u.maxhp;
+ return time-(u.myHitT||-99)<4||units.some(m=>m.team===0&&!m.dead&&m.order&&(m.order.target===u||m.order.tgt===u))}
 function drawUnit(u){
  if(u.garrisoned)return;
  const[sx,sy]=w2s(u.x,u.y),tc=TEAMC[u.team];
@@ -1916,6 +2050,10 @@ function drawUnit(u){
  const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
  sg.addColorStop(0,'rgba(0,0,0,.36)');sg.addColorStop(.55,'rgba(0,0,0,.15)');sg.addColorStop(1,'rgba(0,0,0,0)');
  ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(sx,sy+1.5,9.5,4.2,0,0,7);ctx.fill();
+ /* Team ring on the ground. At phone scale the tabard colours alone are too small to tell sides
+    apart in a melee, so every unit stands on a bright ring of its side's colour. */
+ ctx.fillStyle=TEAMR[u.team]+'33';ctx.strokeStyle=TEAMR[u.team];ctx.lineWidth=1.6;
+ ctx.beginPath();ctx.ellipse(sx,sy+1.5,8.5,3.9,0,0,7);ctx.fill();ctx.stroke();
  /* 0 A.D. character sprite. The game tracks only a mirrored facing (u.face), so the single baked
     view is flipped exactly as the vector art was -- there is no direction vector to select among
     the eight facings bake_zeroad_art.py can produce. Directional units (dirSprite) carry their
@@ -1949,7 +2087,7 @@ function drawUnit(u){
    ctx.strokeStyle='#1b140d';ctx.lineWidth=.85;ctx.stroke()}
   if(u.flash>0){ctx.globalAlpha=Math.min(0.7,u.flash*5);ctx.fillStyle='#fff';
    ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
-  if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp);
+  if(showHP(u))drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp);
   return}
  ctx.save();ctx.translate(sx,sy-bob);ctx.scale(u.face*1.12,1.12);
  ctx.lineJoin='round';ctx.lineCap='round';
@@ -2035,7 +2173,7 @@ function drawUnit(u){
  ctx.restore();
  if(u.flash>0){ctx.globalAlpha=Math.min(0.7,u.flash*5);ctx.fillStyle='#fff';
   ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
- if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp)}
+ if(showHP(u))drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp)}
 /* The owner's banner, flown from a pole above a finished structure. Shared by both draw paths
    because the sprite path returns early: with the 0 A.D. artwork on, nothing on the map used to
    say whose a building was, and in a mirror match the two bases look identical. */
@@ -2309,9 +2447,18 @@ function render(){
   ctx.beginPath();ctx.ellipse(sx,sy,9,4.5,0,0,7);ctx.stroke();
   ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx,sy-15);ctx.stroke();
   ctx.fillStyle='#7fd4ff';ctx.beginPath();ctx.moveTo(sx,sy-15);ctx.lineTo(sx+8,sy-12.5);ctx.lineTo(sx,sy-10);ctx.closePath();ctx.fill()}
- if(placing&&placing.ghost){
+ if(wallBarEl.hidden===!!(placing&&placing.pend))wallBarEl.hidden=!(placing&&placing.pend);
+ if(placing&&placing.line){
   const d=DEFS[placing.type];
-  const tx=Math.round(placing.ghost[0]-d.size/2),ty=Math.round(placing.ghost[1]-d.size/2);
+  for(const[tx,ty]of wallLine(placing.line[0],placing.line[1])){
+   const ok=canPlace(tx,ty,1);
+   const A=w2s(tx,ty),B=w2s(tx+1,ty),C=w2s(tx+1,ty+1),D=w2s(tx,ty+1);
+   ctx.fillStyle=ok?'rgba(120,220,120,.4)':'rgba(230,90,80,.4)';poly4(A,B,C,D);ctx.fill();
+   ctx.strokeStyle=ok?'#9fe08a':'#ff8a7a';ctx.lineWidth=1.5;poly4(A,B,C,D);ctx.stroke();
+   if(ok)drawBuilding({tx,ty,size:1,hh:d.hh,type:placing.type,done:false,progress:1,id:0,flash:0,hp:1,maxhp:1,queue:[]},true)}}
+ else if(placing&&placing.ghost){
+  const d=DEFS[placing.type];
+  const tx=clamp(Math.round(placing.ghost[0]-d.size/2),0,MAP-d.size),ty=clamp(Math.round(placing.ghost[1]-d.size/2),0,MAP-d.size);
   const ok=canPlace(tx,ty,d.size);
   const A=w2s(tx,ty),B=w2s(tx+d.size,ty),C=w2s(tx+d.size,ty+d.size),D=w2s(tx,ty+d.size);
   ctx.fillStyle=ok?'rgba(120,220,120,.4)':'rgba(230,90,80,.4)';poly4(A,B,C,D);ctx.fill();
@@ -2547,7 +2694,8 @@ mkBuilding(1,'tc',44,12,true);
 mkBuilding(1,'barracks',40,15,true);
 mkBuilding(1,'house',47,13,true);
 genResources();
-blockBorders();
+/* The outer ring of tiles used to be walled off (blockBorders), so nothing could be built at the
+   map's edge. Units are kept on the map by passableAt's bounds instead. */
 const ptc=buildings.find(b=>b.team===0&&b.type==='tc');
 const etc=buildings.find(b=>b.team===1&&b.type==='tc');
 for(let i=0;i<3;i++){const s=freeTileAround(ptc);mkUnit(0,'vill',s[0]+0.5,s[1]+0.5)}
@@ -2567,14 +2715,6 @@ applyLevel(level);
 selection=units.filter(u=>u.team===0);
 refreshPanel(true);
 {const c=w2s(11,43);camX=c[0];camY=c[1];clampCam()}
-function scheduleTut(){
- [[1.2,'🕹 Stick moves selected units, or pans the map when nothing is selected · pinch or wheel to zoom'],
-  [6,'Tap a villager, then tap a tree or berries to gather'],
-  [13,'Build a Wood Yard, Mill or Mining Camp for nearby drop-offs'],
-  [18,'Build a Market to trade wood, food, gold and stone · watch the Idle pill'],
-  [20,'Spend wood on houses, barracks and palisades · stone builds walls'],
-  [22,'Raise an army, then press the sword to charge!']]
- .forEach(([t,m])=>setTimeout(()=>{if(started&&!over)toast(m)},t*1000))}
  $('pli').addEventListener('click',e=>{e.stopPropagation();selectIdle()});
  $('ppause').addEventListener('click',e=>{e.stopPropagation();if(!started||over)return;setPaused(!paused)});
  $('pauseOv').addEventListener('click',()=>{if(paused)setPaused(false)});   /* tap outside the card */
@@ -2605,7 +2745,7 @@ function scheduleTut(){
  $('startBtn').addEventListener('click',()=>{
   initAudio();if(AC&&AC.resume)AC.resume();initMusic();loadBank('sfx');loadBank('voice');
   if(picked!==level)applyLevel(picked);
-  $('startOv').style.display='none';started=true;sfx('horn');scheduleTut()});
+  $('startOv').style.display='none';started=true;sfx('horn');if(tutDue())tutStart()});
  /* Level buttons: locked ones are inert. `picked` is applied when Begin is pressed. */
  let picked=level;
  const ICO_LOCK='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z"/></svg>';
@@ -2620,6 +2760,151 @@ function scheduleTut(){
  const again=n=>{try{localStorage.setItem('pe_level_next',n)}catch(_){}location.reload()};
  $('againBtn').addEventListener('click',()=>again(level));
  $('nextBtn').addEventListener('click',()=>again(Math.min(LEVELS.length,level+1)));
+/* ============ first-play tutorial ============
+   Runs once, the first time Begin is pressed (pe_tutorial_done), or again from the gear menu. Each
+   step rings the real control or map object and advances when the game state shows the player did
+   it; informational steps advance on Next. Action steps also offer a dimmer Next after a while, so
+   nobody is stranded (no wood, a lost villager). Counts are compared with a snapshot taken when the
+   step opens, so a house that already stood does not tick off "build a house". Narration is one clip
+   per step from audio/narr_bank.js (make_voices.py, narrator voice), keyed narrator_sNN by index. */
+const TUT_KEY='pe_tutorial_done';
+let tutVoice=true;try{tutVoice=localStorage.getItem('pe_tut_voice')!=='off'}catch(_){}
+function tutDue(){try{return localStorage.getItem(TUT_KEY)!=='1'}catch(_){return false}}
+const myVills=()=>units.filter(u=>u.team===0&&u.type==='vill'&&!u.dead&&!u.garrisoned);
+const selV=()=>selUnits(0).filter(u=>u.type==='vill');
+const busy=f=>units.some(u=>u.team===0&&!u.dead&&u.order.type==='gather'&&f(u.order));
+const nB=t=>buildings.filter(b=>b.team===0&&b.type===t&&!b.dead).length;
+const homeTC=()=>buildings.find(b=>b.team===0&&b.type==='tc'&&!b.dead);
+const myRax=()=>buildings.filter(b=>b.team===0&&b.type==='barracks'&&!b.dead).pop();
+const abtn=t=>document.querySelector('#panel .abtn[title'+t+']');
+const nearR=k=>{const tc=homeTC();return tc?findResByKind(k,tc.cx,tc.cy,40):null};
+const selIs=t=>selection.length===1&&selection[0].kind==='bld'&&selection[0].team===0&&selection[0].type===t;
+/* "Select a villager first" -- ring the villagers until one is selected, then the real target. */
+const vOr=g=>selV().length?g:{grp:myVills()};
+/* Tapping the Town Center with villagers selected garrisons them, so TC steps clear that first. */
+const viaTC=(say,tg)=>({t:()=>selV().length?'Clear the selection with the red ✕ first.':selIs('tc')?say:'Tap your Town Center.',
+ tg:()=>selV().length?{el:$('pcx')}:selIs('tc')?tg():{b:homeTC()}});
+const army=()=>units.filter(u=>u.team===0&&!u.dead&&!u.garrisoned&&u.type!=='vill');
+function tutHome(){const tc=homeTC();if(!tc)return;const c=w2s(tc.cx+2,tc.cy+2);camX=c[0];camY=c[1];clampCam();followMute=1.5}
+/* Frame the Town Center and the resource to tap together, a little low so the caption never hides it. */
+function tutLook(k){const tc=homeTC(),r=nearR(k);if(!tc||!r)return;const a=w2s(tc.cx,tc.cy),b=w2s(r.gx,r.gy);
+ camX=(a[0]+b[0])/2;camY=(a[1]+b[1])/2-40;clampCam();followMute=2}
+const TUT=[
+ {t:'Welcome, my lord! This short lesson shows you every command.',next:1},
+ {t:'Your villagers are selected. Push the stick to walk them.',tg:()=>({el:$('joyZone')}),ok:()=>T.drive>0.8,
+  in:()=>{if(!selV().length){selection=myVills();refreshPanel(true)}}},
+ {t:'Tap the red ✕ to clear the selection.',tg:()=>({el:$('pcx')}),ok:()=>!selection.length},
+ {t:'With nothing selected, the stick moves the view. Look around.',tg:()=>({el:$('joyZone')}),ok:()=>T.pan>450,
+  in:()=>{if(selection.length){selection=[];refreshPanel(true)}}},
+ {t:'The minimap shows the whole realm: tap it to jump anywhere. Pinch to zoom.',tg:()=>({el:$('mmWrap')}),next:1,ok:()=>T.mm},
+ {t:'Back home. Drag a box around your villagers, or tap just one.',tg:()=>({grp:myVills()}),ok:()=>selV().length>0,in:tutHome},
+ /* the home berries sit behind the Town Center's roof, so point at the boars beside it instead */
+ {t:'Now tap a boar to hunt it for food. Berries and sheep work too.',tg:()=>vOr({r:nearR('boar')||nearR('berry')}),ok:()=>busy(o=>o.ctype==='f'),in:()=>tutLook('boar')},
+ {t:'Wood builds everything. Select a villager, then tap a tree.',tg:()=>vOr({r:nearR('tree')}),ok:()=>busy(o=>o.kind==='tree'),in:()=>tutLook('tree')},
+ {t:'Gold pays for soldiers, stone for walls. Send a villager to either.',tg:()=>vOr({r:nearR('gold')}),ok:()=>busy(o=>o.kind==='gold'||o.kind==='stone'),in:()=>tutLook('gold')},
+ {t:'Your stores: wood, food, gold and stone, then population.',tg:()=>({el:$('resbar')}),next:1},
+ {t:'A House holds 5 more people. Select a villager, then tap House.',tg:()=>vOr({el:abtn('="House"')}),
+  ok:()=>placing&&placing.type==='house'||nB('house')>T.base.house},
+ {t:'Tap open ground to set it down. Green fits; the red ✕ cancels.',nodim:1,tg:()=>placing&&placing.ghost?{w:placing.ghost}:null,
+  ok:()=>nB('house')>T.base.house,back:()=>!placing},
+ {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',tg:()=>vOr({el:abtn('="Wood Yard"')}),next:1,
+  ok:()=>nB('woodyard')+nB('mill')+nB('mine')>T.base.drop},
+ {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',tg:()=>vOr({el:abtn('="Farm"')}),ok:()=>nB('farm')>T.base.farm},
+ {t:'With villagers selected, the hammer sends them back to work or to help build.',tg:()=>({el:$('sword')}),next:1,ok:()=>T.sword},
+ {...viaTC('Tap Villager to train one (50 food).',()=>({el:abtn('="Villager"')})),
+  ok:()=>{const tc=homeTC();return tc&&tc.queue.length>0||popOf(0)>T.base.pop}},
+ {...viaTC('Now tap a tree or berries: new villagers walk straight to work.',()=>({r:nearR('berry')||nearR('tree')})),
+  ok:()=>{const tc=homeTC();return tc&&tc.rallyRes&&tc.rallyRes!==T.base.rally}},
+ {t:()=>{const tc=homeTC();return tc&&tc.garrison.length?'Safe inside! Tap the Town Center, then Unload.':'Raiders? Select villagers and tap the Town Center to shelter them.'},
+  tg:()=>{const tc=homeTC();return tc&&tc.garrison.length&&selIs('tc')?{el:abtn('^="Unload"')}:{b:tc}},next:1,
+  ok:()=>{const tc=homeTC();return T.garr&&tc&&!tc.garrison.length},
+  out:()=>{const tc=homeTC();if(tc&&tc.garrison.length)releaseGarrison(tc)}},
+ {t:'The Idle button finds villagers with nothing to do.',tg:()=>({el:$('pli')}),next:1,ok:()=>T.idle},
+ {t:()=>res[0].w<125&&!placing?'A Barracks needs 125 wood: put villagers on trees first.':'Now an army. Select a villager and build a Barracks.',
+  tg:()=>vOr({el:abtn('="Barracks"')}),ok:()=>nB('barracks')>T.base.rax},
+ {t:()=>{const b=myRax();return !b?'Build a Barracks first.':!b.done?'Your builders are raising the Barracks…':selIs('barracks')?'Train Men-at-Arms (food, gold) or Archers (wood, gold).':'Tap the Barracks to train soldiers.'},
+  tg:()=>{const b=myRax();return !b?null:b.done&&selIs('barracks')?{el:abtn('="Man-at-Arms"')}:{b}},
+  ok:()=>buildings.some(b=>b.team===0&&b.type==='barracks'&&b.queue.length)||army().length>0},
+ {t:'The sword gathers your army; press it again to charge. Or tap an enemy.',tg:()=>({el:$('sword')}),next:1},
+ {t:'Soldiers hold their ground: they fight what comes near, but never chase far.',tg:()=>army().length?{grp:army()}:null,next:1},
+ {t:'The gear pauses the game: sound, music, and this lesson again.',tg:()=>({el:$('ppause')}),next:1},
+ {t:'Your goal: destroy the enemy Town Center, far to the east. The enemy wakes now!',tg:()=>({el:$('mmWrap')}),next:1}];
+function tutSnap(){const tc=homeTC();
+ T.base={house:nB('house'),farm:nB('farm'),rax:nB('barracks'),drop:nB('woodyard')+nB('mill')+nB('mine'),pop:popOf(0),rally:tc&&tc.rallyRes};
+ T.t0=T.sayT=time;T.said=false;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
+function tutGo(i){
+ const prev=TUT[T.i];if(prev&&prev.out&&i!==T.i)prev.out();
+ narrStop();T.i=i;const s=TUT[i];if(!s){tutEnd();return}
+ tutSnap();if(s.in)s.in();tutDraw()}
+function tutStart(){T.on=true;T.i=0;document.body.classList.add('tutOn');$('tut').hidden=false;loadBank('narr');tutVoiceBtn();tutGo(0)}
+function tutEnd(){if(!T.on)return;T.on=false;narrStop();try{localStorage.setItem(TUT_KEY,'1')}catch(_){}
+ /* the enemy's clock starts now: its first wave keeps the level's full grace period from here */
+ ai.t=0;ai.next=Math.max(ai.next,time+LV.first);
+ document.body.classList.remove('tutOn');$('tut').hidden=true}
+const scrOf=(wx,wy,lift)=>{const[sx,sy]=w2s(wx,wy);return[(sx-camX)*zoom+cw/2,(sy-camY)*zoom+ch/2-lift*zoom]};
+function tutDraw(){
+ const s=TUT[T.i];if(!s)return;
+ const txt=typeof s.t==='function'?s.t():s.t;
+ if(txt!==T.txt){T.txt=txt;$('tutS').textContent=txt;$('tutN').textContent='LESSON '+(T.i+1)+' / '+TUT.length}
+ const nx=$('tutNext'),late=!s.next&&time-T.t0>25;
+ nx.style.display=s.next||late?'':'none';nx.classList.toggle('late',late);nx.textContent=T.i===TUT.length-1?'Begin':'Next';
+ const g=s.tg?s.tg():null,ring=$('tutRing');let r=null;
+ if(g&&g.el){const b=g.el.getBoundingClientRect();if(b.width)r=[b.left-5,b.top-5,b.width+10,b.height+10,false]}
+ else if(g){let pts=[],pad=24*zoom+6;
+  if(g.grp&&g.grp.length)pts=g.grp.map(u=>scrOf(u.x,u.y,16));
+  else if(g.r)pts=[scrOf(g.r.gx,g.r.gy,6)];
+  else if(g.b){pts=[scrOf(g.b.cx,g.b.cy,g.b.hh*0.4)];pad=g.b.size*26*zoom}
+  else if(g.w){pts=[scrOf(g.w[0],g.w[1],0)];pad=40*zoom}
+  if(pts.length){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+   for(const[x,y]of pts){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
+   const w=Math.min(cw*0.6,Math.max(50,x1-x0+pad*2)),h=Math.min(ch*0.6,Math.max(50,y1-y0+pad*2));
+   /* off screen: pin the ring to the nearest edge so it still says which way to look */
+   const cx=clamp((x0+x1)/2,w/2+4,cw-w/2-4),cy=clamp((y0+y1)/2,h/2+4,ch-h/2-4);
+   r=[cx-w/2,cy-h/2,w,h,true]}}
+ if(!r){ring.style.display='none';return}
+ ring.style.display='block';ring.classList.toggle('round',r[4]);ring.classList.toggle('nodim',!!s.nodim);
+ ring.style.left=r[0]+'px';ring.style.top=r[1]+'px';ring.style.width=r[2]+'px';ring.style.height=r[3]+'px'}
+let tutLT=0;
+function tutTick(ts){requestAnimationFrame(tutTick);
+ const dt=Math.min(0.1,(ts-(tutLT||ts))/1000);tutLT=ts;tutStep(dt)}
+function tutStep(dt){
+ if(!T.on||!started||over)return;
+ const s=TUT[T.i];if(!s)return;
+ if(T.cx!==undefined&&!selection.length)T.pan+=Math.hypot(camX-T.cx,camY-T.cy);T.cx=camX;T.cy=camY;
+ if(!paused&&units.some(u=>u.team===0&&u.order.type==='drive'&&u.moving))T.drive+=dt;
+ const tc=homeTC();if(tc&&tc.garrison.length)T.garr=true;
+ if(!paused&&!T.said&&time-T.sayT<6&&narrPlay(T.i))T.said=true;
+ if(s.ok&&s.ok()){sfx('done');tutGo(T.i+1);return}
+ if(s.back&&s.back()){tutGo(T.i-1);return}
+ tutDraw()}
+requestAnimationFrame(tutTick);
+/* Narration: one clip per step through sfxG, so the Sound slider governs it. It is stopped (not
+   left to overlap) when the step changes, and unit voices hold off while it speaks. */
+let narrSrc=null;
+function narrStop(){if(narrSrc){try{narrSrc.stop()}catch(_){}narrSrc=null}}
+function narrPlay(i){
+ const e=BANK['narrator_s'+String(i).padStart(2,'0')];
+ if(!tutVoice||!AC||!sfxG||!e||!e.bufs.length)return false;
+ narrStop();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=e.bufs[0];g.gain.value=e.vol;
+ src.connect(g);g.connect(sfxG);src.start();narrSrc=src;src.onended=()=>{if(narrSrc===src)narrSrc=null};
+ voiceT=performance.now()+e.bufs[0].duration*1000;return true}
+const ICO_SPK='<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-3px"><path fill="#e3c27a" d="M4 9h4l5-4v14l-5-4H4z"/>';
+function tutVoiceBtn(){$('tutVoice').innerHTML=ICO_SPK+(tutVoice
+ ?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#e3c27a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'
+ :'<path d="m16 9 5 6m0-6-5 6" stroke="#e3c27a" stroke-width="1.8" stroke-linecap="round"/></svg>')}
+$('tutNext').addEventListener('click',e=>{e.stopPropagation();sfx('sel');tutGo(T.i+1)});
+$('tutSkip').addEventListener('click',e=>{e.stopPropagation();sfx('sel');tutEnd()});
+$('tutVoice').addEventListener('click',e=>{e.stopPropagation();tutVoice=!tutVoice;
+ try{localStorage.setItem('pe_tut_voice',tutVoice?'on':'off')}catch(_){}
+ if(tutVoice){T.said=false;T.sayT=time}else narrStop();tutVoiceBtn()});
+mm.addEventListener('pointerdown',()=>{T.mm=true});
+$('pli').addEventListener('click',()=>{T.idle=true});
+$('sword').addEventListener('pointerdown',()=>{if(selV().length)T.sword=true});
+/* Replay restarts the match (the steps teach a fresh village); the second tap confirms. */
+$('pmTut').addEventListener('click',()=>{const b=$('pmTut');
+ if(!b.dataset.ask){b.dataset.ask=1;b.textContent='Restart match & replay?';return}
+ try{localStorage.removeItem(TUT_KEY);localStorage.setItem('pe_level_next',level)}catch(_){}location.reload()});
+$('ppause').addEventListener('click',()=>{const b=$('pmTut');delete b.dataset.ask;b.textContent='Replay tutorial'});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.resume)AC.resume();lastT=0});
 requestAnimationFrame(frame);
 </script>

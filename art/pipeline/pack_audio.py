@@ -3,6 +3,7 @@
 
     python3 art/pipeline/pack_audio.py sfx   art/out/sfx/game/sfx_manifest.json
     python3 art/pipeline/pack_audio.py voice art/out/voice/game/voice_manifest.json
+    python3 art/pipeline/pack_audio.py narr  art/out/narr/game/voice_manifest.json   (tutorial narrator)
 
 The app's WKWebView blocks fetch() under file://, so sounds ship like the music: base64 inside a
 script (ios/WebGame/audio/<bank>_bank.js) that sets window.PE_AUDIO[<bank>]. The game decodes
@@ -41,7 +42,7 @@ def entries(node):
 
 
 def main():
-    if len(sys.argv) != 3 or sys.argv[1] not in ("sfx", "voice"):
+    if len(sys.argv) != 3 or sys.argv[1] not in ("sfx", "voice", "narr"):
         sys.exit(__doc__)
     bank, man_path = sys.argv[1], os.path.abspath(sys.argv[2])
     base = os.path.dirname(man_path)

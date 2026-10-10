@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Generate the unit voice lines (Middle English, c. 1350-1400) with Chatterbox on the Spark.
 
+Also the tutorial narrator (voice ``narrator``, modern English so a new player follows it, one set
+per tutorial step s00..s24 so the game can key each clip by step).  Kept apart from the unit bank:
+
+    ssh spark 'cd ~/voice && nice -n 10 venv/bin/python make_voices.py all --voices narrator --out out_narr --good 2 --max-takes 8 --no-f0'
+    rsync -a --delete --exclude candidates spark:~/voice/out_narr/ art/out/narr/
+    python3 art/pipeline/pack_audio.py narr art/out/narr/game/voice_manifest.json   # -> audio/narr_bank.js
+
 Models
     ResembleAI/chatterbox  (0.5B English TTS; model card: ``license: mit``, "Don't use this model
         to do bad things.")  Every clip carries Resemble's imperceptible Perth watermark; it is
@@ -116,8 +123,45 @@ VOICES = {
                     shout_texts=["Have at thee, dogs! To arms! For the king! Slay them all!",
                                  "Out! Out! Harrow! Saint George! Forward, and cut them down!"]),
 }
+# Tutorial narrator: index i is spoken on tutorial step i (TUT in ios/WebGame/index.html), so the
+# order here must follow the game's step list.
+NARR_LINES = [
+    "Welcome, my lord. This short lesson will show you how to rule your village. Tap Next when you are ready.",
+    "Your three villagers are selected. Push the stick to walk them around.",
+    "Now tap the red cross to clear the selection.",
+    "With nothing selected, the stick moves your view instead. Push it to look around the land.",
+    "The small map shows the whole realm. Tap it to jump anywhere, and pinch the screen to zoom.",
+    "Back home. Drag a box around your villagers to select them, or tap just one.",
+    "Now tap a wild boar to hunt it for food. Berry bushes and sheep give food too.",
+    "Wood builds everything. Select a villager, then tap a tree.",
+    "Gold pays for soldiers, and stone for walls and towers. Send a villager to either one.",
+    "Your stores are shown at the top: wood, food, gold and stone, then your people.",
+    "Each house gives room for five more people. Select a villager, then tap House in the bar below.",
+    "Tap open ground to set it down. Green means it fits. The red cross cancels.",
+    "A wood yard, mill or mining camp near the work saves long walks. Its builders start gathering as soon as it stands.",
+    "Farms never run dry. Tap Farm, then tap the ground. You get one farm for each selected villager.",
+    "With villagers selected, the hammer sends them back to their last task, or to help finish a building.",
+    "More hands, more harvest. Tap your Town Center, then tap Villager to train one.",
+    "With the Town Center selected, tap a tree or a berry bush. New villagers will walk straight to work there.",
+    "If raiders come, select your villagers and tap the Town Center. They shelter inside, and it shoots harder.",
+    "The Idle button finds every villager with nothing to do.",
+    "Now for an army. Select a villager and build a Barracks. It costs one hundred and twenty five wood.",
+    "When the Barracks is built, tap it to train men at arms, and archers with bows.",
+    "The sword button gathers your army. Press it again to charge the nearest enemy, or tap an enemy to strike it.",
+    "Your soldiers hold their ground. They fight anything that comes near, but will not chase far unless you order it.",
+    "The gear pauses the game. There you can set the sound and music, or replay this lesson.",
+    "Your goal is to destroy the enemy Town Center, far to the east. The enemy wakes now. Good luck, my lord.",
+]
+NARR_SETS = {f"s{i:02d}": [(t, t, t)] for i, t in enumerate(NARR_LINES)}
+GRID_NARR = [(0.45, 0.5, 0.7), (0.55, 0.45, 0.8)]
+VOICES["narrator"] = dict(
+    kokoro="bm_george", lang="b", lines=NARR_SETS, grids={k: GRID_NARR for k in NARR_SETS},
+    seed_text="Long ago, when the kingdom was young, a small village stood at the edge of the great forest. "
+              "Its people were few, but their hearts were brave, and their lord was wise and patient.")
+
 PICKS_PER_LINE = {"select": 1, "ack": 2, "work": 1, "attack": 2}
-VOLUME = {"vill_m": {"select": 0.8, "ack": 0.8, "work": 0.8},
+VOLUME = {"narrator": {k: 1.0 for k in NARR_SETS},
+          "vill_m": {"select": 0.8, "ack": 0.8, "work": 0.8},
           "vill_f": {"select": 0.8, "ack": 0.8, "work": 0.8},
           "soldier": {"select": 0.9, "attack": 1.0}}
 
@@ -147,9 +191,13 @@ def stage_seeds(out, voices):
     from kokoro import KPipeline
     refs = out / "refs"
     refs.mkdir(parents=True, exist_ok=True)
-    pipe = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
+    pipes = {}
     for v in voices:
         cfg = VOICES[v]
+        lang = cfg.get("lang", "a")          # "b" = British English, needed by the bm_/bf_ voices
+        if lang not in pipes:
+            pipes[lang] = KPipeline(lang_code=lang, repo_id="hexgrad/Kokoro-82M")
+        pipe = pipes[lang]
         wav = np.concatenate([np.asarray(a, dtype=np.float32) for _, _, a in pipe(cfg["seed_text"], voice=cfg["kokoro"])])
         path = refs / f"{v}_seed.wav"
         sf.write(path, wav, SR_GEN)
@@ -380,7 +428,7 @@ def stage_post(out, voices, sets, overrides, want_f0=True):
                     ranked = sorted(metas, key=lambda m: -m["score"])
                     chosen = [ranked[0]]
                     for m in ranked[1:]:
-                        if len(chosen) >= PICKS_PER_LINE[s]:
+                        if len(chosen) >= PICKS_PER_LINE.get(s, 1):
                             break
                         if m["match"] >= 0.5 and m["score"] >= ranked[0]["score"] - 1.0:
                             chosen.append(m)
