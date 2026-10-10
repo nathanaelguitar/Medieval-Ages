@@ -406,7 +406,13 @@ function garrisonVillagers(villagers,tc){
 }
 function releaseGarrison(b){
  const list=b.garrison.splice(0);
- list.forEach(u=>{u.garrisoned=null;const s=freeTileAround(b);u.x=s[0]+0.5;u.y=s[1]+0.5;u.order={type:'idle'};u.path=null;u.moving=false});
+ list.forEach(u=>{u.garrisoned=null;const s=freeTileAround(b);u.x=s[0]+0.5;u.y=s[1]+0.5;u.order={type:'idle'};u.path=null;u.moving=false;
+  /* Released units head for the building's rally flag, the same as freshly trained ones:
+     villagers flagged onto a resource go straight back to gathering it. */
+  const r=b.rally;if(!r)return;
+  const rr=b.rallyRes;
+  if(u.type==='vill'&&rr&&!rr.dead&&rr.amt>0)setGather(u,rr);
+  else{u.order={type:'move'};setPath(u,r.x+rnd(-0.6,0.6),r.y+rnd(-0.6,0.6))}});
  return list
 }
 function ungarrison(b){
