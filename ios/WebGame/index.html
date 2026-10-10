@@ -2882,10 +2882,10 @@ const TUT=[
  {t:'Wood builds everything. Select a villager, then tap a tree.',tg:()=>vOr({r:nearR('tree')}),ok:()=>busy(o=>o.kind==='tree'),in:()=>tutLook('tree')},
  {t:'Gold pays for soldiers, stone for walls. Send a villager to either.',tg:()=>vOr({r:nearR('gold')}),ok:()=>busy(o=>o.kind==='gold'||o.kind==='stone'),in:()=>tutLook('gold')},
  {t:'Your stores: wood, food, gold and stone, then population.',tg:()=>({el:$('resbar')}),next:1},
- {t:'A House holds 5 more people. Select a villager, then tap House.',tg:()=>vOr({el:abtn('="House"')}),
-  ok:()=>placing&&placing.type==='house'||nB('house')>T.base.house},
+ {t:'A House holds 5 more people. Select a villager, tap House, then tap open ground to place it.',tg:()=>vOr({el:abtn('="House"')}),
+  quick:1,in:()=>{T.h0=nB('house')},ok:()=>placing&&placing.type==='house'||nB('house')>T.h0},
  {t:'Tap open ground to set it down. Green fits; the red ✕ cancels.',nodim:1,tg:()=>placing&&placing.ghost?{w:placing.ghost}:null,
-  ok:()=>nB('house')>T.base.house,back:()=>!placing},
+  ok:()=>nB('house')>T.h0,back:()=>!placing&&nB('house')<=T.h0},
  {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',tg:()=>vOr({el:abtn('="Wood Yard"')}),next:1,
   ok:()=>nB('woodyard')+nB('mill')+nB('mine')>T.base.drop},
  {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',tg:()=>vOr({el:abtn('="Farm"')}),ok:()=>nB('farm')>T.base.farm},
@@ -2962,21 +2962,23 @@ function tutStep(dt){
     line. Then it moves on by itself; Next is always there to hurry it. Information-only steps
     advance once the line has been spoken and read. */
  if(!T.doneT&&s.ok&&s.ok()){T.doneT=time;sfx('done')}
- const talking=!!narrSrc||(!T.said&&tutVoice&&time-T.sayT<6&&time-T.t0<20);
+ /* a step that only arms the next one (tap House -> place it) hands over at once */
+ if(T.doneT&&s.quick){tutGo(T.i+1);return}
+ const talking=performance.now()<narrEndT||(!T.said&&tutVoice&&time-T.sayT<6&&time-T.t0<20);
  if(!talking&&(T.doneT?time-T.doneT>=4&&time-T.t0>=7:s.next&&time-T.t0>=9)){tutGo(T.i+1);return}
  if(s.back&&s.back()){tutGo(T.i-1);return}
  tutDraw()}
 requestAnimationFrame(tutTick);
 /* Narration: one clip per step through sfxG, so the Sound slider governs it. It is stopped (not
    left to overlap) when the step changes, and unit voices hold off while it speaks. */
-let narrSrc=null;
-function narrStop(){if(narrSrc){try{narrSrc.stop()}catch(_){}narrSrc=null}}
+let narrSrc=null,narrEndT=0;   /* narrEndT: wall-clock end of the line, so a suspended context can never hold a step */
+function narrStop(){narrEndT=0;if(narrSrc){try{narrSrc.stop()}catch(_){}narrSrc=null}}
 function narrPlay(i){
  const e=BANK['narrator_s'+String(i).padStart(2,'0')];
  if(!tutVoice||!AC||!sfxG||!e||!e.bufs.length)return false;
  narrStop();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=e.bufs[0];g.gain.value=e.vol;
  src.connect(g);g.connect(sfxG);src.start();narrSrc=src;src.onended=()=>{if(narrSrc===src)narrSrc=null};
- voiceT=performance.now()+e.bufs[0].duration*1000;return true}
+ voiceT=narrEndT=performance.now()+e.bufs[0].duration*1000;return true}
 const ICO_SPK='<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-3px"><path fill="#e3c27a" d="M4 9h4l5-4v14l-5-4H4z"/>';
 function tutVoiceBtn(){$('tutVoice').innerHTML=ICO_SPK+(tutVoice
  ?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#e3c27a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'

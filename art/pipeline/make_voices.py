@@ -136,7 +136,7 @@ NARR_LINES = [
     "Wood builds everything. Select a villager, then tap a tree.",
     "Gold pays for soldiers, and stone for walls and towers. Send a villager to either one.",
     "Your stores are shown at the top: wood, food, gold and stone, then your people.",
-    "Each house gives room for five more people. Select a villager, then tap House in the bar below.",
+    "Each house gives room for five more people. Select a villager, tap House in the bar below, then tap open ground to place it.",
     "Tap open ground to set it down. Green means it fits. The red cross cancels.",
     "A wood yard, mill or mining camp near the work saves long walks. Its builders start gathering as soon as it stands.",
     "Farms never run dry. Tap Farm, then tap the ground. You get one farm for each selected villager.",
