@@ -126,7 +126,7 @@ VOICES = {
 # Tutorial narrator: index i is spoken on tutorial step i (TUT in ios/WebGame/index.html), so the
 # order here must follow the game's step list.
 NARR_LINES = [
-    "Welcome, my lord. This short lesson will show you how to rule your village. Tap Next when you are ready.",
+    "Welcome, my lord. This short lesson will show you how to rule your village. Each step moves on by itself once you have done it, or tap Next whenever you are ready for the next one.",
     "Your three villagers are selected. Push the stick to walk them around.",
     "Now tap the red cross to clear the selection.",
     "With nothing selected, the stick moves your view instead. Push it to look around the land.",

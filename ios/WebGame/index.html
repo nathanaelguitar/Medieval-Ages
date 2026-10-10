@@ -2869,7 +2869,7 @@ function tutHome(){const tc=homeTC();if(!tc)return;const c=w2s(tc.cx+2,tc.cy+2);
 function tutLook(k){const tc=homeTC(),r=nearR(k);if(!tc||!r)return;const a=w2s(tc.cx,tc.cy),b=w2s(r.gx,r.gy);
  camX=(a[0]+b[0])/2;camY=(a[1]+b[1])/2-40;clampCam();followMute=2}
 const TUT=[
- {t:'Welcome, my lord! This short lesson shows you every command.',next:1},
+ {t:'Welcome, my lord! Each lesson moves on once you have done it. Tap Next whenever you are ready.',next:1,hold:1},
  {t:'Your villagers are selected. Push the stick to walk them.',tg:()=>({el:$('joyZone')}),ok:()=>T.drive>0.8,
   in:()=>{if(!selV().length){selection=myVills();refreshPanel(true)}}},
  {t:'Tap the red ✕ to clear the selection.',tg:()=>({el:$('pcx')}),ok:()=>!selection.length},
@@ -2914,7 +2914,7 @@ function tutSnap(){const tc=homeTC();
  T.t0=T.sayT=time;T.said=false;T.doneT=null;T.armed=false;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
 function tutGo(i){
  const prev=TUT[T.i];if(prev&&prev.out&&i!==T.i)prev.out();
- narrStop();T.i=i;const s=TUT[i];if(!s){tutEnd();return}
+ narrStop();T.i=i;T.enterRT=performance.now();const s=TUT[i];if(!s){tutEnd();return}
  tutSnap();if(s.in)s.in();tutDraw()}
 function tutStart(){T.on=true;T.i=0;document.body.classList.add('tutOn');$('tut').hidden=false;loadBank('narr');tutVoiceBtn();tutGo(0)}
 function tutEnd(){if(!T.on)return;T.on=false;narrStop();try{localStorage.setItem(TUT_KEY,'1')}catch(_){}
@@ -2966,7 +2966,7 @@ function tutStep(dt){
  /* a step that only arms the next one (tap House -> place it) hands over at once */
  if(T.doneT&&s.quick){tutGo(T.i+1);return}
  const talking=performance.now()<narrEndT||(!T.said&&tutVoice&&time-T.sayT<6&&time-T.t0<20);
- if(!talking&&(T.doneT?time-T.doneT>=4&&time-T.t0>=7:s.next&&time-T.t0>=9)){tutGo(T.i+1);return}
+ if(!talking&&(T.doneT?time-T.doneT>=4&&time-T.t0>=7:s.next&&!s.hold&&time-T.t0>=9)){tutGo(T.i+1);return}
  if(s.back&&s.back()){tutGo(T.i-1);return}
  tutDraw()}
 requestAnimationFrame(tutTick);
@@ -2985,7 +2985,10 @@ function tutVoiceBtn(){$('tutVoice').innerHTML=ICO_SPK+(tutVoice
  ?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#e3c27a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'
  :'<path d="m16 9 5 6m0-6-5 6" stroke="#e3c27a" stroke-width="1.8" stroke-linecap="round"/></svg>')}
 /* Next on a step that only arms the following one (tap House) skips that follow-up too */
-$('tutNext').addEventListener('click',e=>{e.stopPropagation();sfx('sel');const s=TUT[T.i];tutGo(T.i+(s&&s.quick&&!T.doneT?2:1))});
+$('tutNext').addEventListener('click',e=>{e.stopPropagation();
+ /* a tap that lands just as the step moves on by itself must not skip the new one */
+ if(performance.now()-(T.enterRT||0)<1200)return;
+ sfx('sel');const s=TUT[T.i];tutGo(T.i+(s&&s.quick&&!T.doneT?2:1))});
 $('tutSkip').addEventListener('click',e=>{e.stopPropagation();sfx('sel');tutEnd()});
 $('tutVoice').addEventListener('click',e=>{e.stopPropagation();tutVoice=!tutVoice;
  try{localStorage.setItem('pe_tut_voice',tutVoice?'on':'off')}catch(_){}
