@@ -1781,12 +1781,6 @@ function buildingSprite(b){
    view. The heading is the unit's screen-space direction of travel (or towards its target while
    fighting); DIR_UNIT names the baked set per unit type and the colour per team. */
 const DIR_UNIT={swords:'man_at_arms',archer:'archer',vill:'villager'};
-/* Ground one walk cycle covers, in tiles, per sprite set: art/pipeline/measure_stride.py on the rig
-   (rig units / 6.356 at the bake's 14.34 px/unit and DIR_K). Re-measure after re-baking a walk. */
-const WALK_STRIDE={villager_m:0.649,villager_f:0.683,archer:0.702,man_at_arms:0.665};
-/* Matching the stride exactly to these unit speeds needs ~3.5 cycles a second, which reads as
-   speed-walking at this scale; the cadence is capped at a calm pace and the feet slide a little. */
-const WALK_HZ_MAX=1.6;
 /* Baked set for a unit: villagers come as a man and a woman sharing every work clip. */
 function dirSet(u){const s=DIR_UNIT[u.type];return s==='villager'?'villager_'+(u.sex||'m'):s}
 /* Which work clip a villager plays at a job: an axe at trees, a pickaxe at ore, picking at
@@ -1854,11 +1848,8 @@ function dirSprite(u){
   if(f&&a.impact&&fi===a.impact&&u._wf!==ph){const snd=WORK_SFX[wc];if(snd)playAt(snd,u.x,u.y,0.55)}
   u._wf=fi===a.impact?ph:u._wf}
  if(!f){
-  const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip),st=WALK_STRIDE[set];
-  /* u.anim runs at 7/s while moving. A walk (or carry, the same legs) plays spd/stride cycles a
-     second so the planted foot keeps pace with the ground instead of sliding; a set without a
-     measured stride falls back to its manifest fps. */
-  if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(st?u.anim/7*Math.min(def.spd/st,WALK_HZ_MAX)*a.keys.length:u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
+  const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
+  if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
  u._dir=!!f;return f}
 /* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 35.75px tall
    (1.25x the original 28.6, so units read clearly next to the buildings). */
@@ -2152,20 +2143,23 @@ function occBox(o){
 function silhouette(h,o){
  if(silC.width!==cv.width||silC.height!==cv.height){silC.width=mskC.width=cv.width;silC.height=mskC.height=cv.height}
  const M=mainCtx.getTransform(),p0=M.transformPoint({x:h.x0,y:h.y0}),p1=M.transformPoint({x:h.x1,y:h.y1});
- const rx=Math.max(0,Math.floor(p0.x)-2),ry=Math.max(0,Math.floor(p0.y)-2),rw=Math.min(cv.width-rx,Math.ceil(p1.x-p0.x)+4),rh=Math.min(cv.height-ry,Math.ceil(p1.y-p0.y)+4);
+ const rx=Math.max(0,Math.floor(p0.x)-2),ry=Math.max(0,Math.floor(p0.y)-2),rw=Math.min(cv.width,Math.ceil(p1.x)+2)-rx,rh=Math.min(cv.height,Math.ceil(p1.y)+2)-ry;
  if(rw<=0||rh<=0)return;
  for(const X of [silX,mskX]){X.setTransform(1,0,0,1,0,0);X.globalCompositeOperation='source-over';X.globalAlpha=1;X.clearRect(rx,ry,rw,rh);X.save();X.beginPath();X.rect(rx,ry,rw,rh);X.clip();X.setTransform(M)}
- try{ctx=silX;drawUnit(h.u);ctx=mskX;if(o.kind==='bld')drawBuilding(o);else drawRes(o)}finally{ctx=mainCtx}
- /* Only what covers the unit above its feet counts: an occluder's shadow and footing lie flat on the
-    ground at foot level, and a unit walking through a tree's shadow used to turn wholly blue. (No
+ /* one try/finally for the whole pass: a throw must not leave either offscreen context clipped or
+    composited oddly, or every later silhouette quietly breaks */
+ try{
+ ctx=silX;drawUnit(h.u);ctx=mskX;if(o.kind==='bld')drawBuilding(o);else drawRes(o);ctx=mainCtx;
+ /* Only what covers the unit above its feet counts: an occluder's opaque base (a tree's root mound, a
+    building's plinth) sits at foot level, and a unit walking past it used to turn wholly blue. (No
     getImageData here: on the device the art loads from file://, which taints the canvas, and the
     read threw mid-frame, so everything after it in the draw list vanished.) */
  const footY=M.transformPoint({x:0,y:h.y1-11}).y;   /* ~9 px above the feet, in world space */
  mskX.setTransform(1,0,0,1,0,0);mskX.globalCompositeOperation='destination-out';mskX.fillRect(rx,Math.max(ry,footY),rw,ry+rh-Math.max(ry,footY));mskX.globalCompositeOperation='source-over';
  silX.setTransform(1,0,0,1,0,0);
- silX.globalCompositeOperation='destination-in';silX.drawImage(mskC,0,0);
+ silX.globalCompositeOperation='destination-in';silX.drawImage(mskC,rx,ry,rw,rh,rx,ry,rw,rh);
  silX.globalCompositeOperation='source-in';silX.fillStyle=TEAMR[h.u.team];silX.fillRect(rx,ry,rw,rh);
- silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';
+ }finally{ctx=mainCtx;silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';mskX.globalCompositeOperation='source-over'}
  mainCtx.save();mainCtx.setTransform(1,0,0,1,0,0);mainCtx.globalAlpha=0.62;mainCtx.drawImage(silC,rx,ry,rw,rh,rx,ry,rw,rh);mainCtx.restore()}
 function drawUnit(u){
  if(u.garrisoned)return;
