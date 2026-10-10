@@ -766,7 +766,13 @@ function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
  /* a puff of settling dust reads as "that just finished" without any UI */
  burst(b.cx,b.cy,'#cbb27f',12,42);ping(b.cx,b.cy,'rgba(220,200,150,.8)');
  if(b.team===0){sfx('done');notice(DEFS[b.type].name+' complete')}
- units.forEach(u=>{if(u.lastTask&&u.lastTask.type==='build'&&u.lastTask.b===b)u.lastTask=null;if(u.order.type==='build'&&u.order.b===b)afterBuild(u)})}
+ /* Whoever builds a farm stays to work it, as in Age of Empires: the nearest builder becomes its
+    farmer and anyone else who helped goes back to what they were doing. */
+ let farmer=null;
+ if(b.type==='farm'){const bs=units.filter(u=>!u.dead&&u.order.type==='build'&&u.order.b===b);
+  farmer=bs.sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy))[0]||null}
+ units.forEach(u=>{if(u.lastTask&&u.lastTask.type==='build'&&u.lastTask.b===b)u.lastTask=null;
+  if(u.order.type==='build'&&u.order.b===b){if(u===farmer)setGather(u,b);else afterBuild(u)}})}
 /* Animals graze in place, drift within a short leash of where they spawned, and bolt
    away from whoever is currently harvesting them. */
 function updAnimals(dt){
@@ -947,7 +953,16 @@ function tryPlace(wx,wy){
  if(!canPlace(tx,ty,d.size)){toast("Can't build there");sfx('no');return}
  pay(0,d.cost);
  const b=mkBuilding(0,placing.type,tx,ty,false);
- selUnits(0).filter(u=>u.type==='vill').forEach(v=>assignBuild(v,b));
+ const vills=selUnits(0).filter(u=>u.type==='vill');
+ /* A farm takes one villager, its future farmer: the nearest selected one not already on its
+    way to build another farm, so laying out several farms with a group spreads them one per
+    field instead of piling everyone onto the last. Other buildings take the whole group. */
+ if(b.type==='farm'){
+  const free=vills.filter(u=>!(u.order.type==='build'&&u.order.b&&u.order.b.type==='farm'&&!u.order.b.done));
+  const pool=free.length?free:[];
+  const v=pool.sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy))[0];
+  if(v)assignBuild(v,b)}
+ else vills.forEach(v=>assignBuild(v,b));
  ping(b.cx,b.cy,'#9fe08a');sfx('ok');placing=null;refreshPanel(true)}
 function resAt(wx,wy){let best=null,bd=0.9;for(const r of resources){if(r.dead)continue;const d=dist2(wx,wy,r.gx,r.gy);if(d<bd){bd=d;best=r}}return best}
 function selectType(type){
