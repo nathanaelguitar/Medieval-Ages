@@ -1,0 +1,8 @@
+# Adds TangoFlux (declare-lab/TangoFlux, non-commercial weights) on top of the sa3-sfx image so
+# make_sfx.py --engine tangoflux can run in the same container. Its setup.py pins torch 2.4, so it
+# is installed --no-deps on top of NVIDIA's torch; the container's old torchao breaks diffusers imports, so it goes.
+#   docker build -t sa3-sfx:tf -f Dockerfile.tangoflux .
+FROM sa3-sfx
+RUN pip uninstall -y torchao && pip install --no-cache-dir diffusers datasets torchlibrosa accelerate pyyaml click \
+ && pip install --no-cache-dir --no-deps "git+https://github.com/declare-lab/TangoFlux" \
+ && python -c "import tangoflux, diffusers; print('ok', diffusers.__version__)"

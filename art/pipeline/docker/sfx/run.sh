@@ -7,4 +7,4 @@ HF=$HOME/.cache/huggingface
 exec docker run --rm --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 \
     -v "$HOME/sfx:/work" -v "$HF:/root/.cache/huggingface" \
     -e HF_TOKEN="$(cat $HF/token 2>/dev/null)" -e HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-0} \
-    -w /work sa3-sfx nice -n 10 "$@"
+    -w /work ${IMG:-sa3-sfx} nice -n 10 "$@"

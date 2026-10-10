@@ -26,12 +26,17 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DEST = os.path.join(ROOT, "ios", "WebGame", "audio")
 
 
+def fname(f):
+    """A file entry is a path string or a {"file": path, ...} record."""
+    return f["file"] if isinstance(f, dict) else f
+
+
 def entries(node):
     """(files, volume) from either a list or a {files, volume} dict."""
     if isinstance(node, list):
-        return node, 1.0
+        return [fname(f) for f in node], 1.0
     if isinstance(node, dict) and "files" in node:
-        return node["files"], float(node.get("volume", 1.0))
+        return [fname(f) for f in node["files"]], float(node.get("volume", 1.0))
     return None, None
 
 
@@ -41,6 +46,8 @@ def main():
     bank, man_path = sys.argv[1], os.path.abspath(sys.argv[2])
     base = os.path.dirname(man_path)
     man = json.load(open(man_path))
+    if isinstance(man.get("sounds"), dict):    # make_sfx.py nests the sounds under "sounds"
+        man = man["sounds"]
     flat = {}
     for name, node in man.items():
         if name in ("lines", "_meta", "meta"):

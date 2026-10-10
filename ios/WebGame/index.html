@@ -670,7 +670,7 @@ function kill(t){
  hitStop(t.kind==='unit'?0.12:0.2);
  if(t.kind==='unit'){burst(t.x,t.y,TEAMC[t.team].m,10,55);shake=Math.max(shake,2.4);hitFx(t.x,t.y);
   bleed(t,14);addStain(t.x,t.y,rnd(7,9.5),1.6);addCorpse(t);playAt('death_grunt',t.x,t.y,0.6)}
- else{if(t.type==='gate')gateBlock(t,false);else gridBlock(t,false);
+ else{playAt('building_collapse',t.cx,t.cy,0.8);if(t.type==='gate')gateBlock(t,false);else gridBlock(t,false);
   if(t.garrison&&t.garrison.length)releaseGarrison(t);recalcPop();burst(t.cx,t.cy,'#9a9a9a',24,80);burst(t.cx,t.cy,'#d9b36a',10,60);
   shake=Math.max(shake,t.type==='tc'?7:5);sfx('crash');if(t.type==='tc')checkEnd()}}
 function checkEnd(){if(over)return;
@@ -694,11 +694,13 @@ function combat(u,t,dt){
  if(d<=def.rng+0.12){
   u.path=null;
   u.face=((c[0]-u.x)-(c[1]-u.y))>=0?1:-1;
-  if(u.cd<=0){u.cd=def.cdr;u.anim+=2;u.fire=time;
+  /* the swing's whoosh builds for ~150ms, so it starts just before the blade lands on the hit */
+  if(!def.ranged&&u.type!=='vill'&&u.cd>0&&u.cd<=0.15&&!u.swung){u.swung=true;playAt('sword_swing',u.x,u.y,0.6)}
+  if(u.cd<=0){u.cd=def.cdr;u.anim+=2;u.fire=time;u.swung=false;
    if(def.ranged){spawnArrow(u,t,def.atk);playAt('bow_release',u.x,u.y,0.8)}
    else{damage(t,def.atk,u.team);hitFx(c[0],c[1]);
     if(u.type==='vill')playAt('axe_chop',c[0],c[1],0.7);
-    else{playAt('sword_swing',u.x,u.y,0.55);playAt('sword_hit',c[0],c[1],0.8)}}}
+    else playAt('sword_hit',c[0],c[1],0.8)}}
  }else if(losW(u.x,u.y,c[0],c[1],u.team)){u.path=null;stepMove(u,c[0],c[1],dt)}
  else{if(time>u.nT){u.nT=time+0.75;setPath(u,c[0],c[1])}if(u.path)followPath(u,dt)}}
 
