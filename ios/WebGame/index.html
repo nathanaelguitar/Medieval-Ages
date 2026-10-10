@@ -310,6 +310,40 @@ function setMusic(on){
  if(!on){clearTimeout(musicT);if(musicSrc){const s=musicSrc;musicSrc=null;try{s.stop()}catch(_){}}}
  else if(!musicSrc)musicLater(1);
  $('pmMusic').textContent='Music: '+(on?'On':'Off')}
+/* Sampled sound effects and voices (art/pipeline/make_sfx.py, make_voices.py, pack_audio.py).
+   Banks ship as base64 scripts for the same file:// reason as the music and are decoded once
+   into AudioBuffers, so a sound fires on the frame it is triggered. Each play takes the next take
+   round-robin and a small random pitch shift, so a long fight never repeats one waveform. World
+   sounds only play for things on screen and scale a little with zoom. A bank that is missing
+   simply plays nothing, and the old synthesized beeps stay for UI feedback. */
+const BANK={};let sfxG=null;
+function loadBank(name){
+ if(!AC)return;
+ if(!sfxG){sfxG=AC.createGain();sfxG.gain.value=0.85;sfxG.connect(AC.destination)}
+ const sc=document.createElement('script');sc.src='audio/'+name+'_bank.js';
+ sc.onload=()=>{const b=(window.PE_AUDIO||{})[name];if(!b)return;
+  for(const[k,v]of Object.entries(b)){const e={vol:v.vol||1,bufs:[],rr:0};BANK[k]=e;
+   v.clips.forEach(c=>{try{AC.decodeAudioData(b64ToBuf(c),buf=>e.bufs.push(buf),()=>{})}catch(_){}})}
+  delete window.PE_AUDIO[name]};
+ sc.onerror=()=>{};document.head.appendChild(sc)}
+function playS(k,vol=1,semis=1.8){
+ const e=BANK[k];if(!AC||!sfxG||!e||!e.bufs.length)return false;
+ const src=AC.createBufferSource(),g=AC.createGain();
+ src.buffer=e.bufs[e.rr++%e.bufs.length];
+ src.playbackRate.value=Math.pow(2,(Math.random()*2-1)*semis/12);
+ g.gain.value=e.vol*vol;src.connect(g);g.connect(sfxG);src.start();return true}
+function playAt(k,wx,wy,vol=1){
+ const[sx,sy]=w2s(wx,wy),px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
+ if(px<-80||px>cw+80||py<-80||py>ch+80)return false;
+ return playS(k,vol*Math.min(1,0.55+zoom*0.35))}
+/* Unit voices: villagers answer in a man's or a woman's voice, soldiers share a gruff one with
+   shouted war cries. One voice at a time, with a short gap, so tapping through an army does not
+   turn into a crowd. */
+let voiceT=0;
+function voice(set,u){
+ if(!u||u.team!==0)return;const now=performance.now();if(now<voiceT)return;
+ const v=u.type==='vill'?(u.sex==='f'?'vill_f':'vill_m'):'soldier';
+ if(playS(v+'_'+set,1,0.5))voiceT=now+(set==='attack'?1300:900)}
 function tone(type,f0,f1,dur,vol,delay=0){if(!AC)return;const t=AC.currentTime+delay;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.connect(g);g.connect(masterG);o.start(t);o.stop(t+dur+0.02)}
 function sfx(k){if(!AC)return;switch(k){
  case 'sel':tone('sine',640,880,0.07,0.5);break;
@@ -608,7 +642,7 @@ function updArrow(a,dt){
  const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy),st=a.sp*dt;
  /* An arrow that lands kicks up the same sparks and dust a melee blow does. Without it a volley
     reads as arrows evaporating in mid-air, since the flight is the only thing drawn. */
- if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team);hitFx(a.tx,a.ty)}a.dead=true}
+ if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team);hitFx(a.tx,a.ty);playAt('arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
 function damage(t,amt,fromTeam){
@@ -635,7 +669,7 @@ function kill(t){
  t.dead=true;t.hp=0;
  hitStop(t.kind==='unit'?0.12:0.2);
  if(t.kind==='unit'){burst(t.x,t.y,TEAMC[t.team].m,10,55);shake=Math.max(shake,2.4);hitFx(t.x,t.y);
-  bleed(t,14);addStain(t.x,t.y,rnd(7,9.5),1.6);addCorpse(t)}
+  bleed(t,14);addStain(t.x,t.y,rnd(7,9.5),1.6);addCorpse(t);playAt('death_grunt',t.x,t.y,0.6)}
  else{if(t.type==='gate')gateBlock(t,false);else gridBlock(t,false);
   if(t.garrison&&t.garrison.length)releaseGarrison(t);recalcPop();burst(t.cx,t.cy,'#9a9a9a',24,80);burst(t.cx,t.cy,'#d9b36a',10,60);
   shake=Math.max(shake,t.type==='tc'?7:5);sfx('crash');if(t.type==='tc')checkEnd()}}
@@ -661,8 +695,10 @@ function combat(u,t,dt){
   u.path=null;
   u.face=((c[0]-u.x)-(c[1]-u.y))>=0?1:-1;
   if(u.cd<=0){u.cd=def.cdr;u.anim+=2;u.fire=time;
-   if(def.ranged)spawnArrow(u,t,def.atk);
-   else{damage(t,def.atk,u.team);hitFx(c[0],c[1])}}
+   if(def.ranged){spawnArrow(u,t,def.atk);playAt('bow_release',u.x,u.y,0.8)}
+   else{damage(t,def.atk,u.team);hitFx(c[0],c[1]);
+    if(u.type==='vill')playAt('axe_chop',c[0],c[1],0.7);
+    else{playAt('sword_swing',u.x,u.y,0.55);playAt('sword_hit',c[0],c[1],0.8)}}}
  }else if(losW(u.x,u.y,c[0],c[1],u.team)){u.path=null;stepMove(u,c[0],c[1],dt)}
  else{if(time>u.nT){u.nT=time+0.75;setPath(u,c[0],c[1])}if(u.path)followPath(u,dt)}}
 
@@ -921,25 +957,27 @@ function tap(px,py){
   if(e.kind==='unit'&&e.team===0){
    const dbl=lastTap.ty===e.type&&now-lastTap.t<350&&Math.hypot(px-lastTap.x,py-lastTap.y)<50;
    if(dbl)selectType(e.type);else{selection=[e];sfx('sel')}
+   voice('select',e);
    lastTap.t=now;lastTap.x=px;lastTap.y=py;lastTap.ty=e.type;return}
   if((e.kind==='unit'&&e.team===1)||(e.kind==='bld'&&e.team===1)){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const f=selUnits(0);
    if(f.length){f.forEach(u=>{rememberTask(u);u.order={type:'attack',target:e};u.path=null;u.nT=0});
-    ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk')}
+    ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk');
+    const sol=f.find(u=>u.type!=='vill');voice(sol?'attack':'ack',sol||f[0])}
    else{selection=[e];sfx('sel')}
    refreshPanel(true);return}
   if(KCT[e.kind]){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill');
-   if(v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
+   if(v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok');voice('ack',v[0])}
    else toast(RESNAME[e.kind]+': '+Math.ceil(e.amt)+' remaining');
    refreshPanel(true);return}
   if(e.kind==='bld'&&e.team===0){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill');
-   if(e.type==='tc'&&e.done&&v.length){garrisonVillagers(v,e);ping(e.cx,e.cy,'#7fd4ff')}
-   else if(!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
+   if(e.type==='tc'&&e.done&&v.length){garrisonVillagers(v,e);ping(e.cx,e.cy,'#7fd4ff');voice('ack',v[0])}
+   else if(!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
    else if(e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
    else{selection=[e];sfx('sel')}
    refreshPanel(true);return}
@@ -948,7 +986,7 @@ function tap(px,py){
  const one=selection.length===1&&selection[0].kind==='bld'&&selection[0].team===0&&(selection[0].type==='tc'||selection[0].type==='barracks')&&selection[0].done;
  if(one){const b=selection[0];b.rally={x:wx,y:wy};b.rallyRes=resAt(wx,wy);ping(wx,wy,'#7fd4ff');sfx('ok')}
  else{const f=selUnits(0);
-  if(f.length){orderMove(f,wx,wy);ping(wx,wy,'#9fe08a');sfx('ok')}
+  if(f.length){orderMove(f,wx,wy);ping(wx,wy,'#9fe08a');sfx('ok');voice(f[0].type==='vill'?'ack':'select',f[0])}
   else selection=[]}
  refreshPanel(true)}
 function doBox(){
@@ -959,7 +997,7 @@ function doBox(){
   const[sx,sy]=w2s(u.x,u.y);
   const px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
   if(px>=x0&&px<=x1&&py>=y0&&py<=y1)found.push(u)}
- if(found.length){selection=found;sfx('sel')}
+ if(found.length){selection=found;sfx('sel');voice('select',found[0])}
  refreshPanel(true)}
 
 /* ============ input ============ */
@@ -1080,7 +1118,7 @@ $('sword').addEventListener('pointerdown',e=>{
  buildings.forEach(t=>{if(t.dead||t.team===0)return;const d=dist2(bx,by,t.cx,t.cy);if(d<bd){bd=d;best=t}});
  if(best){const tx=best.x!==undefined?best.x:best.cx,ty=best.y!==undefined?best.y:best.cy;
   own.forEach(u=>{rememberTask(u);u.order={type:'amove',x:tx,y:ty,tgt:null};u.path=null;u.nT=0;setPath(u,tx+rnd(-1,1),ty+rnd(-1,1))});
-  ping(tx,ty,'#ff8a7a');sfx('atk')}
+  ping(tx,ty,'#ff8a7a');sfx('atk');voice('attack',own[0])}
  else toast('No enemies discovered yet')});
 
 const mmNav=e=>{
@@ -1322,6 +1360,7 @@ function dirSet(u){const s=DIR_UNIT[u.type];return s==='villager'?'villager_'+(u
 /* Which work clip a villager plays at a job: an axe at trees, a pickaxe at ore, picking at
    berry bushes, a hoe on farms, a hammer on a building site. Game animals are butchered with
    the axe swing. */
+const WORK_SFX={chop:'axe_chop',mine:'pick_hit',build:'hammer_hit'};
 const WORK_CLIP={tree:'chop',gold:'mine',stone:'mine',berry:'berries',farm:'hoe',boar:'chop',sheep:'chop'};
 const TEAM_COL=['blue','red'];
 function trackHeading(u){
@@ -1370,7 +1409,11 @@ function dirSprite(u){
   const a=has(atkClip);f=dirFrame(set,u.team,atkClip,d,Math.floor(a.impact+(time-u.fire)/def.cdr*a.keys.length))}
  /* Working: the job's own loop, offset per unit so a crew does not swing in lockstep. */
  if(!f&&!u.moving&&u.workClip&&time-(u.workT||-9)<0.3&&has(u.workClip)){
-  const a=has(u.workClip);f=dirFrame(set,u.team,u.workClip,d,Math.floor((time+u.id*0.37)*a.fps))}
+  const a=has(u.workClip),ph=Math.floor((time+u.id*0.37)*a.fps),n=a.keys.length,fi=((ph%n)+n)%n;
+  f=dirFrame(set,u.team,u.workClip,d,ph);
+  /* the tool lands on the clip's impact frame: that is when the chop, strike or blow sounds */
+  if(f&&a.impact&&fi===a.impact&&u._wf!==ph){const snd=WORK_SFX[u.workClip];if(snd)playAt(snd,u.x,u.y,0.55)}
+  u._wf=fi===a.impact?ph:u._wf}
  if(!f){
   const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
   /* u.anim runs at 7/s while moving, tuned for the 8-frame 0 A.D. cycles; rescale it so a baked
@@ -2269,7 +2312,7 @@ function scheduleTut(){
   const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
   e.preventDefault();if(!started||over)return;setPaused(!paused)});
  $('startBtn').addEventListener('click',()=>{
-  initAudio();if(AC&&AC.resume)AC.resume();initMusic();
+  initAudio();if(AC&&AC.resume)AC.resume();initMusic();loadBank('sfx');loadBank('voice');
   $('startOv').style.display='none';started=true;sfx('horn');scheduleTut()});
  $('againBtn').addEventListener('click',()=>location.reload());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.resume)AC.resume();lastT=0});
