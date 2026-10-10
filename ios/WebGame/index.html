@@ -56,7 +56,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 #mmWrap{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));background:rgba(10,14,9,.78);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:3px;backdrop-filter:blur(6px)}
 #mm{display:block;border-radius:7px}
 /* selection panel: one compact bar tucked between the sword and the stick */
-#panel{position:absolute;left:calc(88px + env(safe-area-inset-left));right:calc(176px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));background:rgba(12,16,10,.86);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:5px 7px;display:none;backdrop-filter:blur(8px)}
+#panel{position:absolute;left:calc(88px + env(safe-area-inset-left));right:calc(176px + env(safe-area-inset-right));bottom:4px;background:rgba(12,16,10,.86);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:5px 7px;display:none;backdrop-filter:blur(8px)}
 #panel.show{display:block}
 .prow{display:flex;align-items:center;gap:5px;min-height:20px}
 .picon{position:relative;width:22px;height:22px;background:rgba(255,255,255,.08);border-radius:6px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
@@ -86,6 +86,21 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .abtn span svg{width:9px;height:9px}
 .abtn.no{opacity:.4}
 .abtn.on{border-color:#d9b36a;background:rgba(217,179,106,.18)}
+/* Compact bar: it sits at the very bottom (the home indicator auto-hides in the game, so the
+   safe-area inset is not needed) and is as thin as a thumb target allows, so it covers as little
+   of the board as possible. Narrower buttons let all eleven buildings fit on a landscape phone,
+   whose side insets leave only ~470pt between the sword and the stick. */
+#panel{padding:3px 6px 4px}
+.prow{min-height:16px}
+.picon{width:18px;height:18px}.picon svg{width:12px;height:12px}
+.pname{font-size:10.5px}
+.pclose{width:28px;height:28px;margin:-5px -3px -5px 4px;font-size:14px}
+.pacts{gap:3px;margin-top:3px}
+.abtn{min-width:36px;padding:3px 1px 2px;border-radius:8px;gap:0}
+.abtn svg{width:16px;height:16px}
+.abtn .albl{font-size:8px;margin-top:1px}
+.abtn span{font-size:8.5px;margin-top:1px;gap:2px}
+.abtn span svg{width:7px;height:7px}
 /* Portrait phones cannot spare the bottom corners, so lift the bar above the controls. */
 @media (orientation:portrait){
  #panel{left:calc(10px + env(safe-area-inset-left));right:calc(10px + env(safe-area-inset-right));bottom:calc(178px + env(safe-area-inset-bottom))}
