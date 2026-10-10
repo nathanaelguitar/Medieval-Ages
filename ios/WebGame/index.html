@@ -363,7 +363,7 @@ const tileCol=new Array(MAP*MAP);
 const joy={id:null,vx:0,vy:0};
 const ptrs=new Map();
 const lastTap={t:0,x:0,y:0,ty:null};
-const cv=$('game'),ctx=cv.getContext('2d');
+const cv=$('game'),mainCtx=cv.getContext('2d');let ctx=mainCtx;   /* `ctx` is swapped to an offscreen canvas while silhouettes are drawn */
 const mm=$('mm'),mctx=mm.getContext('2d');
 let cw=0,ch=0,dpr=1;
 /* ============ levels ============
@@ -2095,6 +2095,26 @@ function drawStandards(){
 function showHP(u){
  if(u.team===0)return selection.includes(u)||u.hp<u.maxhp;
  return time-(u.myHitT||-99)<4||units.some(m=>m.team===0&&!m.dead&&m.order&&(m.order.target===u||m.order.tgt===u))}
+/* Silhouettes. A unit standing behind a building or a tree is drawn again as a flat shape in its
+   side's colour, but only where the thing in front covers it -- the unit offscreen, masked by the
+   occluder drawn into a second canvas, tinted, then laid over the scene. */
+const silC=document.createElement('canvas'),silX=silC.getContext('2d');
+const mskC=document.createElement('canvas'),mskX=mskC.getContext('2d');
+function occBox(o){
+ if(o.kind==='bld'){if(o.type==='farm'||(DEFS[o.type].hh||0)<20)return null;
+  const B=w2s(o.tx+o.size,o.ty),C=w2s(o.tx+o.size,o.ty+o.size),D=w2s(o.tx,o.ty+o.size),A=w2s(o.tx,o.ty);return[D[0],B[0],A[1]-o.hh*1.8,C[1]]}
+ const[sx,sy]=w2s(o.gx,o.gy);return[sx-22,sx+22,sy-72,sy+2]}
+function silhouette(h,o){
+ if(silC.width!==cv.width||silC.height!==cv.height){silC.width=mskC.width=cv.width;silC.height=mskC.height=cv.height}
+ const M=mainCtx.getTransform(),p0=M.transformPoint({x:h.x0,y:h.y0}),p1=M.transformPoint({x:h.x1,y:h.y1});
+ const rx=Math.max(0,Math.floor(p0.x)-2),ry=Math.max(0,Math.floor(p0.y)-2),rw=Math.min(cv.width-rx,Math.ceil(p1.x-p0.x)+4),rh=Math.min(cv.height-ry,Math.ceil(p1.y-p0.y)+4);
+ if(rw<=0||rh<=0)return;
+ for(const X of [silX,mskX]){X.setTransform(1,0,0,1,0,0);X.globalCompositeOperation='source-over';X.globalAlpha=1;X.clearRect(rx,ry,rw,rh);X.save();X.beginPath();X.rect(rx,ry,rw,rh);X.clip();X.setTransform(M)}
+ try{ctx=silX;drawUnit(h.u);ctx=mskX;if(o.kind==='bld')drawBuilding(o);else drawRes(o)}finally{ctx=mainCtx}
+ silX.setTransform(1,0,0,1,0,0);silX.globalCompositeOperation='destination-in';silX.drawImage(mskC,0,0);
+ silX.globalCompositeOperation='source-in';silX.fillStyle=TEAMR[h.u.team];silX.fillRect(rx,ry,rw,rh);
+ silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';
+ mainCtx.save();mainCtx.setTransform(1,0,0,1,0,0);mainCtx.globalAlpha=0.62;mainCtx.drawImage(silC,rx,ry,rw,rh,rx,ry,rw,rh);mainCtx.restore()}
 function drawUnit(u){
  if(u.garrisoned)return;
  const[sx,sy]=w2s(u.x,u.y),tc=TEAMC[u.team];
@@ -2538,7 +2558,11 @@ function render(){
  for(const c of corpses){const sx=(c.x-c.y)*TW2,sy=(c.x+c.y)*TH2;
   if(sx<L||sx>R||sy<T||sy>B)continue;dl.push([c.x+c.y-0.05,3,c])}
  dl.sort((a,b)=>a[0]-b[0]);
- for(const d of dl){if(d[1]===0)drawRes(d[2]);else if(d[1]===1)drawBuilding(d[2]);else if(d[1]===3)drawCorpse(d[2]);else drawUnit(d[2])}
+ /* units a building or tree will hide, with the occluders in front of them */
+ const hid=[];for(const d of dl)if(d[1]===2&&!d[2].garrisoned){const[sx,sy]=w2s(d[2].x,d[2].y);hid.push({u:d[2],z:d[0],x0:sx-10,x1:sx+10,y0:sy-42,y1:sy+2})}
+ for(const d of dl){if(d[1]===0)drawRes(d[2]);else if(d[1]===1)drawBuilding(d[2]);else if(d[1]===3)drawCorpse(d[2]);else drawUnit(d[2]);
+  if(hid.length&&(d[1]===1||(d[1]===0&&d[2].kind==='tree'))){const bb=occBox(d[2]);
+   if(bb)for(const h of hid)if(h.z<d[0]&&h.x1>bb[0]&&h.x0<bb[1]&&h.y1>bb[2]&&h.y0<bb[3])silhouette(h,d[2])}}
  // arrows: drawn at their arc height and pointed along the flight, with a faint trail
  for(const a of arrows){if(a.dead)continue;
   const p=a.trav!==undefined?clamp(a.trav/(a.trav+(a.rem||0)+1e-6),0,1):1;
