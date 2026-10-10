@@ -1103,7 +1103,16 @@ function spawnFrom(b,type){
  }else if(type==='vill'){
   let best=null,bd=144;
   for(const rr of resources){if(rr.dead||rr.amt<=0)continue;const d=dist2(rr.gx,rr.gy,b.cx,b.cy);if(d<bd){bd=d;best=rr}}
-  if(best)setGather(u,best)}}
+  if(best)setGather(u,best)}
+ /* With no rally flag, fresh soldiers march to the army's standard -- the biggest company's
+    banner -- rather than loitering at the Barracks. */
+ else if(b.team===0){const g=mainCompany(0,u);
+  if(g){const m=g[0];u.order={type:'move'};setPath(u,m.x+rnd(-0.8,0.8),m.y+rnd(-0.8,0.8))}}}
+/* The army's main body: the largest company on a side (see companies), ignoring `skip`. */
+function mainCompany(team,skip,pool){
+ let best=null;
+ for(const g of companies(pool)){const n=g.filter(u=>u!==skip).length;if(g[0].team===team&&n&&(!best||n>best.n))best={g:g.filter(u=>u!==skip),n}}
+ return best&&best.g}
 
 /* ============ unit update ============ */
 function updUnit(u,dt){
@@ -1481,7 +1490,9 @@ $('sword').addEventListener('pointerdown',e=>{
   if(mil.length){selection=mil;sfx('sel');refreshPanel(true)}
   else toast('No army yet: train troops in the Barracks');
   return}
- let bx=0,by=0;own.forEach(u=>{bx+=u.x;by+=u.y});bx/=own.length;by/=own.length;
+ /* aim from the front: the main company's banner, not the average of every soldier (fresh troops
+    back at the Barracks dragged that toward home and turned the charge around) */
+ const lead=(mainCompany(0,null,own)||own)[0],bx=lead.x,by=lead.y;
  let best=null,bd=1e9;
  units.forEach(t=>{if(t.dead||t.team===0)return;const d=dist2(bx,by,t.x,t.y);if(d<bd){bd=d;best=t}});
  buildings.forEach(t=>{if(t.dead||t.team===0)return;const d=dist2(bx,by,t.cx,t.cy);if(d<bd){bd=d;best=t}});
@@ -2064,8 +2075,8 @@ const TEAMR=['#3d8bff','#ff3b30'];
    whole company. Drawn in world space but held at a readable on-screen size when zoomed out. */
 let standardHits=[];
 const ARMS=['img/herald_lion.png','img/herald_lions3.png'].map(src=>{const im=new Image();im.src=src;return im});
-function companies(){
- const out=[],mil=units.filter(u=>!u.dead&&!u.garrisoned&&u.type!=='vill').sort((a,b)=>a.id-b.id),used=new Set();
+function companies(pool){
+ const out=[],mil=(pool||units).filter(u=>!u.dead&&!u.garrisoned&&u.type!=='vill').sort((a,b)=>a.id-b.id),used=new Set();
  for(const a of mil){if(used.has(a))continue;const g=[a];used.add(a);
   for(const b of mil)if(!used.has(b)&&b.team===a.team&&g.some(m=>dist2(m.x,m.y,b.x,b.y)<6.25)){g.push(b);used.add(b)}
   out.push(g)}
