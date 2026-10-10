@@ -77,11 +77,16 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
    would cover the middle of the map. */
 .pacts{display:flex;gap:4px;margin-top:5px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:none}
 .pacts::-webkit-scrollbar{display:none}
-.abtn{flex:1 1 0;min-width:44px;max-width:70px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:9px;padding:4px 2px;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:1px}
+/* Buttons keep the width their label and cost need; when they don't all fit (12 for villagers,
+   and less room beside the notch) the row slides sideways, and a fade marks the side with more. */
+.pacts.more-r{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+.pacts.more-l{-webkit-mask-image:linear-gradient(90deg,transparent,#000 26px);mask-image:linear-gradient(90deg,transparent,#000 26px)}
+.pacts.more-l.more-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent)}
+.abtn{flex:1 0 auto;min-width:44px;max-width:84px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:9px;padding:4px 2px;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:1px}
 .abtn svg{width:20px;height:20px}
 /* One-word caption. Icons alone made Barracks (a flag) unreadable. */
-.abtn .albl{font-size:8.5px;font-weight:700;color:#d7cfba;line-height:1;white-space:nowrap;overflow:hidden;max-width:100%;letter-spacing:.01em}
-.abtn span{font-size:9px;color:#d9b36a;display:flex;gap:5px;font-weight:600;line-height:1}
+.abtn .albl{font-size:8.5px;font-weight:700;color:#d7cfba;line-height:1;white-space:nowrap;letter-spacing:.01em}
+.abtn span{font-size:9px;color:#d9b36a;display:flex;gap:5px;font-weight:600;line-height:1;white-space:nowrap}
 .abtn span em{font-style:normal;display:flex;align-items:center;gap:1px}
 .abtn span svg{width:9px;height:9px}
 .abtn.no{opacity:.4}
@@ -96,7 +101,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .pname{font-size:10.5px}
 .pclose{width:28px;height:28px;margin:-5px -3px -5px 4px;font-size:14px}
 .pacts{gap:3px;margin-top:3px}
-.abtn{min-width:36px;padding:3px 1px 2px;border-radius:8px;gap:0}
+.abtn{min-width:40px;padding:3px 5px 2px;border-radius:8px;gap:0}
 .abtn svg{width:16px;height:16px}
 .abtn .albl{font-size:8px;margin-top:1px}
 .abtn span{font-size:8.5px;margin-top:1px;gap:2px}
@@ -1659,6 +1664,7 @@ function refreshPanel(force){
    else{const b=selection[0];if(b&&b.kind==='bld')tryQueue(b,a.t)}
    refreshPanel(true)}});
  pActs=acts;
+ {const row=el.querySelector('.pacts');if(row){const edge=()=>{row.classList.toggle('more-l',row.scrollLeft>2);row.classList.toggle('more-r',row.scrollLeft+row.clientWidth<row.scrollWidth-2)};row.addEventListener('scroll',edge,{passive:true});requestAnimationFrame(edge)}}
  if($('phpf'))pHP=$('phpf');
  if($('pqf')){pQF=$('pqf');pQT=$('pqt')}}
 
