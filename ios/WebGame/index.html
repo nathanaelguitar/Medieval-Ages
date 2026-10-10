@@ -2658,8 +2658,12 @@ function applyJoy(dt){
    than snapping, so a march pulls the camera along at a readable pace instead of yanking it. If the
    group is spread wider than the view can hold, it centres on them instead of chasing the furthest
    unit back and forth. */
+/* Once selected soldiers stop travelling -- they have arrived, or a fight has started -- the view
+   eases round to put them in the middle, so a march that ended at the screen's edge does not
+   leave the battle half off it. Villagers are left out: their work keeps them shuffling about. */
+let settleT=0,centring=false;
 function followCamera(dt){
- if(followMute>0){followMute=Math.max(0,followMute-dt);return}
+ if(followMute>0){followMute=Math.max(0,followMute-dt);settleT=0;return}
  const own=selection.filter(s=>s.kind==='unit'&&s.team===0&&!s.dead&&!s.garrisoned);
  if(!own.length)return;
  const hw=cw/(2*zoom),hh=ch/(2*zoom);
@@ -2678,8 +2682,17 @@ function followCamera(dt){
  if(hiy-loy>2*(hh-my))ty=cyAvg;
  else if(cyAvg-camY>hh-my)ty=camY+(cyAvg-camY-(hh-my));
  else if(camY-cyAvg>hh-my)ty=camY-((camY-cyAvg)-(hh-my));
- if(tx===camX&&ty===camY)return;
- const k=Math.min(1,dt*2.6);
+ const mil=own.filter(u=>u.type!=='vill');
+ const travelling=mil.some(u=>u.moving&&(u.order.type==='drive'||u.order.type==='move'||(u.order.type==='amove'&&!u.order.tgt)));
+ settleT=mil.length&&!travelling?settleT+dt:0;
+ let k=Math.min(1,dt*2.6);
+ if(settleT>0.7&&hix-lox<2*hw*0.9&&hiy-loy<2*hh*0.9){
+  const ox=cxAvg-camX,oy=cyAvg-camY;
+  if(Math.abs(ox)>hw*0.12||Math.abs(oy)>hh*0.14)centring=true;           /* start when clearly off-centre */
+  else if(Math.abs(ox)<hw*0.02&&Math.abs(oy)<hh*0.02)centring=false;       /* ...and finish the glide */
+  if(centring){tx=cxAvg;ty=cyAvg;k=Math.min(1,dt*1.5)}}
+ else centring=false;
+ if(Math.abs(tx-camX)<0.5&&Math.abs(ty-camY)<0.5)return;
  camX+=(tx-camX)*k;camY+=(ty-camY)*k;clampCam()}
 function update(dt){
  applyJoy(dt);
