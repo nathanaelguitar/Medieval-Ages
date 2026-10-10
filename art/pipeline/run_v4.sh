@@ -35,6 +35,9 @@ nice -n 10 $MP art/pipeline/video_to_clip.py extract --video $VID/veo_walk_side.
     --out $OUT/motion/walk_clip.json --previews $OUT/previews/motion_walk \
     --gain hip=1.2,knee=1.2,arm=1.2,foot=0.7,bob=1.0,torso=1.0 --shield-arm L --shield-arm-gain 0.3 \
     2>&1 | grep -v -E "^(W0|I0|INFO|WARNING)"
+# idle: keyed (art/pipeline/idle_v1.sh) on this unit's walk retarget; the 0 A.D. idle .dae is only
+# the rig's base pose (props placed at its frame 1) and is not baked
+bash art/pipeline/idle_v1.sh $OUT/motion/walk_clip.json $OUT/motion/idle_clip.json
 # attack: guard (0.95 s) -> sword raised (1.1) -> wind-up top (2.05, held in the video) -> swing
 # starts (2.30) -> impact (2.54, arm extended forward-down) -> follow-through (3.0) -> synthesized
 # recovery to the guard. 1.0 s cycle = the unit's attack cooldown; impact at phase 0.5 = frame 5
@@ -80,11 +83,12 @@ echo "   extract: $(( $(date +%s) - T0 ))s"
 fi
 
 if has rig; then
-echo "== 2. rig (idle .dae first: the props are placed at its frame 1)"; T0=$(date +%s)
+echo "== 2. rig (base .dae first: the props are placed at its frame 1)"; T0=$(date +%s)
 $B --python art/pipeline/rig_body.py -- \
     --body $V4/man_at_arms_blue.glb --alt red=$V4/man_at_arms_red.glb \
     --shield $V4/shield_blue.glb --shield-alt red=$V4/shield_red.glb \
-    --clip idle=art/source/zeroad_clips/biped/infantry/swordsman/idle_relax_shield_01.dae \
+    --clip base=art/source/zeroad_clips/biped/infantry/swordsman/idle_relax_shield_01.dae \
+    --clip idle=$OUT/motion/idle_clip.json \
     --clip walk=$OUT/motion/walk_clip.json --clip attack=$OUT/motion/attack_clip.json \
     --clip death=$OUT/motion/death_clip.json \
     --sword-length 2.0 --sword-blade-w 0.11 --sword-guard-w 0.40 --sword-dir 0,0.15,-1 \
@@ -97,7 +101,7 @@ if has bake; then
 echo "== 3. bake"; T0=$(date +%s)
 rm -rf $OUT/sprites $OUT/sprites@2x $OUT/_tiles
 $B $V4/man_at_arms_rig.blend --python art/pipeline/bake_sprites.py -- \
-    --name man_at_arms --teams blue,red --clip idle=6 --clip walk=12 --clip attack=10:88 --clip death=12:88 \
+    --name man_at_arms --teams blue,red --clip idle=12 --clip walk=12 --clip attack=10:88 --clip death=12:88 \
     --size 72 --supersample 2 --out $OUT --px-per-unit 14.34 $DRY \
     $LIGHT --contrast 0.35 2>&1 | grep -E "^==|span|clip |sword tip|wrote|Traceback|Error"
 echo "   bake: $(( $(date +%s) - T0 ))s"

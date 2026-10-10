@@ -45,7 +45,8 @@ Two stages in one file, so later units (archer, villager; attack/death clips) re
    Extra synthesized curves (``--phase-curve name=phase:value,...``): ``wrist_R`` (sword pitch
    relative to the forearm), ``arm_yaw_R`` (sword arm swung outward about the vertical, for the
    front/back views), ``chest_yaw`` / ``pelvis_yaw`` (torso twist), ``upperarm_L`` / ``elbow_L``
-   as a shield-arm raise, ``root_fwd`` (horizontal root travel in rig units).
+   as a shield-arm raise, ``root_fwd`` (horizontal root travel in rig units), ``head_yaw`` (head
+   turned about the vertical; the keyed idle's glance aside).
 
        python3 art/pipeline/video_to_clip.py oneshot \\
            --video art/source/man_at_arms/video/veo_attack_side.mp4 --start 0.9 --end 3.05 \\
@@ -844,7 +845,7 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
     chest_yaw = rt.get("chest_yaw_deg", 0.0)
     bob_gain = rt.get("bob_gain", 1.0)
     for k in (f"upperarm_{shield}", f"elbow_{shield}", "wrist_R", "wrist_L", "arm_yaw_R", "arm_yaw_L",
-              "root_fwd", "chest_yaw", "pelvis_yaw"):
+              "root_fwd", "chest_yaw", "pelvis_yaw", "head_yaw"):
         cv.setdefault(k, None)
     F = max(4, int(round(clip["cycle_s"] * fps)))
     H = int(round(hold_s * fps))
@@ -959,6 +960,8 @@ def build_action(source, clip_path, name, base_action=None, base_frame=1, fps=24
         rotate_world(source.pose.bones["Biped_spine"], "X", tor)    # +X rotation tips an up vector forward (-Y)
         if head_counter:
             rotate_world(source.pose.bones["Biped_head"], "X", -tor * head_counter)
+        # head turned about the vertical (+ = toward the figure's left), e.g. the idle's glance aside
+        rotate_world(source.pose.bones["Biped_head"], "Z", cvi("head_yaw", ph))
         for s in SIDES:
             th = cvi(f"thigh_{s}", ph)
             kn = max(0.0, cvi(f"knee_{s}", ph))

@@ -28,6 +28,9 @@ nice -n 10 $MP art/pipeline/video_to_clip.py extract --video $VID/veo_archer_wal
     --out $OUT/motion/walk_clip.json --previews $OUT/previews/motion_walk \
     --gain hip=1.2,knee=1.2,arm=1.2,foot=0.7,bob=1.0,torso=1.0 --shield-arm L --shield-arm-gain 0.3 \
     2>&1 | grep -v -E "^(W0|I0|INFO|WARNING)"
+# idle: keyed (art/pipeline/idle_v1.sh) on this unit's walk retarget; the 0 A.D. idle .dae is only
+# the rig's base pose (props placed at its frame 1) and is not baked
+bash art/pipeline/idle_v1.sh $OUT/motion/walk_clip.json $OUT/motion/idle_clip.json
 # shoot: ready (0.33 s, bow at the side) -> bow up, hand to the string (0.67-0.83) -> draw -> full
 # draw (1.33, held in the video until 4.15) -> release at 4.29 s (impact) -> arm back (4.42) ->
 # follow-through (4.75) -> bow lowered (5.0) -> synthesized return to ready. 1.5 s cycle = the
@@ -88,10 +91,10 @@ echo "   skin: $(( $(date +%s) - T0 ))s"
 fi
 
 if has rig; then
-echo "== 2. rig (idle .dae first: the bow is placed at its frame 1)"; T0=$(date +%s)
+echo "== 2. rig (base .dae first: the bow is placed at its frame 1)"; T0=$(date +%s)
 $B --python art/pipeline/rig_body.py -- \
     --body $V/archer_blue.glb --alt red=$V/archer_red.glb --sword none --height $HEIGHT \
-    --clip idle=art/source/zeroad_clips/biped/citizen/idle_relax_f.dae \
+    --clip base=art/source/zeroad_clips/biped/citizen/idle_relax_f.dae --clip idle=$OUT/motion/idle_clip.json \
     --clip walk=$OUT/motion/walk_clip.json --clip attack=$OUT/motion/attack_clip.json \
     --clip death=$OUT/motion/death_clip.json \
     --prop "name=bow;bone=Biped_hand_L;pos=${BOW_POS:-0,-0.05,-0.1};dir=${BOW_DIR:-0,-0.22,1};edge=0,-1,0;size=4.0" \
@@ -104,7 +107,7 @@ if has bake; then
 echo "== 3. bake"; T0=$(date +%s)
 rm -rf $OUT/sprites $OUT/sprites@2x $OUT/_tiles
 $B $V/archer_rig.blend --python art/pipeline/bake_sprites.py -- \
-    --name archer --teams blue,red --clip idle=6:${CELL_IDLE:-72} --clip walk=12:${CELL_WALK:-72} \
+    --name archer --teams blue,red --clip idle=12:${CELL_IDLE:-72} --clip walk=12:${CELL_WALK:-72} \
     --clip attack=12:${CELL_ATTACK:-96} --clip death=12:${CELL_DEATH:-88} \
     --size 72 --supersample 2 --out $OUT --px-per-unit 14.34 $DRY \
     $LIGHT --contrast 0.35 2>&1 | grep -E "^==|span|clip |prop|wrote|Traceback|Error"

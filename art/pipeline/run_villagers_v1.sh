@@ -34,6 +34,9 @@ for u in villager_m:male villager_f:female; do
     MPX extract --video $VID/veo_${sex}_walk.mp4 --start 1.5 --end 8.0 --facing right --model $MODEL \
         --out $OUT/motion/walk_clip.json --previews $OUT/previews/motion_walk \
         --gain hip=1.2,knee=1.2,arm=$armg,foot=0.7,bob=1.0,torso=1.0 --shield-arm none
+    # idle: keyed (art/pipeline/idle_v1.sh) on this unit's walk retarget; the 0 A.D. idle .dae is only
+    # the rig's base pose (props placed at its frame 1) and is not baked
+    bash art/pipeline/idle_v1.sh $OUT/motion/walk_clip.json $OUT/motion/idle_clip.json
 done
 # chop: the third stroke of the video (the first 2 s are the axe pick-up). Phase 0 = axe raised
 # overhead (6.2 s), swing forward (6.45), impact 6.6 s (phase 0.4), follow-through low (6.9),
@@ -122,7 +125,7 @@ for u in villager_m:male:${HEIGHT_M:-4.05} villager_f:female:${HEIGHT_F:-3.9}; d
         --set retarget.shield_mode=offset --curve "upperarm_L=0:30,1:30" --curve "elbow_L=0:100,1:100"
     $B --python art/pipeline/rig_body.py -- \
         --body $V/${unit}_blue.glb --alt red=$V/${unit}_red.glb --sword none --height $height \
-        --clip idle=art/source/zeroad_clips/biped/citizen/idle_relax_f.dae \
+        --clip base=art/source/zeroad_clips/biped/citizen/idle_relax_f.dae --clip idle=$OUT/motion/idle_clip.json \
         --clip walk=$OUT/motion/walk_clip.json \
         --clip chop=$SH/chop_clip.json --clip mine=$SH/mine_clip.json --clip hoe=$SH/hoe_clip.json \
         --clip berries=$SH/berries_clip.json --clip build=$SH/build_clip.json --clip death=$SH/death_clip.json \
@@ -143,7 +146,7 @@ for u in villager_m:male:${HEIGHT_M:-4.05} villager_f:female:${HEIGHT_F:-3.9}; d
     echo "== 3. bake $unit"; T0=$(date +%s)
     rm -rf $OUT/sprites $OUT/sprites@2x $OUT/_tiles
     $B $V/${unit}_rig.blend --python art/pipeline/bake_sprites.py -- \
-        --name $unit --teams blue,red --clip idle=6:72 --clip walk=12:72 \
+        --name $unit --teams blue,red --clip idle=12:72 --clip walk=12:72 \
         --clip chop=12:${CELL_CHOP:-96} --clip mine=12:${CELL_MINE:-96} --clip hoe=12:${CELL_HOE:-96} \
         --clip berries=12:${CELL_BERRIES:-80} --clip build=8:${CELL_BUILD:-80} --clip death=12:${CELL_DEATH:-88} \
         --clip carry=12:${CELL_CARRY:-72} \
