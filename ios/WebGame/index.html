@@ -141,6 +141,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
   <div class="pmTitle">Paused</div>
   <div id="pmMain">
    <button class="pmBtn" id="pmResume">Resume</button>
+   <button class="pmBtn" id="pmMusic">Music: On</button>
    <button class="pmBtn pmDanger" id="pmResign">Resign</button>
   </div>
   <div id="pmConfirm" style="display:none">
@@ -277,6 +278,38 @@ const idleOf=t=>units.reduce((n,u)=>n+(u.team===t&&!u.dead&&!u.garrisoned&&u.typ
 /* ============ audio ============ */
 let AC=null,masterG=null;
 function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();masterG=AC.createGain();masterG.gain.value=0.35;masterG.connect(AC.destination)}catch(_) {}}
+/* Background music: the march plays now and then under the game, quietly, then rests for a
+   minute or two so the board's own sounds carry. It has its own gain (not masterG) so it can sit
+   well under the effects, and because it runs in the same AudioContext, pausing the game (which
+   suspends AC) pauses it too. The track ships as base64 (audio/music_march.js, loaded after the
+   first tap) because fetch() is blocked under file:// in the app's web view, and decoding it into
+   Web Audio is the only way to set its volume on iOS -- an <audio> element's volume is read-only. */
+const MUSIC_VOL=0.16;
+let musicG=null,musicBuf=null,musicSrc=null,musicT=null,musicOn=true;
+try{musicOn=localStorage.getItem('pe_music')!=='off'}catch(_){}
+function b64ToBuf(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer}
+function initMusic(){
+ if(!AC||musicG)return;
+ musicG=AC.createGain();musicG.gain.value=0;musicG.connect(AC.destination);
+ const sc=document.createElement('script');sc.src='audio/music_march.js';
+ sc.onload=()=>{try{AC.decodeAudioData(b64ToBuf(window.PE_MUSIC_B64),buf=>{musicBuf=buf;window.PE_MUSIC_B64=null;musicLater(5)},()=>{})}catch(_){}};
+ document.head.appendChild(sc)}
+function musicLater(sec){clearTimeout(musicT);musicT=setTimeout(playMusic,sec*1000)}
+function playMusic(){
+ if(!musicBuf||!musicOn||over)return;
+ if(paused||document.hidden){musicLater(10);return}
+ const src=AC.createBufferSource();src.buffer=musicBuf;src.connect(musicG);
+ const t=AC.currentTime;musicG.gain.cancelScheduledValues(t);musicG.gain.setValueAtTime(0,t);
+ musicG.gain.linearRampToValueAtTime(MUSIC_VOL,t+4);                      /* fade in */
+ musicG.gain.setValueAtTime(MUSIC_VOL,t+musicBuf.duration-6);
+ musicG.gain.linearRampToValueAtTime(0,t+musicBuf.duration);              /* fade out */
+ src.onended=()=>{if(musicSrc===src){musicSrc=null;musicLater(rnd(60,120))}};
+ musicSrc=src;src.start(t)}
+function setMusic(on){
+ musicOn=on;try{localStorage.setItem('pe_music',on?'on':'off')}catch(_){}
+ if(!on){clearTimeout(musicT);if(musicSrc){const s=musicSrc;musicSrc=null;try{s.stop()}catch(_){}}}
+ else if(!musicSrc)musicLater(1);
+ $('pmMusic').textContent='Music: '+(on?'On':'Off')}
 function tone(type,f0,f1,dur,vol,delay=0){if(!AC)return;const t=AC.currentTime+delay;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.connect(g);g.connect(masterG);o.start(t);o.stop(t+dur+0.02)}
 function sfx(k){if(!AC)return;switch(k){
  case 'sel':tone('sine',640,880,0.07,0.5);break;
@@ -2210,6 +2243,8 @@ function scheduleTut(){
  $('pauseOv').addEventListener('click',()=>{if(paused)setPaused(false)});   /* tap outside the card */
  $('pauseCard').addEventListener('click',e=>e.stopPropagation());
  $('pmResume').addEventListener('click',()=>setPaused(false));
+ $('pmMusic').addEventListener('click',()=>setMusic(!musicOn));
+ $('pmMusic').textContent='Music: '+(musicOn?'On':'Off');
  $('pmResign').addEventListener('click',()=>{$('pmMain').style.display='none';$('pmConfirm').style.display=''});
  $('pmResignNo').addEventListener('click',()=>{$('pmMain').style.display='';$('pmConfirm').style.display='none'});
  $('pmResignYes').addEventListener('click',()=>{setPaused(false);end(false,true)});
@@ -2220,7 +2255,7 @@ function scheduleTut(){
   const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
   e.preventDefault();if(!started||over)return;setPaused(!paused)});
  $('startBtn').addEventListener('click',()=>{
-  initAudio();if(AC&&AC.resume)AC.resume();
+  initAudio();if(AC&&AC.resume)AC.resume();initMusic();
   $('startOv').style.display='none';started=true;sfx('horn');scheduleTut()});
  $('againBtn').addEventListener('click',()=>location.reload());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.resume)AC.resume();lastT=0});
