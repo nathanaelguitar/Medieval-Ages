@@ -906,11 +906,23 @@ function buildStep(u,dt){
   if(Math.random()<dt*3){const[sx,sy]=w2s(c[0],c[1]);parts.push({x:sx+rnd(-10,10),y:sy-rnd(4,14),vx:rnd(-8,8),vy:-rnd(6,16),g:40,life:0,max:0.5,r:1.6,col:'#cbb27f'})}
   if(b.progress>=1)completeB(b);
  }else{navTo(u,c[0],c[1]);followPath(u,dt)}}
+/* Where a unit appears beside a building: on its FRONT side (larger x+y, toward the camera) so
+   the tall sprite never hides it, nearest the middle of that face, and spread across tiles no unit
+   already stands on so a batch of trainees does not stack on one spot. The old scan took the first
+   free tile from the back row, which put new villagers behind the Town Center. */
 function freeTileAround(b){
- for(let r=1;r<7;r++)for(let j=b.ty-r;j<=b.ty+b.size-1+r;j++)for(let i=b.tx-r;i<=b.tx+b.size-1+r;i++){
-  if(j>b.ty-r&&j<b.ty+b.size-1+r&&i>b.tx-r&&i<b.tx+b.size-1+r)continue;
-  if(passable(i,j))return[i,j]}
- return[b.tx,b.ty-1]}
+ const fx=b.tx+b.size,fy=b.ty+b.size;
+ for(let r=1;r<7;r++){
+  const ring=[];
+  for(let j=b.ty-r;j<=b.ty+b.size-1+r;j++)for(let i=b.tx-r;i<=b.tx+b.size-1+r;i++){
+   if(j>b.ty-r&&j<b.ty+b.size-1+r&&i>b.tx-r&&i<b.tx+b.size-1+r)continue;
+   if(passable(i,j))ring.push([i,j])}
+  if(!ring.length)continue;
+  const taken=([i,j])=>units.some(u=>!u.dead&&!u.garrisoned&&Math.abs(u.x-(i+0.5))<0.6&&Math.abs(u.y-(j+0.5))<0.6);
+  const score=([i,j])=>(i+j)*4-Math.abs(i-fx+0.5-(j-fy+0.5))*0.5;   /* front first, then centred */
+  ring.sort((p,q)=>score(q)-score(p));
+  return ring.find(t=>!taken(t))||ring[0]}
+ return[b.tx+b.size,b.ty+b.size]}
 function tryQueue(b,type){const d=DEFS[type];
  if(b.queue.length>=5){if(b.team===0){toast('Queue is full');sfx('no')}return}
  if(!canAfford(b.team,d.cost)){if(b.team===0){toast('Not enough resources');sfx('no')}return}
