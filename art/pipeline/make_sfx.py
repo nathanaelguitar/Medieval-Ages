@@ -53,9 +53,9 @@ NEGATIVE = ("reverb, echo, hall, room ambience, music, melody, speech, words, cr
 #          loudness target dBFS RMS used for the suggested relative volume, number of picks)
 SOUNDS = {
     "bow_release": (
-        ["Longbow string twang release then a fast arrow whoosh flying past, single shot, close mic, dry, no reverb, medieval foley",
-         "Bowstring snap and a quick arrow whoosh, one archer shot, tight dry recording",
-         "Arrow shot from a wooden bow: taut string thump followed by a short whoosh, single sound effect, dry"],
+        ["Arrow loosed from a wooden longbow: a soft dull bowstring thump and a fast airy whoosh, no ringing, no musical tone, single shot, dry",
+         "Quick arrow whoosh flying through the air with a muted string slap, one shot, natural recording, no metallic ring",
+         "Archer shoots: low thud of the bow then a short swish of the arrow, dry foley, no beep, no tone"],
         (0.35, 0.75), 2.0, (1500, 7000), -19, 5),
     "arrow_hit": (
         ["Arrow thudding into a wooden target, single short impact, close mic, dry, no reverb",

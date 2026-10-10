@@ -1065,7 +1065,7 @@ function gatherStep(u,dt){
    /* the shoot clip faces the boar and is phased off u.cd in dirSprite, so its release frame
       shows as the arrow leaves */
    u.workT=time;u.workAt=[r.gx,r.gy];u.workClip='shoot';u.workAlt=null;
-   if(u.cd<=0){u.cd=1.1;spawnArrow(u,r,7)}}   /* a hunt is heard as arrows and the animal, not a war bow */
+   if(u.cd<=0){u.cd=1.1;spawnArrow(u,r,7);playAt('bow_hunt',u.x,u.y,0.55)}}   /* a hunting bow: a soft thump and whoosh, not the war bow */
  }else if(o.phase==='work'){
   u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.anim+=dt*9;
   u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';u.workAlt=WORK_ALT[r.kind]||null;
