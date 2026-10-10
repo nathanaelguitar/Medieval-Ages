@@ -2885,7 +2885,8 @@ const TUT=[
  {t:'A House holds 5 more people. Select a villager, tap House, then tap open ground to place it.',tg:()=>vOr({el:abtn('="House"')}),
   quick:1,in:()=>{T.h0=nB('house')},ok:()=>placing&&placing.type==='house'||nB('house')>T.h0},
  {t:'Tap open ground to set it down. Green fits; the red ✕ cancels.',nodim:1,tg:()=>placing&&placing.ghost?{w:placing.ghost}:null,
-  ok:()=>nB('house')>T.h0,back:()=>!placing&&nB('house')<=T.h0},
+  /* back to the House step only if a placement was started here and then cancelled */
+  ok:()=>nB('house')>T.h0,back:()=>{if(placing)T.armed=true;return T.armed&&!placing&&nB('house')<=T.h0}},
  {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',tg:()=>vOr({el:abtn('="Wood Yard"')}),next:1,
   ok:()=>nB('woodyard')+nB('mill')+nB('mine')>T.base.drop},
  {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',tg:()=>vOr({el:abtn('="Farm"')}),ok:()=>nB('farm')>T.base.farm},
@@ -2910,7 +2911,7 @@ const TUT=[
  {t:'Destroy the enemy’s Town Center, far to the east. The enemy wakes now. Godspeed, my liege.',tg:()=>({el:$('mmWrap')}),next:1}];
 function tutSnap(){const tc=homeTC();
  T.base={house:nB('house'),farm:nB('farm'),rax:nB('barracks'),drop:nB('woodyard')+nB('mill')+nB('mine'),pop:popOf(0),rally:tc&&tc.rallyRes};
- T.t0=T.sayT=time;T.said=false;T.doneT=null;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
+ T.t0=T.sayT=time;T.said=false;T.doneT=null;T.armed=false;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
 function tutGo(i){
  const prev=TUT[T.i];if(prev&&prev.out&&i!==T.i)prev.out();
  narrStop();T.i=i;const s=TUT[i];if(!s){tutEnd();return}
@@ -2983,7 +2984,8 @@ const ICO_SPK='<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-a
 function tutVoiceBtn(){$('tutVoice').innerHTML=ICO_SPK+(tutVoice
  ?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#e3c27a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'
  :'<path d="m16 9 5 6m0-6-5 6" stroke="#e3c27a" stroke-width="1.8" stroke-linecap="round"/></svg>')}
-$('tutNext').addEventListener('click',e=>{e.stopPropagation();sfx('sel');tutGo(T.i+1)});
+/* Next on a step that only arms the following one (tap House) skips that follow-up too */
+$('tutNext').addEventListener('click',e=>{e.stopPropagation();sfx('sel');const s=TUT[T.i];tutGo(T.i+(s&&s.quick&&!T.doneT?2:1))});
 $('tutSkip').addEventListener('click',e=>{e.stopPropagation();sfx('sel');tutEnd()});
 $('tutVoice').addEventListener('click',e=>{e.stopPropagation();tutVoice=!tutVoice;
  try{localStorage.setItem('pe_tut_voice',tutVoice?'on':'off')}catch(_){}
