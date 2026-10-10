@@ -2,12 +2,12 @@
 window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {}, {
  "med_barracks": {
   "file": "med_barracks.png",
-  "fill": 0.5259,
-  "fp_cx": 292.87,
-  "fp_cy": 313.8,
+  "fill": 0.5851,
+  "fp_cx": 291.84,
+  "fp_cy": 367.82,
   "fp_w": 576.0,
-  "h": 468,
-  "w": 586
+  "h": 522,
+  "w": 600
  },
  "med_farm": {
   "file": "med_farm.png",

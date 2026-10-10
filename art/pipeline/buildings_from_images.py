@@ -697,6 +697,11 @@ def stage_build(names_filter=None, debug=False):
         if p:
             os.makedirs(p, exist_ok=True)
     man1, man2, infos = {}, {}, {}
+    if names_filter:   # rebuilding a subset: keep every other entry already in the manifests
+        for var, fn in ((man1, "manifest_snippet.json"), (man2, "manifest_snippet_2x.json"), (infos, "build_info.json")):
+            path = os.path.join(OUT, fn)
+            if os.path.exists(path):
+                var.update(json.load(open(path)))
     for name, (src_name, n, kind) in BUILDINGS.items():
         if names_filter and name not in names_filter:
             continue
