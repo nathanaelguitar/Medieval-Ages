@@ -134,6 +134,15 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .tip{margin-top:14px;font-size:11px;color:#8d8874}
 /* Title screen: full-bleed key art with the title column on its darker left side. Falls back to
    the shared overlay gradient when the art is missing. */
+/* Intro film: plays on every launch. The first viewing has to run to the end; after that a Skip
+   button sits bottom right. */
+#introOv{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center;
+ transition:opacity .8s}
+#introOv.gone{opacity:0;pointer-events:none}
+#introVid{width:100%;height:100%;object-fit:contain;background:#000}
+#introSkip{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));
+ padding:9px 18px;border-radius:20px;border:1px solid rgba(227,194,122,.6);background:rgba(0,0,0,.45);
+ color:#e3c27a;font:600 15px Palatino,Georgia,serif;letter-spacing:.06em}
 #startOv{align-items:flex-start;justify-content:center;text-align:left;
  padding-left:max(36px,calc(env(safe-area-inset-left) + 22px));
  background:linear-gradient(90deg,rgba(7,9,5,.92) 0%,rgba(7,9,5,.72) 30%,rgba(7,9,5,.15) 62%,rgba(7,9,5,0) 80%),
@@ -206,6 +215,8 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
    <button class="pmBtn" id="pmResignNo">Keep fighting</button>
   </div>
  </div></div>
+<div id="introOv"><video id="introVid" src="intro.mp4" playsinline webkit-playsinline preload="auto"></video>
+ <button id="introSkip" hidden>Skip &#9654;</button></div>
 <div id="startOv" class="ov ui">
  <div class="hero">
   <h1 class="title">MEDIEVAL<span>AGES</span></h1>
@@ -2580,6 +2591,24 @@ function scheduleTut(){
  $('nextBtn').addEventListener('click',()=>again(Math.min(LEVELS.length,level+1)));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.resume)AC.resume();lastT=0});
 requestAnimationFrame(frame);
+</script>
+<script>
+/* Intro film. Watching it through once is required; every later launch offers Skip. If the web
+   view refuses to autoplay with sound (a desktop browser), it plays muted rather than stalling. */
+(()=>{const ov=document.getElementById('introOv'),v=document.getElementById('introVid'),
+  skip=document.getElementById('introSkip');
+ let seen=false;try{seen=localStorage.getItem('pe_intro_seen')==='1'}catch(e){}
+ let done=false;
+ const finish=full=>{if(done)return;done=true;
+  if(full){try{localStorage.setItem('pe_intro_seen','1')}catch(e){}}
+  v.pause();ov.classList.add('gone');setTimeout(()=>{ov.remove()},900)};
+ if(seen)skip.hidden=false;
+ skip.addEventListener('click',e=>{e.stopPropagation();finish(false)});
+ v.addEventListener('ended',()=>finish(true));
+ v.addEventListener('error',()=>finish(false));
+ const p=v.play();
+ if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>finish(false))});
+})();
 </script>
 </body>
 </html>

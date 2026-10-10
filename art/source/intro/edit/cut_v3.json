@@ -1,0 +1,80 @@
+{
+ "xf": 0.5,
+ "crf": 21,
+ "maxrate": "3900k",
+ "title": {
+  "png": "title_card.png",
+  "dur": 4.0,
+  "xf": 1.0
+ },
+ "music": {
+  "path": "/private/tmp/claude-501/-Users-nathanaelguitar/3f74f736-d2cb-4fbc-b01d-fef3f62e207a/scratchpad/edit/music_march.m4a",
+  "start": 0,
+  "db": 0,
+  "fade_in": 1.5,
+  "fade_out": 3.0
+ },
+ "amb_db": -9,
+ "shots": [
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot1_1.mp4",
+   "in": 0.0,
+   "dur": 5.8,
+   "grade": "warm"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot2a_woodcutter_seed2102.mp4",
+   "in": 0.3,
+   "dur": 5.0,
+   "grade": "warm"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot2b_field_guildhall_seed2202.mp4",
+   "in": 0.0,
+   "dur": 4.8,
+   "grade": "warm"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot3a_lookout_seed3102.mp4",
+   "in": 0.0,
+   "dur": 4.0,
+   "grade": "default"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot3b_red_column_v2_redonly_seed3202.mp4",
+   "in": 0.0,
+   "dur": 5.0,
+   "grade": "default"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot4a_helmet_seed4101.mp4",
+   "in": 0.0,
+   "dur": 5.0,
+   "grade": "default"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot4b_longbowmen_draw_seed4201.mp4",
+   "in": 1.0,
+   "dur": 4.0,
+   "grade": "default"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot5_volley_t3_archers_loose_seed5303.mp4",
+   "in": 1.5,
+   "dur": 3.5,
+   "grade": "default"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot6_clash_t2_red_charge_slomo_seed6202.mp4",
+   "in": 1.0,
+   "dur": 5.0,
+   "grade": "default"
+  },
+  {
+   "src": "/Users/nathanaelguitar/Documents/Python/Medieval-Ages/art/source/intro/fasth3/shot6_clash_t3_shield_slam_slomo_seed6303.mp4",
+   "in": 0.0,
+   "dur": 4.5,
+   "grade": "default"
+  }
+ ]
+}
