@@ -6,4 +6,6 @@
 - (void)startInView:(UIView *)host;
 - (void)stop;
 - (void)setActive:(BOOL)active;
+/* Tell the page the native intro film has finished (it starts the title music). */
+- (void)introFinished;
 @end

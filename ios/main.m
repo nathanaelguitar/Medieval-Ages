@@ -92,6 +92,7 @@
     [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:nil];
     [self.introPlayer pause];
     UIApplication.sharedApplication.idleTimerDisabled=YES;
+    [self.webGame introFinished];
     UIView *v=self.introView;
     self.introView=nil;
     [UIView animateWithDuration:0.8 animations:^{ v.alpha=0; } completion:^(BOOL done) {

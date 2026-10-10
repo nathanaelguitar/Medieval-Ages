@@ -77,6 +77,10 @@
     self.running=NO;
 }
 
+- (void)introFinished {
+    [self.webView evaluateJavaScript:@"dispatchEvent(new Event('oe-intro-done'))" completionHandler:nil];
+}
+
 - (void)setActive:(BOOL)active {
     if (!self.running) return;
     if (active) [self.webView setNeedsLayout];

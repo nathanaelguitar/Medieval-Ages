@@ -426,30 +426,54 @@ function applyVolumes(){
  if(musicG&&musicSrc&&AC){const t=AC.currentTime;musicG.gain.cancelScheduledValues(t);
   musicG.gain.setValueAtTime(musicLevel(),t);
   if(musicEnd-6>t){musicG.gain.setValueAtTime(musicLevel(),musicEnd-6);musicG.gain.linearRampToValueAtTime(0,musicEnd)}}}
-let musicG=null,musicBuf=null,musicSrc=null,musicT=null,musicOn=true;
+/* Soundtrack. One track at a time, picked by the mood of the moment: "March of the Noble" on the
+   title screen, the two "Village at Dusk" pieces taking turns while the realm is at peace, and the
+   march whenever your people are fighting (any blow between you and the enemy in the last 25 s).
+   A change of mood fades the current piece out and brings the right one in; between pieces of the
+   same mood there is a short rest. Each track is ~3 min, which is ~75 MB once decoded, so only the
+   one playing is held: its base64 is dropped after decoding and fetched again next time. */
+let musicG=null,musicSrc=null,musicOn=true,musicCur=null,musicLoading=null,musicRestUntil=0,calmNext='dusk_a',lastFight=-99,titleMusic=false;
 try{musicOn=localStorage.getItem('pe_music')!=='off'}catch(_){}
 function b64ToBuf(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer}
-function initMusic(){
- if(!AC||musicG)return;
- musicG=AC.createGain();musicG.gain.value=0;musicG.connect(AC.destination);
- const sc=document.createElement('script');sc.src='audio/music_march.js';
- sc.onload=()=>{try{AC.decodeAudioData(b64ToBuf(window.PE_MUSIC_B64),buf=>{musicBuf=buf;window.PE_MUSIC_B64=null;musicLater(5)},()=>{})}catch(_){}};
- document.head.appendChild(sc)}
-function musicLater(sec){clearTimeout(musicT);musicT=setTimeout(playMusic,sec*1000)}
-function playMusic(){
- if(!musicBuf||!musicOn||over)return;
- if(paused||document.hidden){musicLater(10);return}
- const src=AC.createBufferSource();src.buffer=musicBuf;src.connect(musicG);
- const t=AC.currentTime;musicG.gain.cancelScheduledValues(t);musicG.gain.setValueAtTime(0,t);
- musicG.gain.linearRampToValueAtTime(musicLevel(),t+4);                   /* fade in */
- musicG.gain.setValueAtTime(musicLevel(),t+musicBuf.duration-6);musicEnd=t+musicBuf.duration;
- musicG.gain.linearRampToValueAtTime(0,t+musicBuf.duration);              /* fade out */
- src.onended=()=>{if(musicSrc===src){musicSrc=null;musicLater(rnd(60,120))}};
- musicSrc=src;src.start(t)}
+const trackB64=k=>k==='march'?window.PE_MUSIC_B64:(window.PE_TRACKS||{})[k];
+function dropB64(k){if(k==='march')window.PE_MUSIC_B64=null;else if(window.PE_TRACKS)delete window.PE_TRACKS[k]}
+function loadTrack(k,cb){
+ const go=()=>{const b=trackB64(k);if(!b){cb(null);return}
+  try{AC.decodeAudioData(b64ToBuf(b),buf=>{dropB64(k);cb(buf)},()=>cb(null))}catch(_){cb(null)}};
+ if(trackB64(k)){go();return}
+ const sc=document.createElement('script');sc.src='audio/'+(k==='march'?'music_march.js':'music_'+k+'.js');
+ sc.onload=()=>{sc.remove();go()};sc.onerror=()=>{sc.remove();cb(null)};document.head.appendChild(sc)}
+function initMusic(){if(!AC||musicG)return;musicG=AC.createGain();musicG.gain.value=0;musicG.connect(AC.destination)}
+function musicWant(){if(!started)return titleMusic?'noble':null;return time-lastFight<25?'march':calmNext}
+function musicFade(sec,rest){
+ if(!musicSrc)return;const src=musicSrc,t=AC.currentTime;musicSrc=null;musicCur=null;
+ musicG.gain.cancelScheduledValues(t);musicG.gain.setValueAtTime(musicG.gain.value,t);musicG.gain.linearRampToValueAtTime(0,t+sec);
+ try{src.stop(t+sec+0.05)}catch(_){}musicRestUntil=performance.now()+(sec+rest)*1000}
+function playTrack(k){
+ musicLoading=k;
+ loadTrack(k,buf=>{musicLoading=null;if(!buf||!musicOn||musicWant()!==k||musicSrc)return;
+  const src=AC.createBufferSource();src.buffer=buf;src.connect(musicG);
+  const t=AC.currentTime;musicG.gain.cancelScheduledValues(t);musicG.gain.setValueAtTime(0,t);
+  musicG.gain.linearRampToValueAtTime(musicLevel(),t+3);
+  musicG.gain.setValueAtTime(musicLevel(),t+buf.duration-6);musicEnd=t+buf.duration;
+  musicG.gain.linearRampToValueAtTime(0,t+buf.duration);
+  src.onended=()=>{if(musicSrc!==src)return;musicSrc=null;musicCur=null;
+   if(k.startsWith('dusk'))calmNext=k==='dusk_a'?'dusk_b':'dusk_a';
+   musicRestUntil=performance.now()+(k==='noble'?2:rnd(12,30))*1000};
+  musicSrc=src;musicCur=k;src.start(t)})}
+function musicTick(){
+ if(!AC||!musicG||!musicOn||paused||document.hidden)return;
+ const want=musicWant();
+ if(musicSrc){if(want!==musicCur&&!(musicCur.startsWith('dusk')&&want&&want.startsWith('dusk')))musicFade(want==='march'?1.5:3,want==='march'?0.3:4);return}
+ if(want&&!musicLoading&&performance.now()>=musicRestUntil)playTrack(want)}
+setInterval(musicTick,500);
+/* title music: after the intro film (the iOS app plays it natively and says when it is done) */
+function startTitleMusic(){if(titleMusic)return;titleMusic=true;initAudio();if(AC&&AC.resume)AC.resume();initMusic()}
+addEventListener('oe-intro-done',startTitleMusic);
+addEventListener('pointerdown',()=>{if(!started&&!titleMusic&&!document.getElementById('introOv'))startTitleMusic();else if(titleMusic&&AC&&AC.state==='suspended')AC.resume()},true);
 function setMusic(on){
  musicOn=on;try{localStorage.setItem('pe_music',on?'on':'off')}catch(_){}
- if(!on){clearTimeout(musicT);if(musicSrc){const s=musicSrc;musicSrc=null;try{s.stop()}catch(_){}}}
- else if(!musicSrc)musicLater(1);
+ if(!on)musicFade(1,0);else musicRestUntil=0;
  $('pmMusic').textContent='Music: '+(on?'On':'Off')}
 /* Sampled sound effects and voices (art/pipeline/make_sfx.py, make_voices.py, pack_audio.py).
    Banks ship as base64 scripts for the same file:// reason as the music and are decoded once
@@ -830,6 +854,7 @@ function damage(t,amt,fromTeam,src){
   if(o.type==='idle'&&dist2(t.x,t.y,src.x,src.y)<=reach*reach){t.order={type:'attack',target:src,auto:true,ax:t.x,ay:t.y};t.path=null;t.nT=0}
   else if(o.type==='amove'&&(!o.tgt||o.tgt.dead||o.tgt.kind==='bld'))o.tgt=src}
  t.hp-=amt;t.flash=0.15;if(fromTeam===0)t.myHitT=time;
+ if((t.team===0&&fromTeam===1)||(t.team===1&&fromTeam===0))lastFight=time;
  bleed(t,amt);
  /* floating damage numbers, but only for fights the player is part of, and throttled so a
     big melee does not turn into a wall of text */
@@ -3049,7 +3074,7 @@ requestAnimationFrame(frame);
  ['loadedmetadata','canplay','playing','pause','stalled','waiting'].forEach(n=>v.addEventListener(n,()=>L(n+' t='+v.currentTime.toFixed(1))));
  v.addEventListener('error',()=>L('error '+(v.error&&v.error.code)+' '+(v.error&&v.error.message)));
  let done=false;
- const finish=full=>{if(done)return;done=true;L('finish full='+full+' t='+v.currentTime.toFixed(1));
+ const finish=full=>{if(done)return;done=true;setTimeout(startTitleMusic,300);L('finish full='+full+' t='+v.currentTime.toFixed(1));
   if(full){try{localStorage.setItem('pe_intro_seen','1')}catch(e){}}
   v.pause();ov.classList.add('gone');setTimeout(()=>{ov.remove()},900)};
  if(seen)skip.hidden=false;
