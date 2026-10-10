@@ -110,9 +110,14 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 #sword[data-mode="build"]{background:radial-gradient(circle at 35% 30%,#6b5335,#241b12 72%);border-color:rgba(238,205,139,.6)}
 #sword:active{transform:scale(.92)}
 #sword svg{width:32px;height:32px}
-/* Select mode (nothing selected): armed, the next one-finger drag rubber-bands a selection; a green pulse says so. */
-#sword[data-mode="select"]{background:radial-gradient(circle at 35% 30%,#3b4a3a,#141b14 72%);border-color:rgba(200,230,190,.45)}
-#sword.armed{border-color:#9fe08a;background:radial-gradient(circle at 35% 30%,#4f7a3e,#1a2a14 72%);animation:selArm .9s ease-in-out infinite alternate}
+/* Select button, just above the command button: armed, the next one-finger drag rubber-bands a
+   selection; a green pulse says so. Kept separate so the command button never changes meaning. */
+#selBtn{position:absolute;left:calc(23px + env(safe-area-inset-left));bottom:calc(98px + env(safe-area-inset-bottom));width:48px;height:48px;border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,#3b4a3a,#141b14 72%);border:2px solid rgba(200,230,190,.45);display:flex;align-items:center;justify-content:center;
+ box-shadow:0 6px 18px rgba(0,0,0,.55);pointer-events:auto;touch-action:manipulation;z-index:6}
+#selBtn svg{width:24px;height:24px}
+#selBtn:active{transform:scale(.92)}
+#selBtn.armed{border-color:#9fe08a;background:radial-gradient(circle at 35% 30%,#4f7a3e,#1a2a14 72%);animation:selArm .9s ease-in-out infinite alternate}
 @keyframes selArm{from{box-shadow:0 0 0 2px rgba(159,224,138,.7),0 6px 18px rgba(0,0,0,.55)}to{box-shadow:0 0 0 7px rgba(159,224,138,.18),0 6px 18px rgba(0,0,0,.55)}}
 /* joystick */
 #joyZone{position:absolute;right:calc(10px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:150px;height:150px;touch-action:none}
@@ -230,7 +235,8 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
  </div>
  <div id="mmWrap" class="ui"><canvas id="mm" width="150" height="84"></canvas></div>
  <div id="panel" class="ui"></div>
- <div id="sword" class="ui"><svg viewBox="0 0 24 24"><path d="M20.2 3.8 10 14" stroke="#f2f2ee" stroke-width="2.4" stroke-linecap="round"/><path d="M19 3 21 5" stroke="#f2f2ee" stroke-width="2.4" stroke-linecap="round"/><path d="M7.6 12.2l4.2 4.2" stroke="#c8c8c2" stroke-width="2.2" stroke-linecap="round"/><path d="M8.6 15.4 6 18" stroke="#c98b4e" stroke-width="2.6" stroke-linecap="round"/><circle cx="5.2" cy="18.8" r="1.5" fill="#c98b4e"/></svg></div>
+ <div id="selBtn" class="ui" aria-label="Select: tap, then drag a box"><svg viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="14" height="12" rx="1" fill="none" stroke="#f2e4c6" stroke-width="1.8" stroke-dasharray="3 2.2"/><path d="M11 9.5v11l2.9-2.8 2 4.2 2.1-1-2-4.1h4z" fill="#f2f2ee" stroke="#1b140d" stroke-width=".8" stroke-linejoin="round"/></svg></div>
+<div id="sword" class="ui"><svg viewBox="0 0 24 24"><path d="M20.2 3.8 10 14" stroke="#f2f2ee" stroke-width="2.4" stroke-linecap="round"/><path d="M19 3 21 5" stroke="#f2f2ee" stroke-width="2.4" stroke-linecap="round"/><path d="M7.6 12.2l4.2 4.2" stroke="#c8c8c2" stroke-width="2.2" stroke-linecap="round"/><path d="M8.6 15.4 6 18" stroke="#c98b4e" stroke-width="2.6" stroke-linecap="round"/><circle cx="5.2" cy="18.8" r="1.5" fill="#c98b4e"/></svg></div>
  <div id="joyZone" class="ui"><div id="joyBase"><div id="joyNub"></div></div></div>
  <div id="toasts"></div>
 </div>
@@ -1430,6 +1436,11 @@ function doBox(){sheepSel=[];
   const px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
   if(px>=x0&&px<=x1&&py>=y0&&py<=y1)found.push(u)}
  if(found.length){selection=found;sfx('sel');voice('select',found[0])}
+ /* no units in the box: your sheep inside it become the flock to lead */
+ else{for(const r of resources){if(r.kind!=='sheep'||r.owner!==0||r.dead||r.slain)continue;
+   const[sx,sy]=w2s(r.gx,r.gy),px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
+   if(px>=x0&&px<=x1&&py>=y0&&py<=y1)sheepSel.push(r)}
+  if(sheepSel.length){selection=[];sfx('sel');toast(sheepSel.length+' sheep · tap where to lead them')}}
  selArm=false;refreshPanel(true)}
 
 /* ============ input ============ */
@@ -1542,6 +1553,8 @@ cv.addEventListener('wheel',e=>{
  followMute=2.5;
 },{passive:false});
 
+$('selBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!started)return;
+ selArm=!selArm;sfx('sel');if(selArm)toast('Drag across the map to select');updateCommandButton()});
 $('sword').addEventListener('pointerdown',e=>{
  e.preventDefault();e.stopPropagation();
  if(!started)return;
@@ -1555,8 +1568,8 @@ $('sword').addEventListener('pointerdown',e=>{
    for(const t of [...units,...buildings]){if(t.dead||t.team===0||t.garrisoned||t.kind==='res')continue;const c=closestPoint(t,b.cx,b.cy),d=dist2(c[0],c[1],b.cx,b.cy);if(d<bd){bd=d;best=t}}
    if(best){b.focus=best;n++;ping(best.x!==undefined?best.x:best.cx,best.y!==undefined?best.y:best.cy,'#ff8a7a')}});
   if(n){sfx('atk')}else toast('No enemy in range');return}
- /* nothing to command: the button is Select, and arms (or disarms) box-select for the next drag */
- if(!own.length){selArm=!selArm;sfx('sel');if(selArm)toast('Drag across the map to select');refreshPanel(true);return}
+ /* nothing selected: the sword picks up the whole army, the same as double-tapping a soldier */
+ if(!own.length){if(units.some(u=>u.team===0&&u.type!=='vill'&&!u.dead&&!u.garrisoned))selectArmy();else toast('No army yet: train troops in the Barracks');refreshPanel(true);return}
  /* aim from the front: the main company's banner, not the average of every soldier (fresh troops
     back at the Barracks dragged that toward home and turned the charge around) */
  const lead=(mainCompany(0,null,own)||own)[0],bx=lead.x,by=lead.y;
@@ -1585,9 +1598,8 @@ function updateCommandButton(){
  const el=$('sword');if(!el)return;
  const build=selection.some(s=>s.kind==='unit'&&s.team===0&&s.type==='vill'&&!s.dead);
  const atk=!build&&(selMil().length||selection.some(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done));
- const mode=build?'build':atk?'attack':'select';
- if(mode!=='select')selArm=false;
- el.classList.toggle('armed',selArm);
+ const mode=build?'build':'attack';
+ $('selBtn').classList.toggle('armed',selArm);
  if(el.dataset.mode===mode)return;
  el.dataset.mode=mode;el.setAttribute('aria-label',build?'Build or help selected villagers':atk?'Attack with selected units':'Select: drag a box');
  el.innerHTML=mode==='select'
@@ -2118,8 +2130,8 @@ function showHP(u){
 /* Silhouettes. A unit standing behind a building or a tree is drawn again as a flat shape in its
    side's colour, but only where the thing in front covers it -- the unit offscreen, masked by the
    occluder drawn into a second canvas, tinted, then laid over the scene. */
-const silC=document.createElement('canvas'),silX=silC.getContext('2d');
-const mskC=document.createElement('canvas'),mskX=mskC.getContext('2d');
+const silC=document.createElement('canvas'),silX=silC.getContext('2d',{willReadFrequently:true});
+const mskC=document.createElement('canvas'),mskX=mskC.getContext('2d',{willReadFrequently:true});
 function occBox(o){
  if(o.kind==='bld'){if(o.type==='farm'||(DEFS[o.type].hh||0)<20)return null;
   const B=w2s(o.tx+o.size,o.ty),C=w2s(o.tx+o.size,o.ty+o.size),D=w2s(o.tx,o.ty+o.size),A=w2s(o.tx,o.ty);return[D[0],B[0],A[1]-o.hh*1.8,C[1]]}
@@ -2131,7 +2143,18 @@ function silhouette(h,o){
  if(rw<=0||rh<=0)return;
  for(const X of [silX,mskX]){X.setTransform(1,0,0,1,0,0);X.globalCompositeOperation='source-over';X.globalAlpha=1;X.clearRect(rx,ry,rw,rh);X.save();X.beginPath();X.rect(rx,ry,rw,rh);X.clip();X.setTransform(M)}
  try{ctx=silX;drawUnit(h.u);ctx=mskX;if(o.kind==='bld')drawBuilding(o);else drawRes(o)}finally{ctx=mainCtx}
- silX.setTransform(1,0,0,1,0,0);silX.globalCompositeOperation='destination-in';silX.drawImage(mskC,0,0);
+ /* only solid parts of the occluder count: its ground shadow is drawn half-transparent, and a unit
+    walking through a tree's shadow is not hidden by it (it used to turn wholly blue there) */
+ mskX.setTransform(1,0,0,1,0,0);const md=mskX.getImageData(rx,ry,rw,rh),mp=md.data;
+ for(let i=3;i<mp.length;i+=4)mp[i]=mp[i]>170?255:0;
+ mskX.putImageData(md,rx,ry);
+ /* and only a unit that is substantially hidden gets the outline: a sliver of overlap at an
+    occluder's edge would otherwise paint the whole visible unit blue */
+ silX.setTransform(1,0,0,1,0,0);
+ const ud=silX.getImageData(rx,ry,rw,rh).data;let body=0,hidden=0;
+ for(let i=3;i<ud.length;i+=4)if(ud[i]>40){body++;if(mp[i]===255)hidden++}
+ if(!body||hidden/body<0.3){silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';return}
+ silX.globalCompositeOperation='destination-in';silX.drawImage(mskC,0,0);
  silX.globalCompositeOperation='source-in';silX.fillStyle=TEAMR[h.u.team];silX.fillRect(rx,ry,rw,rh);
  silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';
  mainCtx.save();mainCtx.setTransform(1,0,0,1,0,0);mainCtx.globalAlpha=0.62;mainCtx.drawImage(silC,rx,ry,rw,rh,rx,ry,rw,rh);mainCtx.restore()}
@@ -2899,7 +2922,7 @@ const TUT=[
  {t:'With nothing selected, the stick or a finger dragged across the map moves the view. Look around.',tg:()=>({el:$('joyZone')}),ok:()=>T.pan>450,
   in:()=>{if(selection.length){selection=[];refreshPanel(true)}}},
  {t:'The minimap shows the whole realm: tap it to jump anywhere. Pinch to zoom.',tg:()=>({el:$('mmWrap')}),next:1,ok:()=>T.mm},
- {t:'Tap the Select button, then drag a box around your villagers, or tap just one.',tg:()=>selArm||selV().length?{grp:myVills()}:{el:$('sword')},ok:()=>selV().length>0,in:tutHome},
+ {t:'Tap the Select button, then drag a box around your villagers, or tap just one.',tg:()=>selArm||selV().length?{grp:myVills()}:{el:$('selBtn')},ok:()=>selV().length>0,in:tutHome},
  /* the home berries sit behind the Town Center's roof, so point at the boars beside it instead */
  {t:'Now tap a boar to hunt it for food. Berries and sheep work too.',tg:()=>vOr({r:nearR('boar')||nearR('berry')}),ok:()=>busy(o=>o.ctype==='f'),in:()=>tutLook('boar')},
  {t:'Wood builds everything. Select a villager, then tap a tree.',tg:()=>vOr({r:nearR('tree')}),ok:()=>busy(o=>o.kind==='tree'),in:()=>tutLook('tree')},
