@@ -6,9 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pocket Empires">
+<meta name="apple-mobile-web-app-title" content="Medieval Ages">
 <meta name="theme-color" content="#0c120a">
-<title>Pocket Empires</title>
+<title>Medieval Ages</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;background:#0a0f07;touch-action:none;overscroll-behavior:none;font-family:-apple-system,'SF Pro Text',system-ui,sans-serif}
@@ -117,6 +117,24 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .bigbtn{margin-top:20px;font-size:17px;font-weight:800;letter-spacing:.04em;color:#241a08;background:linear-gradient(#ecd29a,#c9a253);border:1px solid #8a6a2c;border-radius:14px;padding:13px 34px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
 .bigbtn:active{transform:scale(.96)}
 .tip{margin-top:14px;font-size:11px;color:#8d8874}
+/* Title screen: full-bleed key art with the title column on its darker left side. Falls back to
+   the shared overlay gradient when the art is missing. */
+#startOv{align-items:flex-start;justify-content:center;text-align:left;
+ padding-left:max(36px,calc(env(safe-area-inset-left) + 22px));
+ background:linear-gradient(90deg,rgba(7,9,5,.92) 0%,rgba(7,9,5,.72) 30%,rgba(7,9,5,.15) 62%,rgba(7,9,5,0) 80%),
+  url(img/keyart.jpg) 62% center/cover no-repeat,radial-gradient(ellipse at 50% 30%,rgba(34,48,26,.94),rgba(8,12,6,.97))}
+#startOv .hero{display:flex;flex-direction:column;align-items:flex-start;max-width:min(470px,52vw);margin:auto 0}
+#startOv .title{font-family:Palatino,'Palatino Linotype',Georgia,serif;font-weight:800;color:#e3c27a;line-height:.92;
+ font-size:clamp(40px,10vh,76px);letter-spacing:.05em;text-shadow:0 2px 0 #3e2e0e,0 8px 28px rgba(0,0,0,.75);margin:0}
+#startOv .title span{display:block;font-size:1em;letter-spacing:.32em;color:#c99c4f;margin:0}
+#startOv .tag{margin:12px 0 4px;font-size:clamp(13px,2.6vh,17px);font-style:italic;color:#e4dcc6;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+#startOv #lvRow{justify-content:flex-start;margin-top:14px}
+#startOv .heroBtns{display:flex;align-items:center;gap:16px}
+#startOv .bigbtn{padding:12px 42px}
+.howLink{margin-top:20px;background:none;border:0;color:#d9cfb4;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-family:inherit}
+#howPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(520px,90vw);text-align:left;background:rgba(10,13,8,.95);z-index:2}
+#howPanel[hidden]{display:none}
+#howPanel .howLink{align-self:center;margin-top:8px}
 /* Level select: a compact row of numbered buttons; locked ones are greyed with a padlock. */
 #lvRow{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:16px;max-width:min(560px,94vw)}
 .lvBtn{position:relative;min-width:40px;height:38px;padding:0 6px;font-size:15px;font-weight:800;color:#efe8d6;background:rgba(10,14,9,.78);border:1px solid rgba(255,255,255,.2);border-radius:10px}
@@ -174,19 +192,20 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
   </div>
  </div></div>
 <div id="startOv" class="ov ui">
- <h1>POCKET<span>EMPIRES</span></h1>
- <p class="sub">a tiny Age-of-Empires–style skirmish</p>
- <div class="how">
-  <div><b>Stick</b>: move the selected units; drag the map to pan the camera</div>
-  <div><b>Tap</b>: select · command · gather · attack &nbsp; <b>Double-tap</b>: all units of that type</div>
-  <div><b>Drag the map</b>: pan around &nbsp; <b>Pinch</b>: zoom</div>
-  <div><b>Command button</b>: sword attacks; with villagers selected it builds or resumes their task</div>
-  <div><b>Market</b>: trade gathered resources to rebalance your economy · the top HUD shows idle villagers</div>
-  <div><b>Goal</b>: gather, build, raise an army… and raze the red Town Center</div>
+ <div class="hero">
+  <h1 class="title">MEDIEVAL<span>AGES</span></h1>
+  <p class="tag">Build a village. Raise an army. Hold the realm.</p>
+  <div id="lvRow"></div><div id="lvName"></div>
+  <div class="heroBtns"><button class="bigbtn" id="startBtn">Begin</button><button class="howLink" id="howBtn">How to play</button></div>
  </div>
- <div id="lvRow"></div><div id="lvName"></div>
- <button class="bigbtn" id="startBtn">Begin the Skirmish</button>
- <p class="tip">Best in landscape · In Safari: Share → “Add to Home Screen” for full-screen play</p>
+ <div class="how" id="howPanel" hidden>
+  <div><b>Tap</b>: select · command · gather · attack &nbsp; <b>Double-tap</b>: all units of that type</div>
+  <div><b>Stick</b>: move the selected units, or pan the map when nothing is selected</div>
+  <div><b>Drag</b>: box-select &nbsp; <b>Pinch</b>: zoom</div>
+  <div><b>Sword button</b>: send the army to attack; with villagers selected it builds or resumes their task</div>
+  <div><b>Goal</b>: gather, build, raise an army… and raze the enemy Town Center</div>
+  <button class="howLink" id="howClose">Close</button>
+ </div>
 </div>
 <div id="endOv" class="ov ui" style="display:none">
  <h1 id="endTitle">Victory</h1>
@@ -2439,6 +2458,8 @@ function scheduleTut(){
   if(e.key!==' '&&e.key!=='Space')return;
   const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
   e.preventDefault();if(!started||over)return;setPaused(!paused)});
+ $('howBtn').addEventListener('click',e=>{e.stopPropagation();$('howPanel').hidden=false});
+ $('howClose').addEventListener('click',e=>{e.stopPropagation();$('howPanel').hidden=true});
  $('startBtn').addEventListener('click',()=>{
   initAudio();if(AC&&AC.resume)AC.resume();initMusic();loadBank('sfx');loadBank('voice');
   if(picked!==level)applyLevel(picked);

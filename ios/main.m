@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* Native entry for the Pocket Empires web game.
+/* Native entry for the Medieval Ages web game.
    Apps linked against the iOS 27 SDK must adopt the UIScene lifecycle or UIKit traps at launch
    (UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption). SDL2's UIKit backend only knows
    the legacy app-delegate window, so the shipped target no longer boots through SDL_UIKitRunApp:

@@ -1,6 +1,6 @@
-# Pocket Empires for iOS
+# Medieval Ages for iOS
 
-An unofficial iPhone/iPad build that bundles the self-contained **Pocket Empires** canvas game inside the existing OpenEmpire iOS workspace. The current target loads `ios/WebGame/index.html` in a native `WKWebView`; it does not require Trial data or a network connection at runtime. The original OpenEmpire C/SDL port remains in the workspace, but this target's playable experience is the bundled web game.
+An unofficial iPhone/iPad build that bundles the self-contained **Medieval Ages** canvas game inside the existing OpenEmpire iOS workspace. The current target loads `ios/WebGame/index.html` in a native `WKWebView`; it does not require Trial data or a network connection at runtime. The original OpenEmpire C/SDL port remains in the workspace, but this target's playable experience is the bundled web game.
 
 **Status:** the updated source was syntax-checked, the portable project tests passed, and a signed Debug build was installed and launched on the connected iPhone on September 21, 2026. Device interaction/performance testing still needs to be done manually. See [the validation report](docs/VALIDATION.md).
 
@@ -46,7 +46,7 @@ The engine copy is under `build-ios/engine`; edit port code or `scripts/prepare_
 
 ## Assets and offline play
 
-The Pocket Empires target needs no asset importer and runs offline after installation. The original Trial-data importer remains in the older native-port code path but is not needed by this target.
+The Medieval Ages target needs no asset importer and runs offline after installation. The original Trial-data importer remains in the older native-port code path but is not needed by this target.
 
 **On 0 A.D. artwork — this section previously claimed the app "bundles no Microsoft or 0 A.D. game files". That was wrong and is corrected here.** The app ships 213 distributable actor/texture files from `ios/ZeroADArt/` into `OpenEmpire.app/ZeroADArt/`, consumed by the native SceneKit art scene in `ios/OEArtDemo.m`. It bundles no **Microsoft** files; the Trial-data path still requires a local installation the app does not supply.
 
@@ -100,7 +100,7 @@ Not added: repairing damaged buildings, campaigns, matchmaking/network multiplay
 
 On repair specifically, since it is the next thing anyone reaches for: a damaged Town Center cannot currently be repaired. Tapping your own Town Center with villagers selected garrisons them instead, which is the wanted behaviour, and there is no path that restores hit points to a finished building at all -- the build action only advances construction on an unfinished one, so `buildStep` has nothing to do once `b.done` is set. A repair order would want to be routed from the hammer, not from the plain tap: the tap already means "garrison", and overloading it would make a full Town Center the only one you could repair. The work is a repair order alongside build that walks villagers to the building and trades resources for hit points at a rate scaled by how many villagers are on it.
 
-The legacy C/SDL CPU sprite renderer is preserved in the workspace, but the current Pocket Empires screen is drawn by the bundled HTML canvas. Actual frame rate and memory use still need profiling on your device.
+The legacy C/SDL CPU sprite renderer is preserved in the workspace, but the current Medieval Ages screen is drawn by the bundled HTML canvas. Actual frame rate and memory use still need profiling on your device.
 
 ## Tests
 

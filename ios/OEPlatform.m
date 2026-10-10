@@ -144,7 +144,7 @@ static UIButton *Button(NSString *title, id target, SEL selector) {
     [self buildLauncher];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(willResign:) name:UIApplicationWillResignActiveNotification object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(didBecome:) name:UIApplicationDidBecomeActiveNotification object:nil];
-    /* Pocket Empires is the whole experience, so open straight into the bundled web game
+    /* Medieval Ages is the whole experience, so open straight into the bundled web game
        instead of parking the player on the native launcher. The launcher is still built but
        immediately hidden: it remains the message surface for the legacy native port. The
        start is deferred one runloop turn so the web view is laid out at its real size. */
