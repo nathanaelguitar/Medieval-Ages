@@ -515,7 +515,7 @@ function genResources(){
  /* Wild game: boars haunt the treeline, sheep graze the open meadow. Both are food and
     both bolt when a villager starts cutting into them. */
  [[15,40],[16,40],[15,41],[14,41],[36,18],[37,18],[36,19],[35,19],[26,29],[27,29],[27,28],
-  [45,25],[46,25],[45,26]].forEach(([x,y])=>{if(ok(x,y))putAnimal('boar',x,y,200)});
+  [45,25],[46,25],[45,26]].forEach(([x,y])=>{if(ok(x,y))putAnimal('boar',x,y,300)});
  [[11,24],[12,24],[11,25],[12,25],[33,44],[34,44],[33,45],[34,45],[21,17],[22,17],[21,18],
   [43,33],[44,33],[43,34],[44,34]].forEach(([x,y])=>{if(ok(x,y))putAnimal('sheep',x,y,120)});
 }
@@ -863,8 +863,21 @@ function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
  let farmer=null;
  if(b.type==='farm'){const bs=units.filter(u=>!u.dead&&u.order.type==='build'&&u.order.b===b);
   farmer=bs.sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy))[0]||null}
+ /* Builders of a drop-off go straight to work the resource it serves: the nearest trees for a
+    Wood Yard, gold or stone for a Mining Camp, berries for a Mill. With nothing in reach they
+    return to what they were doing. */
+ const serves=DROP_SERVES[b.type];
+ let near=null;
+ if(serves){for(const k of serves){const r=findResByKind(k,b.cx,b.cy,9);
+  if(r&&(!near||dist2(r.gx,r.gy,b.cx,b.cy)<dist2(near.gx,near.gy,b.cx,b.cy)))near=r}}
  units.forEach(u=>{if(u.lastTask&&u.lastTask.type==='build'&&u.lastTask.b===b)u.lastTask=null;
-  if(u.order.type==='build'&&u.order.b===b){if(u===farmer)setGather(u,b);else afterBuild(u)}})}
+  if(u.order.type==='build'&&u.order.b===b){
+   if(u===farmer)setGather(u,b);
+   else if(near&&u.type==='vill'){
+    /* spread a crew over neighbouring nodes of the same kind instead of one tree */
+    const r=findResByKind(near.kind,u.x,u.y,3)||near;setGather(u,r)}
+   else afterBuild(u)}})}
+const DROP_SERVES={woodyard:['tree'],mine:['gold','stone'],mill:['berry']};
 /* Animals graze in place, drift within a short leash of where they spawned, and bolt
    away from whoever is currently harvesting them. */
 function updAnimals(dt){
