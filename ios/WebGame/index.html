@@ -2620,8 +2620,12 @@ requestAnimationFrame(frame);
  skip.addEventListener('click',e=>{e.stopPropagation();finish(false)});
  v.addEventListener('ended',()=>finish(true));
  v.addEventListener('error',()=>finish(false));
- const p=v.play();
- if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>finish(false))});
+ /* Only roll while the app is on screen: a launch from Xcode or a locked phone used to play the
+    whole film unseen. Backgrounding pauses it; coming back resumes. */
+ const start=()=>{if(done)return;const p=v.play();
+  if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>finish(false))})};
+ document.addEventListener('visibilitychange',()=>{if(done)return;if(document.hidden)v.pause();else start()});
+ if(!document.hidden)start();
 })();
 </script>
 </body>
