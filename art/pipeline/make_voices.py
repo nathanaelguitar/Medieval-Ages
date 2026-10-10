@@ -123,8 +123,8 @@ VOICES = {
                     shout_texts=["Have at thee, dogs! To arms! For the king! Slay them all!",
                                  "Out! Out! Harrow! Saint George! Forward, and cut them down!"]),
 }
-# Tutorial narrator: index i is spoken on tutorial step i (TUT in ios/WebGame/index.html), so the
-# order here must follow the game's step list.
+# Tutorial narrator: clip sNN is keyed to a step by TUT[].v in ios/WebGame/index.html. s00-s24 follow
+# the original step order; later clips are appended and named explicitly by the step that uses them.
 NARR_LINES = [
     "Welcome, my lord. This short lesson will show you how to rule your village. Each step moves on by itself once you have done it, or tap Next whenever you are ready for the next one.",
     "Your three villagers are selected. Push the stick to walk them around.",
@@ -154,6 +154,9 @@ NARR_LINES = [
     # half plus a slow, grave "Godspeed... my liege." from the plain seed at exaggeration 0.8. A
     # `post` run overwrites game/narrator_s24_1.wav, so re-copy that file after one.
     "Your goal is to destroy the enemy's Town Center, far to the east. The enemy wakes now. Godspeed, my liege.",
+    # s25 and on were added later; the game maps them to their steps by key (TUT[].v), not position
+    "To bring them back out, tap the Town Center, then tap Unload. They walk out to its flag.",
+    "With the Barracks selected, tap open ground to plant its flag. New soldiers will gather there.",
 ]
 NARR_SETS = {f"s{i:02d}": [(t, t, t)] for i, t in enumerate(NARR_LINES)}
 GRID_NARR = [(0.45, 0.5, 0.7), (0.55, 0.45, 0.8)]

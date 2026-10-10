@@ -2907,8 +2907,11 @@ const TUT=[
   ok:()=>{const tc=homeTC();return tc&&tc.queue.length>0||popOf(0)>T.base.pop}},
  {...viaTC('Now tap a tree or berries: new villagers walk straight to work.',()=>({r:nearR('berry')||nearR('tree')})),
   ok:()=>{const tc=homeTC();return tc&&tc.rallyRes&&tc.rallyRes!==T.base.rally}},
- {t:()=>{const tc=homeTC();return tc&&tc.garrison.length?'Safe inside! Tap the Town Center, then Unload.':'Raiders? Select villagers and tap the Town Center to shelter them.'},
-  tg:()=>{const tc=homeTC();return tc&&tc.garrison.length&&selIs('tc')?{el:abtn('^="Unload"')}:{b:tc}},next:1,
+ {t:'Raiders? Select villagers and tap the Town Center to shelter them. Each one inside adds an arrow.',
+  tg:()=>({b:homeTC()}),next:1,ok:()=>T.garr},
+ /* unloading gets its own step (v: its own narration clip, added after the first 25) */
+ {v:'s25',t:()=>{const tc=homeTC();return tc&&!tc.garrison.length?'Everyone is out again.':selIs('tc')?'Tap Unload to bring them out. They walk to its flag.':'To bring them out, tap the Town Center, then Unload.'},
+  tg:()=>{const tc=homeTC();return tc&&tc.garrison.length&&selIs('tc')?{el:abtn('^="Unload"')}:{b:homeTC()}},next:1,
   ok:()=>{const tc=homeTC();return T.garr&&tc&&!tc.garrison.length},
   out:()=>{const tc=homeTC();if(tc&&tc.garrison.length)releaseGarrison(tc)}},
  {t:'The Idle button finds villagers with nothing to do.',tg:()=>({el:$('pli')}),next:1,ok:()=>T.idle},
@@ -2917,10 +2920,15 @@ const TUT=[
  {t:()=>{const b=myRax();return !b?'Build a Barracks first.':!b.done?'Your builders are raising the Barracks…':selIs('barracks')?'Train Men-at-Arms (food, gold) or Archers (wood, gold).':'Tap the Barracks to train soldiers.'},
   tg:()=>{const b=myRax();return !b?null:b.done&&selIs('barracks')?{el:abtn('="Man-at-Arms"')}:{b}},
   ok:()=>buildings.some(b=>b.team===0&&b.type==='barracks'&&b.queue.length)||army().length>0},
+ /* the rally flag: where fresh soldiers gather (with none they join the army's banner) */
+ {v:'s26',t:()=>selIs('barracks')?'Now tap open ground: the flag marks where new soldiers gather.':'Tap the Barracks, then tap the ground to plant its rally flag.',
+  nodim:1,tg:()=>{const b=myRax();return b&&!selIs('barracks')?{b}:null},next:1,
+  in:()=>{const b=myRax();T.r0=b&&b.rally},ok:()=>{const b=myRax();return !!(b&&b.rally&&b.rally!==T.r0)}},
  {t:'The sword gathers your army; press it again to charge. Or tap an enemy.',tg:()=>({el:$('sword')}),next:1},
  {t:'Soldiers hold their ground: they fight what comes near, but never chase far.',tg:()=>army().length?{grp:army()}:null,next:1},
  {t:'The gear pauses the game: sound, music, and this lesson again.',tg:()=>({el:$('ppause')}),next:1},
  {t:'Destroy the enemy’s Town Center, far to the east. The enemy wakes now. Godspeed, my liege.',tg:()=>({el:$('mmWrap')}),next:1}];
+{let k=0;for(const s of TUT)if(!s.v)s.v='s'+String(k++).padStart(2,'0')}
 function tutSnap(){const tc=homeTC();
  T.base={house:nB('house'),farm:nB('farm'),rax:nB('barracks'),drop:nB('woodyard')+nB('mill')+nB('mine'),pop:popOf(0),rally:tc&&tc.rallyRes};
  T.t0=T.sayT=time;T.said=false;T.doneT=null;T.armed=false;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
@@ -2968,7 +2976,7 @@ function tutStep(dt){
  if(!paused&&units.some(u=>u.team===0&&u.order.type==='drive'&&u.moving))T.drive+=dt;
  const tc=homeTC();if(tc&&tc.garrison.length)T.garr=true;
  /* the window to start a step's line opens only once its clip has decoded (the bank is large) */
- const ne=BANK['narrator_s'+String(T.i).padStart(2,'0')];if(!T.said&&!(ne&&ne.bufs.length))T.sayT=time;
+ const ne=BANK['narrator_'+s.v];if(!T.said&&!(ne&&ne.bufs.length))T.sayT=time;
  if(!paused&&!T.said&&time-T.sayT<6&&narrPlay(T.i))T.said=true;
  /* Pacing: doing the thing marks the step done (a chime and a tick) but does not yank the lesson
     on -- the player gets a few seconds to play with the feature and the narrator finishes the
@@ -2978,7 +2986,7 @@ function tutStep(dt){
  /* a step that only arms the next one (tap House -> place it) hands over at once */
  if(T.doneT&&s.quick){tutGo(T.i+1);return}
  const talking=performance.now()<narrEndT||(!T.said&&tutVoice&&time-T.sayT<6&&time-T.t0<20);
- if(!talking&&(T.doneT?time-T.doneT>=4&&time-T.t0>=7:s.next&&!s.hold&&time-T.t0>=9)){tutGo(T.i+1);return}
+ if(!talking&&(T.doneT?time-T.doneT>=7&&time-T.t0>=12:s.next&&!s.hold&&time-T.t0>=13)){tutGo(T.i+1);return}
  if(s.back&&s.back()){tutGo(T.i-1);return}
  tutDraw()}
 requestAnimationFrame(tutTick);
@@ -2987,7 +2995,7 @@ requestAnimationFrame(tutTick);
 let narrSrc=null,narrEndT=0;   /* narrEndT: wall-clock end of the line, so a suspended context can never hold a step */
 function narrStop(){narrEndT=0;if(narrSrc){try{narrSrc.stop()}catch(_){}narrSrc=null}}
 function narrPlay(i){
- const e=BANK['narrator_s'+String(i).padStart(2,'0')];
+ const e=TUT[i]&&BANK['narrator_'+TUT[i].v];
  if(!tutVoice||!AC||!sfxG||!e||!e.bufs.length)return false;
  narrStop();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=e.bufs[0];g.gain.value=e.vol;
  src.connect(g);g.connect(sfxG);src.start();narrSrc=src;src.onended=()=>{if(narrSrc===src)narrSrc=null};
