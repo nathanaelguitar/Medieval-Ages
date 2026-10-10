@@ -1775,6 +1775,9 @@ function buildingSprite(b){
    view. The heading is the unit's screen-space direction of travel (or towards its target while
    fighting); DIR_UNIT names the baked set per unit type and the colour per team. */
 const DIR_UNIT={swords:'man_at_arms',archer:'archer',vill:'villager'};
+/* Ground one walk cycle covers, in tiles, per sprite set: art/pipeline/measure_stride.py on the rig
+   (rig units / 6.356 at the bake's 14.34 px/unit and DIR_K). Re-measure after re-baking a walk. */
+const WALK_STRIDE={villager_m:0.649,villager_f:0.683,archer:0.702,man_at_arms:0.665};
 /* Baked set for a unit: villagers come as a man and a woman sharing every work clip. */
 function dirSet(u){const s=DIR_UNIT[u.type];return s==='villager'?'villager_'+(u.sex||'m'):s}
 /* Which work clip a villager plays at a job: an axe at trees, a pickaxe at ore, picking at
@@ -1842,10 +1845,11 @@ function dirSprite(u){
   if(f&&a.impact&&fi===a.impact&&u._wf!==ph){const snd=WORK_SFX[wc];if(snd)playAt(snd,u.x,u.y,0.55)}
   u._wf=fi===a.impact?ph:u._wf}
  if(!f){
-  const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
-  /* u.anim runs at 7/s while moving, tuned for the old 8-frame cycles; rescale it so a baked
-     walk plays at its own manifest fps and the stride matches the clip it was extracted from. */
-  if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
+  const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip),st=WALK_STRIDE[set];
+  /* u.anim runs at 7/s while moving. A walk (or carry, the same legs) plays spd/stride cycles a
+     second so the planted foot keeps pace with the ground instead of sliding; a set without a
+     measured stride falls back to its manifest fps. */
+  if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(st?u.anim/7*def.spd/st*a.keys.length:u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
  u._dir=!!f;return f}
 /* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 35.75px tall
    (1.25x the original 28.6, so units read clearly next to the buildings). */

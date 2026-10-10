@@ -13,7 +13,9 @@ arm raised to hold a bundle).
 
 ``--hold-phase p`` freezes every base curve at phase p (a static stance); without it the base
 curves are kept. ``--curve name=phase:value,...`` replaces or adds a curve (smoothstep between
-keys, as video_to_clip's phase curves). ``--set a.b=json`` edits any field (retarget options).
+keys, as video_to_clip's phase curves). ``--scale name=k`` multiplies a base curve's swing about its
+mean (the walk's relative arms subtract the mean anyway, so it is an exact amplitude change).
+``--set a.b=json`` edits any field (retarget options).
 """
 import argparse
 import json
@@ -36,6 +38,7 @@ def main():
     ap.add_argument("--impact-phase", type=float)
     ap.add_argument("--hold-phase", type=float)
     ap.add_argument("--curve", action="append", default=[])
+    ap.add_argument("--scale", action="append", default=[], help="name=k: swing about the mean x k")
     ap.add_argument("--set", action="append", default=[], help="dotted.key=json value")
     a = ap.parse_args()
     with open(a.base) as fh:
@@ -48,6 +51,10 @@ def main():
             x = (a.hold_phase % 1.0) * S
             i, f = int(np.floor(x)) % S, x - np.floor(x)
             curves[k] = np.full(S, v[i] * (1 - f) + v[(i + 1) % S] * f)
+    for spec in a.scale:
+        name, k = spec.split("=")
+        v = curves[name]
+        curves[name] = v.mean() + (v - v.mean()) * float(k)
     for spec in a.curve:
         name, pts = parse_phase_curve(spec)
         curves[name] = eval_phase_curve(pts, phs)
@@ -72,7 +79,8 @@ def main():
             d[parts[-1]] = json.loads(val)
         except json.JSONDecodeError:
             d[parts[-1]] = val
-    clip["derived_from"] = {"base": os.path.relpath(a.base), "hold_phase": a.hold_phase, "curves": a.curve, "set": a.set}
+    clip["derived_from"] = {"base": os.path.relpath(a.base), "hold_phase": a.hold_phase, "curves": a.curve, "scale": a.scale,
+                           "set": a.set}
     clip["stats"] = {k: {"min": round(float(v.min()), 1), "max": round(float(v.max()), 1)} for k, v in curves.items()}
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     with open(a.out, "w") as fh:

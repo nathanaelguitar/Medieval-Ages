@@ -1,6 +1,6 @@
 #!/bin/bash
 # Villagers v1 (male + female) on the Spark: TRELLIS.2 bodies (trellis_units_v1.sh, run first),
-# one walk per villager from their own Veo video, and work clips shared by both (chop, mine, hoe,
+# one walk shared by both (the man-at-arms v4 walk, softened; see stage 1), and work clips shared by both (chop, mine, hoe,
 # berries from Veo; build derived from chop; gather keyed, shoot = the archer's draw retimed; death = the man-at-arms v4 death retargeted), with
 # procedural tools shown only in their clip. Same camera / lighting / contrast / scale as v4.
 #   cd ~/medieval && bash art/pipeline/run_villagers_v1.sh 2>&1 | tee art/out/villager_male_v1/run_villagers_v1.log
@@ -28,12 +28,17 @@ for u in villager_m:male villager_f:female; do
     hasu $unit || continue
     OUT=${unit/villager_m/villager_male}; OUT=art/out/${OUT/villager_f/villager_female}_v1
     mkdir -p $OUT/motion $OUT/previews
-    # the woman's video swings the arms far more than the man's; her gain is halved so the
-    # sprite does not march with the arms out horizontal
-    armg=1.2; [ $sex = female ] && armg=${ARM_GAIN_F:-0.55}
-    MPX extract --video $VID/veo_${sex}_walk.mp4 --start 1.5 --end 8.0 --facing right --model $MODEL \
-        --out $OUT/motion/walk_clip.json --previews $OUT/previews/motion_walk \
-        --gain hip=1.2,knee=1.2,arm=$armg,foot=0.7,bob=1.0,torso=1.0 --shield-arm none
+    # walk: the man-at-arms v4 walk (same skeleton), not the villagers' own Veo videos -- the woman
+    # in veo_female_walk.mp4 dances (her clip barely travelled: 0.57 units of ground per cycle, so
+    # she glided), and the man's tracked arms hung stiff. Both arms swing (no shield arm), and the
+    # stride is a little softer than the soldier's (thigh x0.88, knee x0.9 about their means; arm
+    # swing x0.85, about +-17 deg). index.html plays it at the unit's ground speed from WALK_STRIDE,
+    # the ground it covers per cycle on each rig (art/pipeline/measure_stride.py; rerun after a change).
+    python3 art/pipeline/derive_clip.py --base art/out/man_at_arms_v4/motion/walk_clip.json \
+        --out $OUT/motion/walk_clip.json --set 'retarget.shield_arm="none"' \
+        --scale thigh_R=${WALK_THIGH:-0.88} --scale thigh_L=${WALK_THIGH:-0.88} \
+        --scale knee_R=${WALK_KNEE:-0.9} --scale knee_L=${WALK_KNEE:-0.9} \
+        --scale upperarm_R=${WALK_ARM:-0.85} --scale upperarm_L=${WALK_ARM:-0.85}
     # idle: keyed (art/pipeline/idle_v1.sh) on this unit's walk retarget; the 0 A.D. idle .dae is only
     # the rig's base pose (props placed at its frame 1) and is not baked
     bash art/pipeline/idle_v1.sh $OUT/motion/walk_clip.json $OUT/motion/idle_clip.json
