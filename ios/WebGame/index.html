@@ -85,10 +85,14 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .pacts{display:flex;gap:4px;margin-top:5px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:none}
 .pacts::-webkit-scrollbar{display:none}
 /* Buttons keep the width their label and cost need; when they don't all fit (12 for villagers,
-   and less room beside the notch) the row slides sideways, and a fade marks the side with more. */
-.pacts.more-r{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
-.pacts.more-l{-webkit-mask-image:linear-gradient(90deg,transparent,#000 26px);mask-image:linear-gradient(90deg,transparent,#000 26px)}
-.pacts.more-l.more-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent)}
+   and less room beside the notch) the row slides sideways, and a fade marks the side with more.
+   The fades are overlays with pointer-events off: a CSS mask on the scrolling row itself stopped
+   taps reaching the buttons on iOS. */
+#panel::before,#panel::after{content:'';position:absolute;bottom:4px;width:24px;height:46px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:2}
+#panel::before{left:6px;background:linear-gradient(90deg,rgba(20,24,18,.85),transparent);border-radius:9px 0 0 9px}
+#panel::after{right:6px;background:linear-gradient(270deg,rgba(20,24,18,.85),transparent);border-radius:0 9px 9px 0}
+#panel.more-l::before,#panel.more-r::after{opacity:1}
+
 .abtn{flex:1 0 auto;min-width:44px;max-width:84px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:9px;padding:4px 2px;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:1px}
 .abtn svg{width:20px;height:20px}
 /* One-word caption. Icons alone made Barracks (a flag) unreadable. */
@@ -97,7 +101,9 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .abtn span em{font-style:normal;display:flex;align-items:center;gap:1px}
 .abtn span svg{width:9px;height:9px}
 .abtn.no{opacity:.4}
-.abtn.on{border-color:#d9b36a;background:rgba(217,179,106,.18)}
+.abtn.on{border-color:#ffd77a;background:rgba(232,190,100,.38);box-shadow:0 0 0 1px rgba(255,215,122,.6),0 0 12px 2px rgba(255,200,90,.65);animation:abtnGlow 1.1s ease-in-out infinite alternate}
+#panel .abtn.on{background:rgba(232,190,100,.38);border-color:#ffd77a}
+@keyframes abtnGlow{from{box-shadow:0 0 0 1px rgba(255,215,122,.6),0 0 8px 1px rgba(255,200,90,.45)}to{box-shadow:0 0 0 1px rgba(255,215,122,.9),0 0 16px 4px rgba(255,200,90,.8)}}
 /* Compact bar: it sits just above the home-indicator strip (touches in that strip made the home
    bar react and interrupt play, even with the system gesture deferred) and is as thin as a thumb target allows, so it covers as little
    of the board as possible. Narrower buttons let all eleven buildings fit on a landscape phone,
@@ -1638,6 +1644,9 @@ function refreshPanel(force){
   (first.kind==='bld'&&first.type==='tc'&&first.garrison.length?` · ${first.garrison.length}/${first.gcap} garrisoned`:'')+
   (first.type==='farm'&&first.done?` · ${Math.ceil(first.amt)} food`:'');
  else title=selection.length+' units';
+ /* say what the next tap does while a building or a garrison is armed */
+ if(placing)title=(WALL_LINE[placing.type]?'Drawing ':'Placing ')+DEFS[placing.type].name+(WALL_LINE[placing.type]?': drag across the map':': tap the map');
+ else if(garrisonPick)title='Garrison: tap the Town Center or a tower';
  let html='<div class="prow">';
  for(const[k,n]of Object.entries(counts))html+=`<div class="picon">${ICON[k]||''}${n>1?`<i>${n}</i>`:''}</div>`;
  html+=`<div class="pname">${title}</div><button class="pclose" id="pcx">✕</button></div>`;
@@ -1655,7 +1664,7 @@ function refreshPanel(force){
    for(const k of['w','f','s'])acts.push({l:'Buy 100 '+RESLABEL[k]+' for '+mktBuy(k)+' gold',s:'Buy',c:mktBuy(k)+'g',t:'trade',sell:false,k,ic:ICO[k]})}
   if(counts.barracks)acts.push({l:'Man-at-Arms',s:'Man-at-Arms',c:'60f 20g',t:'swords',q:1},{l:'Archer',s:'Archer',c:'40w 30g',t:'archer',q:1})}
  if(acts.length){
-  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn" data-i="${i}" title="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span></button>`).join('')+'</div>';
+  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn${(placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick)?' on':''}" data-i="${i}" title="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span></button>`).join('')+'</div>';
   if(acts.some(a=>a.q)&&selection.length===1&&first.kind==='bld')html+='<div class="pq"><div id="pqf"></div><span id="pqt">Idle</span></div>'}
  el.innerHTML=html;
  /* The red X first cancels a building waiting to be placed, then clears the selection. Clearing
@@ -1671,7 +1680,7 @@ function refreshPanel(force){
    else{const b=selection[0];if(b&&b.kind==='bld')tryQueue(b,a.t)}
    refreshPanel(true)}});
  pActs=acts;
- {const row=el.querySelector('.pacts');if(row){const edge=()=>{row.classList.toggle('more-l',row.scrollLeft>2);row.classList.toggle('more-r',row.scrollLeft+row.clientWidth<row.scrollWidth-2)};row.addEventListener('scroll',edge,{passive:true});requestAnimationFrame(edge)}}
+ {const row=el.querySelector('.pacts');if(row){const edge=()=>{el.classList.toggle('more-l',row.scrollLeft>2);el.classList.toggle('more-r',row.scrollLeft+row.clientWidth<row.scrollWidth-2)};row.addEventListener('scroll',edge,{passive:true});requestAnimationFrame(edge)}}
  if($('phpf'))pHP=$('phpf');
  if($('pqf')){pQF=$('pqf');pQT=$('pqt')}}
 
@@ -1830,8 +1839,18 @@ function clipFrame(k,ph){
  if(!a.frames.length||!a.frames.every(f=>f.complete&&f.naturalWidth))return null;
  const n=a.frames.length,i=a.loop?((ph%n)+n)%n:Math.max(0,Math.min(n-1,ph));
  return{img:a.frames[i],key:a.keys[i]}}
+const PRELOADED=new Set();
+/* Warm the walk and idle facings of every unit set while the intro film and title screen are up,
+   a few at a time so the page stays responsive; turning in the first battle then never waits.
+   Work clips stay lazy: a villager alone has ~2,000 frames, too many to decode up front. */
+(function warmFacings(){
+ const jobs=[];for(const set of ['villager_m','villager_f','man_at_arms','archer'])for(const team of [0,1]){PRELOADED.add(set+team);
+  for(const c of ['idle','walk'])for(let k=0;k<8;k++)jobs.push([set,team,c,k])}
+ const step=()=>{for(let n=0;n<6&&jobs.length;n++){const j=jobs.shift();dirFrame(j[0],j[1],j[2],j[3],0)}if(jobs.length)setTimeout(step,40)};
+ setTimeout(step,300)})();
 function dirSprite(u){
  const set=dirSet(u);if(!set){u._dir=false;return null}
+ {const pk=set+u.team;if(!PRELOADED.has(pk)){PRELOADED.add(pk);for(const c of ['idle','walk'])for(let k=0;k<8;k++)dirFrame(set,u.team,c,k,0)}}
  trackHeading(u);
  const d=dirIndex(u.hd),def=DEFS[u.type],tc=TEAM_COL[u.team]||'blue';
  const has=c=>ANIM[`${set}_${tc}_${c}_d${d}`];
@@ -1857,6 +1876,9 @@ function dirSprite(u){
  if(!f){
   const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
   if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
+ /* A facing's frames load on first use; until they arrive keep the last frame shown instead of
+    dropping to the vector stand-in for a frame (units seemed to change skin as they turned). */
+ if(f)u._lastF=f;else if(u._lastF)f=u._lastF;
  u._dir=!!f;return f}
 /* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 35.75px tall
    (1.25x the original 28.6, so units read clearly next to the buildings). */
