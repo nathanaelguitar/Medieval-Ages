@@ -146,7 +146,7 @@ NARR_LINES = [
     "If raiders come, select your villagers and tap the Town Center. They shelter inside, and it shoots harder.",
     "The Idle button finds every villager with nothing to do.",
     "Now for an army. Select a villager and build a Barracks. It costs one hundred and twenty five wood.",
-    "When the Barracks is built, tap it to train men at arms, and archers with bows.",
+    "When the Barracks is built, tap it to train men at arms and archers.",
     "The sword button gathers your army. Press it again to charge the nearest enemy, or tap an enemy to strike it.",
     "Your soldiers hold their ground. They fight anything that comes near, but will not chase far unless you order it.",
     "The gear pauses the game. There you can set the sound and music, or replay this lesson.",
