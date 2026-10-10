@@ -837,6 +837,15 @@ function selectType(type){
  const L=camX-cw/(2*zoom),R=camX+cw/(2*zoom),T=camY-ch/(2*zoom),B=camY+ch/(2*zoom);
  const found=units.filter(u=>{if(u.team!==0||u.type!==type||u.dead||u.garrisoned)return false;const[sx,sy]=w2s(u.x,u.y);return sx>L&&sx<R&&sy>T&&sy<B});
  if(found.length){selection=found;sfx('sel');toast(found.length+'× '+DEFS[type].name)}}
+/* A unit is hit anywhere on its drawn body, not just at its feet: the sprites stand about 36px
+   tall, and a tap on a torso maps to ground behind the unit. Screen-space box per unit, nearest
+   foot point wins. */
+function unitAtScreen(px,py){
+ const[wx,wy]=scr2wS(px,py);let best=null,bd=1e9;
+ for(const u of units){if(u.dead||u.garrisoned)continue;
+  const[sx,sy]=w2s(u.x,u.y),dx=wx-sx,dy=wy-sy;
+  if(Math.abs(dx)<10&&dy<5&&dy>-38){const d=dx*dx+(dy+16)*(dy+16);if(d<bd){bd=d;best=u}}}
+ return best}
 function entityAt(wx,wy){
  let best=null,bd=0.3;
  for(const u of units){if(u.dead||u.garrisoned)continue;const d=dist2(wx,wy,u.x,u.y);if(d<bd){bd=d;best=u}}
@@ -851,7 +860,7 @@ function tap(px,py){
  const[wx,wy]=scr2w(px,py);
  const now=performance.now();
  if(placing){tryPlace(wx,wy);return}
- const e=entityAt(wx,wy);
+ const e=unitAtScreen(px,py)||entityAt(wx,wy);
  /* With a Town Center or Barracks selected, tapping a resource (or one of your farms) plants the
     rally flag on it, so villagers trained there walk straight out to work instead of just being
     told how much wood is left. */
@@ -1315,8 +1324,9 @@ function dirSprite(u){
      walk plays at its own manifest fps and the stride matches the clip it was extracted from. */
   if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
  u._dir=!!f;return f}
-/* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 28.6px tall. */
-const DIR_K=28.6/144;
+/* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 35.75px tall
+   (1.25x the original 28.6, so units read clearly next to the buildings). */
+const DIR_K=35.75/144;
 function drawDirFrame(f,sx,sy){
  const m=SPRM[f.key],cx=m?m[2]:f.img.width/2,cy=m?m[3]:f.img.height;
  ctx.drawImage(f.img,sx-cx*DIR_K,sy-cy*DIR_K,f.img.width*DIR_K,f.img.height*DIR_K)}
@@ -1453,7 +1463,7 @@ function drawRes(r){
   /* Photoreal oak, oak, Scots pine and birch matching the medieval buildings, chosen and sized by
      tile hash so a wood reads as mixed growth. Their sprites map one tile to TW at full size
      (about three villagers tall); the 0 A.D. trees remain as a fallback. */
-  const h4=(r.tx*7+r.ty*13)%4,sz=0.82+((r.tx*31+r.ty*17)%7)*0.04;
+  const h4=(r.tx*7+r.ty*13)%4,sz=0.58+((r.tx*31+r.ty*17)%7)*0.03;   /* kept low so woods don't hide units */
   if(drawSpr(['res_oak_a','res_oak_b','res_pine','res_birch'][h4],sx+sway*0.6,sy,TW*sz))return;
   if(drawSpr(['tree_oak_1','tree_oak_2','tree_pine_1'][v],sx+sway*0.6,sy,28))return;
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(sx,sy+1,9,4,0,0,7);ctx.fill();
@@ -1582,7 +1592,7 @@ function drawUnit(u){
    ctx.strokeStyle='#1b140d';ctx.lineWidth=.85;ctx.stroke()}
   if(u.flash>0){ctx.globalAlpha=Math.min(0.7,u.flash*5);ctx.fillStyle='#fff';
    ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
-  if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-24,16,u.hp/u.maxhp);
+  if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp);
   return}
  ctx.save();ctx.translate(sx,sy-bob);ctx.scale(u.face*1.12,1.12);
  ctx.lineJoin='round';ctx.lineCap='round';
@@ -1668,7 +1678,7 @@ function drawUnit(u){
  ctx.restore();
  if(u.flash>0){ctx.globalAlpha=Math.min(0.7,u.flash*5);ctx.fillStyle='#fff';
   ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
- if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-24,16,u.hp/u.maxhp)}
+ if(selection.includes(u)||u.hp<u.maxhp)drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp)}
 /* The owner's banner, flown from a pole above a finished structure. Shared by both draw paths
    because the sprite path returns early: with the 0 A.D. artwork on, nothing on the map used to
    say whose a building was, and in a mirror match the two bases look identical. */
