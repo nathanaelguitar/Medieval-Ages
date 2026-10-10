@@ -48,15 +48,24 @@
     self.introLayer.frame=v.bounds;
     [v.layer addSublayer:self.introLayer];
     if ([NSUserDefaults.standardUserDefaults boolForKey:@"pe_intro_seen"]) {
-        UIButton *skip=[UIButton buttonWithType:UIButtonTypeCustom];
-        [skip setTitle:@"Skip \u25B6" forState:UIControlStateNormal];
-        [skip setTitleColor:[UIColor colorWithRed:0.89 green:0.76 blue:0.48 alpha:1] forState:UIControlStateNormal];
-        skip.titleLabel.font=[UIFont fontWithName:@"Palatino-Bold" size:15]?:[UIFont boldSystemFontOfSize:15];
-        skip.backgroundColor=[UIColor colorWithWhite:0 alpha:0.45];
-        skip.layer.cornerRadius=18;
+        /* Gold small-caps label with an SF Symbol chevron: a text arrow (U+25B6) renders as a colour
+           emoji on iOS. */
+        UIColor *gold=[UIColor colorWithRed:0.89 green:0.76 blue:0.48 alpha:1];
+        UIButtonConfiguration *cfg=[UIButtonConfiguration plainButtonConfiguration];
+        UIFont *font=[UIFont fontWithName:@"Palatino-Bold" size:14]?:[UIFont boldSystemFontOfSize:14];
+        cfg.attributedTitle=[[NSAttributedString alloc] initWithString:@"SKIP"
+            attributes:@{NSFontAttributeName:font,NSKernAttributeName:@2.2,NSForegroundColorAttributeName:gold}];
+        cfg.image=[UIImage systemImageNamed:@"chevron.forward.2"
+            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:10 weight:UIImageSymbolWeightSemibold]];
+        cfg.imagePlacement=NSDirectionalRectEdgeTrailing;
+        cfg.imagePadding=7;
+        cfg.baseForegroundColor=gold;
+        cfg.contentInsets=NSDirectionalEdgeInsetsMake(9,20,9,18);
+        UIButton *skip=[UIButton buttonWithConfiguration:cfg primaryAction:nil];
+        skip.backgroundColor=[UIColor colorWithWhite:0 alpha:0.5];
+        skip.layer.cornerRadius=19;
         skip.layer.borderWidth=1;
-        skip.layer.borderColor=[UIColor colorWithRed:0.89 green:0.76 blue:0.48 alpha:0.6].CGColor;
-        skip.contentEdgeInsets=UIEdgeInsetsMake(8,18,8,18);
+        skip.layer.borderColor=[gold colorWithAlphaComponent:0.55].CGColor;
         skip.translatesAutoresizingMaskIntoConstraints=NO;
         [skip addTarget:self action:@selector(skipIntro) forControlEvents:UIControlEventTouchUpInside];
         [v addSubview:skip];

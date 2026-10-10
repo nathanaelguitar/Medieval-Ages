@@ -163,6 +163,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
  box-shadow:0 6px 18px rgba(0,0,0,.5);color:#f0e9d7;pointer-events:auto}
 #tutTxt{flex:1;font:600 13.5px/1.3 Palatino,'Palatino Linotype',Georgia,serif;letter-spacing:.01em}
 #tutTxt small{display:block;font:700 9.5px -apple-system,system-ui,sans-serif;letter-spacing:.12em;color:#b98f47;margin-bottom:1px}
+#tutSkip,#introSkip{text-transform:uppercase;letter-spacing:.14em;font-size:12.5px;display:inline-flex;align-items:center}
 .tutBtn{padding:6px 14px;border-radius:20px;border:1px solid rgba(227,194,122,.6);background:rgba(0,0,0,.45);
  color:#e3c27a;font:600 14px Palatino,Georgia,serif;letter-spacing:.05em;pointer-events:auto;touch-action:manipulation;cursor:pointer;white-space:nowrap}
 .tutBtn:active{transform:scale(.95)}
@@ -237,7 +238,7 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
 </div>
 <div id="tut" hidden><div id="tutRing"></div>
  <div id="tutCap"><div id="tutTxt" aria-live="polite"><small id="tutN"></small><span id="tutS"></span></div><button class="tutBtn" id="tutNext">Next</button></div>
- <div id="tutBar"><button class="tutBtn" id="tutVoice" aria-label="Narration on or off"></button><button class="tutBtn" id="tutSkip">Skip &#9654;</button></div></div>
+ <div id="tutBar"><button class="tutBtn" id="tutVoice" aria-label="Narration on or off"></button><button class="tutBtn" id="tutSkip">Skip<svg viewBox="0 0 12 12" width="10" height="10" style="margin-left:7px;vertical-align:-1px"><path d="M2.5 2.2 6.3 6l-3.8 3.8M6.2 2.2 10 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
 <div id="pauseOv"><div id="pauseCard">
   <div class="pmTitle">Paused</div>
   <div id="pmMain">
@@ -255,7 +256,7 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
   </div>
  </div></div>
 <div id="introOv"><video id="introVid" src="intro.mp4" playsinline webkit-playsinline preload="auto"></video>
- <button id="introSkip" hidden>Skip &#9654;</button></div>
+ <button id="introSkip" hidden>Skip<svg viewBox="0 0 12 12" width="10" height="10" style="margin-left:7px;vertical-align:-1px"><path d="M2.5 2.2 6.3 6l-3.8 3.8M6.2 2.2 10 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
 <div id="wallBar" class="ui" hidden><button id="wallOk">&#10003; Build</button><button id="wallRedo">&#8634; Redraw</button></div>
 <div id="startOv" class="ov ui">
  <div class="hero">
