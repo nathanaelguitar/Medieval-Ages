@@ -2410,10 +2410,8 @@ function drawBuilding(b,ghost){
   ctx.strokeStyle='#5b4a2c';ctx.lineWidth=1.4;
   [A,B,C,D].forEach(P=>{ctx.beginPath();ctx.moveTo(P[0],P[1]-6);ctx.lineTo(P[0],P[1]);ctx.stroke()});
  }else if(b.type==='mill'){
-  /* The Mill is drawn, in both art modes, rather than baked: this asset set has no mill mesh, so it
-     borrowed the storehouse sprite and looked identical to the Wood Yard, Mining Camp and Market.
-     Sails turning over a tapered tower also give a working settlement one piece of motion that says
-     so from across the map. */
+  /* Vector Mill: only the placement ghost and the no-art fallback get here now; with art the Mill is
+     med_mill plus its turning med_mill_sails (drawSails, above). */
   const Aw=[A[0],A[1]-h],Bw=[B[0],B[1]-h],Cw=[C[0],C[1]-h],Dw=[D[0],D[1]-h];
   if(!ghost){ctx.fillStyle='rgba(0,0,0,.22)';poly4(A,B,C,D);ctx.fill()}
   const Mx=(Aw[0]+Cw[0])/2,My=(Aw[1]+Cw[1])/2;

@@ -70,8 +70,15 @@ Outputs (all under art/out/buildings/):
   previews/village.png and previews/village_small.png (game projection, TW=64 and TW=44)
 
 Per-building knobs in corners.json: ``manual`` corners, ``warp``, ``no_dirt``, ``fp_scale``
-(declare a wider footprint so the game draws the building smaller in its tiles; 1.3 on the mill,
-whose sails span twice its base), ``axis`` for walls (default "x").
+(declare a wider footprint so the game draws the building smaller in its tiles), ``axis`` for walls
+(default "x").
+
+The Mill is baked WITHOUT sails (bld_mill.png shows only the windshaft's hub boss). Its sails are a
+separate face-on render on flat magenta, ``gen/sails/mill_sails_src.png``, which ``build`` (whenever
+med_mill is built) keys, makes rotationally symmetric (top and right arms plus their 180-degree
+copies) and writes as ``med_mill_sails.png``, a square with the hub at its centre. The game turns it
+in its own plane and projects it onto the tower front; the hub's position in med_mill's @2x pixels
+and the sail diameter are MILL_HUB / MILL_SAIL in index.html, so re-read them after re-baking.
 
 Setup (Mac):  uv venv .bvenv -p 3.12 && uv pip install -p .bvenv/bin/python numpy pillow opencv-python-headless
 Run:          .bvenv/bin/python art/pipeline/buildings_from_images.py --stage all
@@ -605,6 +612,81 @@ def build_one(name, src_name, n_tiles, kind, entry, out1, out2, debug_dir):
     return res, info
 
 
+# ----------------------------------------------------------------------------- mill sails
+SAILS_SRC = os.path.join(SRC, "sails", "mill_sails_src.png")
+SAILS_2X = 640            # px across the sail disc in the @2x sprite (the game scales it to the body)
+HUB_KEEP = 0.06           # radius (fraction of the source width) of the hub boss kept as rendered
+
+
+def key_magenta(rgb):
+    """Chroma key a flat #FF00FF background: alpha from how magenta a pixel is (min(R,B) - G, which
+    is ~1 on the background and below 0 on wood, cream canvas and blue cloth), then unmix the
+    background from the edge pixels and strip any remaining magenta spill."""
+    m = np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1]
+    alpha = np.clip((0.62 - m) / (0.62 - 0.22), 0, 1)
+    k = np.array([1.0, 0.0, 1.0], np.float32)
+    a = alpha[..., None]
+    col = np.where(a > 0.02, (rgb - (1 - a) * k) / np.maximum(a, 1e-3), 0)
+    col = np.clip(col, 0, 1)
+    spill = np.clip(np.minimum(col[..., 0], col[..., 2]) - col[..., 1], 0, None)
+    col[..., 0] -= spill
+    col[..., 2] -= spill
+    return np.concatenate([col, a], axis=2).astype(np.float32)
+
+
+def sail_hub(alpha):
+    """The rotation centre of a 4-arm sail cross: the point about which the alpha best matches its
+    own 90-degree rotation (coarse-to-fine search near the alpha centroid)."""
+    small = cv2.resize(alpha, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_AREA)
+    ys, xs = np.where(small > 0.5)
+    best = (float(xs.mean()), float(ys.mean()))
+    for step, rad in ((2.0, 24), (0.5, 3), (0.125, 0.75)):
+        cx0, cy0 = best
+        cand = [(cx0 + dx, cy0 + dy) for dx in np.arange(-rad, rad + 1e-6, step) for dy in np.arange(-rad, rad + 1e-6, step)]
+        def err(p):
+            R = cv2.getRotationMatrix2D(p, 90, 1.0)
+            r = cv2.warpAffine(small, R, small.shape[::-1], flags=cv2.INTER_LINEAR)
+            return float(np.abs(r - small).sum())
+        best = min(cand, key=err)
+    return best[0] * 4 + 1.5, best[1] * 4 + 1.5
+
+
+def stage_sails():
+    """Face-on sail cross (Codex render on flat magenta) -> med_mill_sails.png, a square sprite with
+    the hub at its exact centre and a transparent background. The game draws it over med_mill at
+    the windshaft, rotating it in its own plane and then projecting that plane onto the tower's
+    lower-left face (see drawBuilding). Returns the manifest entries (1x, 2x)."""
+    rgb = np.asarray(Image.open(SAILS_SRC).convert("RGB")).astype(np.float32) / 255.0
+    rgba = clean_alpha(key_magenta(rgb), min_frac=0.01)
+    hx, hy = sail_hub(rgba[..., 3])
+    # A real sail cross is rotationally symmetric (every cloth on the same side of its stock), which a
+    # generated image rarely is. Keep the top and right arms and make the bottom and left arms their
+    # 180-degree copies; the hub boss itself (inside HUB_KEEP of the centre) stays as rendered.
+    h, w = rgba.shape[:2]
+    R180 = cv2.getRotationMatrix2D((hx, hy), 180, 1.0)
+    rot = np.clip(cv2.warpAffine(premul(rgba), R180, (w, h), flags=cv2.INTER_CUBIC, borderValue=0), 0, 1)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    dx, dy = xx - hx, yy - hy
+    swap = ((dy > np.abs(dx)) | (-dx > np.abs(dy))) & (dx * dx + dy * dy > (HUB_KEEP * w) ** 2)
+    pm = premul(rgba)
+    pm[swap] = rot[swap]
+    rgba = np.concatenate([pm[..., :3] / np.maximum(pm[..., 3:4], 1e-4), pm[..., 3:4]], axis=2)
+    ys, xs = np.where(rgba[..., 3] > 0.05)
+    r = float(np.sqrt((xs - hx) ** 2 + (ys - hy) ** 2).max()) + 3
+    n = int(math.ceil(2 * r))
+    T = np.array([[1, 0, n / 2 - hx], [0, 1, n / 2 - hy]], float)   # hub -> centre of an n x n square
+    sq = np.clip(cv2.warpAffine(premul(rgba), T, (n, n), flags=cv2.INTER_CUBIC, borderValue=0), 0, 1)
+    out1, out2 = os.path.join(OUT, "sprites"), os.path.join(OUT, "sprites2x")
+    for d, px in ((out1, SAILS_2X // 2), (out2, SAILS_2X)):
+        os.makedirs(d, exist_ok=True)
+        Image.fromarray(unpremul_u8(resize_premul(sq, px / n))).save(os.path.join(d, "med_mill_sails.png"))
+    print(f"sails: hub ({hx:.1f},{hy:.1f}) radius {r:.0f}px in the source -> {SAILS_2X}px @2x")
+    e1 = {"file": "med_mill_sails.png", "w": SAILS_2X // 2, "h": SAILS_2X // 2, "fp_w": SAILS_2X // 2,
+          "fp_cx": SAILS_2X / 4, "fp_cy": SAILS_2X / 4, "fill": 0}
+    e2 = dict(e1, w=SAILS_2X, h=SAILS_2X, fp_w=SAILS_2X, fp_cx=SAILS_2X / 2, fp_cy=SAILS_2X / 2)
+    return e1, e2
+
+
 # ----------------------------------------------------------------------------- previews
 def grass(w, h, seed=1, tw=GAME_TW, th=GAME_TH):
     rng = np.random.default_rng(seed)
@@ -710,11 +792,14 @@ def stage_build(names_filter=None, debug=False):
         for k, (e1, e2) in res.items():
             man1[k], man2[k] = e1, e2
         print(f"{name:14s} {info}")
+    if SET == "buildings" and os.path.exists(SAILS_SRC) and (not names_filter or "med_mill" in names_filter
+                                                             or "med_mill_sails" in names_filter):
+        man1["med_mill_sails"], man2["med_mill_sails"] = stage_sails()
     json.dump(man1, open(os.path.join(OUT, "manifest_snippet.json"), "w"), indent=1, sort_keys=True)
     json.dump(man2, open(os.path.join(OUT, "manifest_snippet_2x.json"), "w"), indent=1, sort_keys=True)
     json.dump(infos, open(os.path.join(OUT, "build_info.json"), "w"), indent=1)
     # previews
-    tiles = [preview_sprite(k, e, out1, prev) for k, e in man1.items()]
+    tiles = [preview_sprite(k, e, out1, prev) for k, e in man1.items() if k != "med_mill_sails"]
     cols = 5
     rows = [tiles[i:i + cols] for i in range(0, len(tiles), cols)]
     sheet_w = max(sum(t.width for t in r) + 8 * len(r) for r in rows)

@@ -76,12 +76,21 @@ window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {
  },
  "med_mill": {
   "file": "med_mill.png",
-  "fill": 0.4196,
-  "fp_cx": 256.43,
-  "fp_cy": 693.8,
-  "fp_w": 499.2,
-  "h": 800,
-  "w": 454
+  "fill": 0.3874,
+  "fp_cx": 195.86,
+  "fp_cy": 310.21,
+  "fp_w": 384.0,
+  "h": 400,
+  "w": 394
+ },
+ "med_mill_sails": {
+  "file": "med_mill_sails.png",
+  "fill": 0,
+  "fp_cx": 320.0,
+  "fp_cy": 320.0,
+  "fp_w": 640,
+  "h": 640,
+  "w": 640
  },
  "med_mine": {
   "file": "med_mine.png",
