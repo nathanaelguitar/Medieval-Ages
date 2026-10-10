@@ -725,7 +725,7 @@ function spawnArrow(src,target,dmg){
     drawn. Slower than before so the eye can follow it. */
  const d0=Math.hypot(c[0]-sx0,c[1]-sy0)||1,bld=src.kind==='bld';
  const ox=(c[0]-sx0)/d0*(bld?0:0.3),oy=(c[1]-sy0)/d0*(bld?0:0.3);   /* start at the bow, not the feet */
- arrows.push({x:sx0+ox,y:sy0+oy,px:sx0,py:sy0,tx:c[0],ty:c[1],target,sp:9,dmg,team:src.team,life:3,dead:false,
+ arrows.push({x:sx0+ox,y:sy0+oy,px:sx0,py:sy0,tx:c[0],ty:c[1],target,src,sp:9,dmg,team:src.team,life:3,dead:false,
   trav:0,h0:bld?Math.min(60,(src.hh||30)*0.8):20,h1:target.kind==='bld'?18:14,arc:Math.min(46,8+d0*3.6),trail:[]})}
 function updArrow(a,dt){
  a.px=a.x;a.py=a.y;
@@ -735,11 +735,19 @@ function updArrow(a,dt){
  a.trav=(a.trav||0)+Math.min(st,d);a.rem=d;
  /* An arrow that lands kicks up the same sparks and dust a melee blow does. Without it a volley
     reads as arrows evaporating in mid-air, since the flight is the only thing drawn. */
- if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team);hitFx(a.tx,a.ty);playAt('arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
+ if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team,a.src);hitFx(a.tx,a.ty);playAt('arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
-function damage(t,amt,fromTeam){
+function damage(t,amt,fromTeam,src){
  if(t.dead||t.hp<=0)return;
+ /* Return fire. A soldier that is idle, or marching with no unit to fight, turns on whoever hit
+    it -- arrows included. Without this, idle troops only noticed enemies within 4.2 tiles, so
+    archers (range 5.5) could stand just outside and shoot them down unanswered. Villagers flee
+    instead (below), and a unit already fighting another unit keeps its target. */
+ if(t.kind==='unit'&&t.type!=='vill'&&src&&src.kind==='unit'&&!src.dead&&src.team!==t.team&&!t.garrisoned){
+  const o=t.order;
+  if(o.type==='idle'){t.order={type:'attack',target:src};t.path=null;t.nT=0}
+  else if(o.type==='amove'&&(!o.tgt||o.tgt.dead||o.tgt.kind==='bld'))o.tgt=src}
  t.hp-=amt;t.flash=0.15;
  bleed(t,amt);
  /* floating damage numbers, but only for fights the player is part of, and throttled so a
@@ -794,7 +802,7 @@ function combat(u,t,dt){
   if(!def.ranged&&u.type!=='vill'&&u.cd>0&&u.cd<=0.15&&!u.swung){u.swung=true;playAt('sword_swing',u.x,u.y,0.6)}
   if(u.cd<=0){u.cd=def.cdr;u.anim+=2;u.fire=time;u.swung=false;
    if(def.ranged){spawnArrow(u,t,def.atk);playAt('bow_release',u.x,u.y,0.8)}
-   else{damage(t,def.atk,u.team);hitFx(c[0],c[1]);
+   else{damage(t,def.atk,u.team,u);hitFx(c[0],c[1]);
     if(u.type==='vill')playAt('axe_chop',c[0],c[1],0.7);
     else playAt('sword_hit',c[0],c[1],0.8)}}
  }else if(losW(u.x,u.y,c[0],c[1],u.team)){u.path=null;stepMove(u,c[0],c[1],dt)}
@@ -953,7 +961,7 @@ function updUnit(u,dt){
  u.moving=!!u.drove;u.drove=false;u.cd-=dt;if(u.flash>0)u.flash-=dt;
  const o=u.order;
  switch(o.type){
-  case 'idle':if(u.type!=='vill'){const e=acquire(u,4.2);if(e)u.order={type:'attack',target:e}}break;
+  case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e}}break;   /* the AI's idle troops hold their ground over a wider radius */
   case 'drive':{const b=u.type==='vill'?nearbyBuild(u):null;if(b)assignBuild(u,b);break}
   case 'move':{
    const reached=followPath(u,dt);
