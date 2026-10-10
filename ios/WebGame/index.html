@@ -313,7 +313,7 @@ const ICON={
  stonewall:'<svg viewBox="0 0 20 20"><path d="M2.5 6.5h15v10h-15z" fill="#aeb6bd" stroke="#e8e2d2" stroke-width="1.2"/><path d="M2.5 11.5h15M7.5 6.5v5M13 6.5v5M5 11.5v5M10.5 11.5v5M15.5 11.5v5" stroke="#68717a" stroke-width="1"/></svg>',
  gate:'<svg viewBox="0 0 20 20"><path d="M3.2 17.5V8.4a6.8 6.8 0 0 1 13.6 0v9.1" fill="none" stroke="#e8e2d2" stroke-width="2"/><path d="M6.4 17.5v-8a3.6 3.6 0 0 1 7.2 0v8" fill="none" stroke="#c89b52" stroke-width="1.6"/><path d="M8 17.5v-7.6M10 17.5v-8M12 17.5v-7.6" stroke="#c89b52" stroke-width="1"/></svg>',
  tower:'<svg viewBox="0 0 20 20"><path d="M5 17V6h10v11M4 6h12l-2-3H6z" fill="#aeb6bd" stroke="#e8e2d2" stroke-width="1.2"/><path d="M7 9h6M7 12h6M7 15h6" stroke="#68717a" stroke-width="1"/><path d="M10 3v-2" stroke="#d9b36a" stroke-width="1.5"/></svg>',
- market:'<svg viewBox="0 0 20 20"><path d="M3 17V8h14v9M2 8l2-4h12l2 4z" fill="#c0a56d" stroke="#e8e2d2" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 11h10M5 14h10" stroke="#6f4930" stroke-width="1.4"/><path d="M6 4v4M10 4v4M14 4v4" stroke="#e8e2d2" stroke-width="1"/></svg>',
+ market:'<svg viewBox="0 0 20 20"><path d="M10 2.6v13.6M6.5 17.6h7M3.2 5.4h13.6" stroke="#e9c352" stroke-width="1.5" stroke-linecap="round" fill="none"/><circle cx="10" cy="2.6" r="1.2" fill="#e9c352"/><path d="M3.2 5.4 1.2 10.6M3.2 5.4l2 5.2M16.8 5.4l-2 5.2M16.8 5.4l2 5.2" stroke="#c9a54a" stroke-width=".9" fill="none"/><path d="M.8 10.6h4.8a2.4 2 0 0 1-4.8 0zM14.4 10.6h4.8a2.4 2 0 0 1-4.8 0z" fill="#e9c352" stroke="#a8842c" stroke-width=".7"/></svg>',
  tc:'<svg viewBox="0 0 20 20"><path d="M3 17V8h3v3h2.4V8h3.2v3H14V8h3v9z" fill="#e8e2d2"/></svg>',
  ungarrison:'<svg viewBox="0 0 20 20"><path d="M3 17V6h8v11" fill="none" stroke="#e8e2d2" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 10h8m0 0-2.6-2.6M17 10l-2.6 2.6" fill="none" stroke="#c89b52" stroke-width="1.8" stroke-linecap="round"/></svg>',
  trade:'<svg viewBox="0 0 20 20"><path d="M4 7h10m0 0-2.6-2.6M14 7l-2.6 2.6" fill="none" stroke="#e8e2d2" stroke-width="1.8" stroke-linecap="round"/><path d="M16 13H6m0 0 2.6-2.6M6 13l2.6 2.6" fill="none" stroke="#c89b52" stroke-width="1.8" stroke-linecap="round"/></svg>'};
@@ -614,11 +614,25 @@ function commandVillagers(){
 function canAfford(t,c){return res[t].w>=(c.w||0)&&res[t].f>=(c.f||0)&&res[t].g>=(c.g||0)&&res[t].s>=(c.s||0)}
 function pay(t,c){res[t].w-=c.w||0;res[t].f-=c.f||0;res[t].g-=c.g||0;res[t].s-=c.s||0}
 const RESLABEL={w:'wood',f:'food',g:'gold',s:'stone'};
+/* Market, Age of Empires style: gold is the currency. Sell 100 wood, food or stone for gold, or
+   buy 100 with gold. Each resource has a going price; the market takes a cut both ways (sell at
+   85%, buy at 115%), and every trade moves the price, so dumping one resource gets steadily
+   worse and buying it up gets steadily dearer. */
+const MKT={w:100,f:100,s:130};
+const mktSell=k=>Math.round(MKT[k]*0.85),mktBuy=k=>Math.round(MKT[k]*1.15);
 function tradeMarket(m,a){
  if(!m||m.dead||!m.done||m.team!==0||m.type!=='market')return;
- if(res[0][a.pay]<a.amount){toast('Not enough '+RESLABEL[a.pay]+' to trade');sfx('no');return}
- res[0][a.pay]-=a.amount;res[0][a.get]+=a.gain;
- toast('Market trade: +'+a.gain+' '+RESLABEL[a.get]);sfx('coin')
+ const k=a.k;
+ if(a.sell){
+  if(res[0][k]<100){toast('Need 100 '+RESLABEL[k]+' to sell');sfx('no');return}
+  const g=mktSell(k);res[0][k]-=100;res[0].g+=g;MKT[k]=Math.max(25,MKT[k]-5);
+  toast('Sold 100 '+RESLABEL[k]+' · +'+g+' gold')}
+ else{
+  const g=mktBuy(k);
+  if(res[0].g<g){toast('Need '+g+' gold to buy '+RESLABEL[k]);sfx('no');return}
+  res[0].g-=g;res[0][k]+=100;MKT[k]=Math.min(400,MKT[k]+5);
+  toast('Bought 100 '+RESLABEL[k]+' · −'+g+' gold')}
+ sfx('coin');refreshPanel(true)
 }
 function canPlace(tx,ty,size){for(let j=0;j<size;j++)for(let i=0;i<size;i++){const x=tx+i,y=ty+j;
  if(x<1||y<1||x>MAP-2||y>MAP-2)return false;const k=y*MAP+x;
@@ -1380,13 +1394,16 @@ function refreshPanel(force){
   if(counts.tc)acts.push({l:'Villager',s:'Villager',c:'50f',t:'vill',q:1});
   if(selection.length===1&&first.kind==='bld'&&first.type==='tc'&&first.garrison.length)acts.push({l:'Unload '+first.garrison.length,s:'Unload',c:'',t:'ungarrison'});
   if(selection.length===1&&first.kind==='bld'&&first.type==='market'&&first.done){
-   acts.push({l:'Food +125',s:'Food',c:'100w',t:'trade',pay:'w',amount:100,get:'f',gain:125},{l:'Wood +75',s:'Wood',c:'100f',t:'trade',pay:'f',amount:100,get:'w',gain:75},{l:'Gold +70',s:'Gold',c:'100f',t:'trade',pay:'f',amount:100,get:'g',gain:70},{l:'Stone +70',s:'Stone',c:'100f',t:'trade',pay:'f',amount:100,get:'s',gain:70})}
+   for(const k of['w','f','s'])acts.push({l:'Sell 100 '+RESLABEL[k]+' for '+mktSell(k)+' gold',s:'Sell',c:mktSell(k)+'g',t:'trade',sell:true,k,ic:ICO[k]});
+   for(const k of['w','f','s'])acts.push({l:'Buy 100 '+RESLABEL[k]+' for '+mktBuy(k)+' gold',s:'Buy',c:mktBuy(k)+'g',t:'trade',sell:false,k,ic:ICO[k]})}
   if(counts.barracks)acts.push({l:'Man-at-Arms',s:'Man-at-Arms',c:'60f 20g',t:'swords',q:1},{l:'Archer',s:'Archer',c:'40w 30g',t:'archer',q:1})}
  if(acts.length){
-  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn" data-i="${i}" title="${a.l}" aria-label="${a.l}">${ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span></button>`).join('')+'</div>';
+  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn" data-i="${i}" title="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span></button>`).join('')+'</div>';
   if(acts.some(a=>a.q)&&selection.length===1&&first.kind==='bld')html+='<div class="pq"><div id="pqf"></div><span id="pqt">Idle</span></div>'}
  el.innerHTML=html;
- $('pcx').onclick=()=>{selection=[];refreshPanel(true)};
+ /* The red X first cancels a building waiting to be placed, then clears the selection. Clearing
+    the selection alone left the ghost armed, and the next tap laid a site with no builders. */
+ $('pcx').onclick=()=>{if(placing)placing=null;else selection=[];refreshPanel(true)};
  el.querySelectorAll('.abtn').forEach(btn=>{
   const a=acts[+btn.dataset.i];
   btn.onclick=()=>{
@@ -2480,11 +2497,11 @@ function update(dt){
  units=units.filter(u=>!u.dead);
  buildings=buildings.filter(b=>!b.dead);
  resources=resources.filter(r=>!r.dead);
- ai.t+=dt;if(ai.t>=1){ai.t-=1;if(!over)aiThink()}
+ ai.t+=dt;if(ai.t>=1){ai.t-=1;if(!over&&!T.on)aiThink()}
  afT-=dt;
  if(afT<=0){afT=0.4;
   $('panel').querySelectorAll('.abtn').forEach((btn,i)=>{const a=pActs[i];if(!a)return;
-   const affordable=a.t==='ungarrison'||(a.t==='trade'?res[0][a.pay]>=a.amount:canAfford(0,DEFS[a.t].cost));
+   const affordable=a.t==='ungarrison'||(a.t==='trade'?(a.sell?res[0][a.k]>=100:res[0].g>=mktBuy(a.k)):canAfford(0,DEFS[a.t].cost));
    btn.classList.toggle('no',!affordable);
    btn.classList.toggle('on',!!placing&&placing.type===a.t)})}
  if(pHP&&selection.length===1)pHP.style.width=(Math.max(0,selection[0].hp/selection[0].maxhp*100))+'%';
