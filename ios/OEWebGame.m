@@ -2,12 +2,19 @@
 #import "OEWebGame.h"
 #import <WebKit/WebKit.h>
 
-@interface OEWebGame () <WKNavigationDelegate>
+@interface OEWebGame () <WKNavigationDelegate,WKScriptMessageHandler>
 @property(nonatomic,readwrite,getter=isRunning) BOOL running;
 @property(nonatomic,strong) WKWebView *webView;
 @end
 
 @implementation OEWebGame
+
+/* window.webkit.messageHandlers.oelog.postMessage(str) prints to stderr, which
+   `devicectl device process launch --console` streams to the Mac. */
+- (void)userContentController:(WKUserContentController *)controller didReceiveScriptMessage:(WKScriptMessage *)message {
+    (void)controller;
+    fprintf(stderr,"[page] %s\n",[[message.body description] UTF8String]); fflush(stderr);
+}
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     (void)navigation;
@@ -35,6 +42,10 @@
     configuration.allowsInlineMediaPlayback=YES;
     if (@available(iOS 10.0,*))
         configuration.mediaTypesRequiringUserActionForPlayback=WKAudiovisualMediaTypeNone;
+    [configuration.userContentController addScriptMessageHandler:self name:@"oelog"];
+    /* The app plays the intro film natively (see main.m); the page's own intro is for browsers. */
+    [configuration.userContentController addUserScript:[[WKUserScript alloc] initWithSource:@"window.OE_NATIVE_INTRO=true"
+        injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES]];
 
     self.webView=[[WKWebView alloc] initWithFrame:host.bounds configuration:configuration];
     if (@available(iOS 16.4,*)) self.webView.inspectable=YES;   /* lets Safari's Web Inspector attach */
