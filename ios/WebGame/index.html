@@ -658,12 +658,20 @@ function ping(wx,wy,col){const[sx,sy]=w2s(wx,wy);parts.push({ring:1,x:sx,y:sy,li
 function spawnArrow(src,target,dmg){
  const sx0=src.x!==undefined?src.x:src.cx,sy0=src.y!==undefined?src.y:src.cy;
  const c=closestPoint(target,sx0,sy0);
- arrows.push({x:sx0,y:sy0,px:sx0,py:sy0-0.2,tx:c[0],ty:c[1],target,sp:13,dmg,team:src.team,life:3,dead:false})}
+ /* A real projectile: it leaves from the bow (chest height on an archer, the parapet on a tower
+    or Town Center), flies a visible arc that rises more on long shots, and lands at the target's
+    body. Ground travel stays a straight line so hits and homing are unchanged; the height is only
+    drawn. Slower than before so the eye can follow it. */
+ const d0=Math.hypot(c[0]-sx0,c[1]-sy0)||1,bld=src.kind==='bld';
+ const ox=(c[0]-sx0)/d0*(bld?0:0.3),oy=(c[1]-sy0)/d0*(bld?0:0.3);   /* start at the bow, not the feet */
+ arrows.push({x:sx0+ox,y:sy0+oy,px:sx0,py:sy0,tx:c[0],ty:c[1],target,sp:9,dmg,team:src.team,life:3,dead:false,
+  trav:0,h0:bld?Math.min(60,(src.hh||30)*0.8):20,h1:target.kind==='bld'?18:14,arc:Math.min(46,8+d0*3.6),trail:[]})}
 function updArrow(a,dt){
  a.px=a.x;a.py=a.y;
  if(a.target&&a.target.garrisoned){a.dead=true;return}
  if(a.target&&!a.target.dead&&a.target.hp>0){const c=closestPoint(a.target,a.x,a.y);a.tx=c[0];a.ty=c[1]}
  const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy),st=a.sp*dt;
+ a.trav=(a.trav||0)+Math.min(st,d);a.rem=d;
  /* An arrow that lands kicks up the same sparks and dust a melee blow does. Without it a volley
     reads as arrows evaporating in mid-air, since the flight is the only thing drawn. */
  if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team);hitFx(a.tx,a.ty);playAt('arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
@@ -2102,19 +2110,29 @@ function render(){
   if(sx<L||sx>R||sy<T||sy>B)continue;dl.push([c.x+c.y-0.05,3,c])}
  dl.sort((a,b)=>a[0]-b[0]);
  for(const d of dl){if(d[1]===0)drawRes(d[2]);else if(d[1]===1)drawBuilding(d[2]);else if(d[1]===3)drawCorpse(d[2]);else drawUnit(d[2])}
- // arrows, each with a short trail so a volley reads as flight rather than as dashes
+ // arrows: drawn at their arc height and pointed along the flight, with a faint trail
  for(const a of arrows){if(a.dead)continue;
-  const p1=w2s(a.px,a.py),p2=w2s(a.x,a.y);
-  const dx=p1[0]-p2[0],dy=p1[1]-p2[1];
+  const p=a.trav!==undefined?clamp(a.trav/(a.trav+(a.rem||0)+1e-6),0,1):1;
+  const g=w2s(a.x,a.y),h=(a.h0??16)+((a.h1??14)-(a.h0??16))*p+(a.arc??0)*4*p*(1-p);
+  const x=g[0],y=g[1]-h,tr=a.trail||(a.trail=[]);
+  const last=tr.length?tr[tr.length-1]:null;
+  if(!last||Math.hypot(x-last[0],y-last[1])>0.5){tr.push([x,y]);if(tr.length>6)tr.shift()}
+  /* direction: from the oldest trail point, so the arrow noses over at the top of its arc */
+  const o=tr[0]||[x-1,y],dl=Math.hypot(x-o[0],y-o[1]);
+  const ux=dl>0.01?(x-o[0])/dl:1,uy=dl>0.01?(y-o[1])/dl:0,L=11;
   ctx.lineCap='round';
-  for(let i=1;i<=3;i++){
-   ctx.strokeStyle='rgba(243,233,200,'+(0.30/i)+')';ctx.lineWidth=1.4-i*0.22;
-   ctx.beginPath();
-   ctx.moveTo(p1[0]+dx*i*0.7,p1[1]+dy*i*0.7);
-   ctx.lineTo(p2[0]+dx*i*0.35,p2[1]+dy*i*0.35);
-   ctx.stroke()}
-  ctx.strokeStyle='#f3e9c8';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke()}
+  for(let i=0;i<tr.length-1;i++){const k=(i+1)/tr.length;     /* trail */
+   ctx.strokeStyle='rgba(240,232,210,'+(0.22*k)+')';ctx.lineWidth=1.2*k;
+   ctx.beginPath();ctx.moveTo(tr[i][0],tr[i][1]);ctx.lineTo(tr[i+1][0],tr[i+1][1]);ctx.stroke()}
+  const bx=x-ux*L,by=y-uy*L;
+  ctx.strokeStyle='#5d4127';ctx.lineWidth=1.4;                  /* shaft */
+  ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(x,y);ctx.stroke();
+  ctx.fillStyle='#3c3f44';                                      /* iron head */
+  ctx.beginPath();ctx.moveTo(x+ux*3,y+uy*3);ctx.lineTo(x-uy*1.6,y+ux*1.6);ctx.lineTo(x+uy*1.6,y-ux*1.6);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#ece6d6';ctx.lineWidth=1.1;                  /* goose fletching */
+  ctx.beginPath();
+  ctx.moveTo(bx+ux*2.5,by+uy*2.5);ctx.lineTo(bx-uy*2.2,by+ux*2.2);
+  ctx.moveTo(bx+ux*2.5,by+uy*2.5);ctx.lineTo(bx+uy*2.2,by-ux*2.2);ctx.stroke()}
  // particles
  for(const p of parts){if(p.ring)continue;const t=p.life/p.max;
   ctx.globalAlpha=1-t;ctx.fillStyle=p.col;
