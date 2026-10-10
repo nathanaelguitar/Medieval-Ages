@@ -370,6 +370,14 @@ function genResources(){
  [[14,47],[15,47],[14,48],[15,48],[42,9],[43,9],[42,8],[43,8],[27,31],[28,31],[27,30],[31,25],[32,25],[31,24]].forEach(g=>{if(ok(g[0],g[1])&&!resMap.has(g[1]*MAP+g[0]))put('gold',g[0],g[1],400)});
  [[24,10],[25,10],[24,11],[25,11],[31,45],[32,45],[31,46],[32,46],[18,26],[19,26],[18,27],[19,27]].forEach(g=>{if(ok(g[0],g[1])&&!resMap.has(g[1]*MAP+g[0]))put('stone',g[0],g[1],500)});
  [[7,38],[8,38],[7,39],[8,39],[6,38],[48,16],[49,16],[48,17],[49,17],[47,16]].forEach(g=>{if(ok(g[0],g[1])&&!resMap.has(g[1]*MAP+g[0]))put('berry',g[0],g[1],150)});
+ /* A home quarry beside each Town Center, so stone is not a trip across the map into enemy
+    reach: the nearest 2x2 open patch to a spot about four tiles from the TC. Mirrored for both
+    sides; the mid-map quarries above stay as contested deposits. */
+ function homeQuarry(cx,cy){
+  for(let r=0;r<=4;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+   const x=cx+dx,y=cy+dy,cells=[[x,y],[x+1,y],[x,y+1],[x+1,y+1]];
+   if(cells.every(([a,b])=>ok(a,b)&&!resMap.has(b*MAP+a))){cells.forEach(([a,b])=>put('stone',a,b,500));return}}}
+ homeQuarry(5,46);homeQuarry(49,8);
  /* Wild game: boars haunt the treeline, sheep graze the open meadow. Both are food and
     both bolt when a villager starts cutting into them. */
  [[15,40],[16,40],[15,41],[14,41],[36,18],[37,18],[36,19],[35,19],[26,29],[27,29],[27,28],
