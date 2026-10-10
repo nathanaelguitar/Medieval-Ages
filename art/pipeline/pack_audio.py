@@ -46,8 +46,10 @@ def main():
     bank, man_path = sys.argv[1], os.path.abspath(sys.argv[2])
     base = os.path.dirname(man_path)
     man = json.load(open(man_path))
-    if isinstance(man.get("sounds"), dict):    # make_sfx.py nests the sounds under "sounds"
-        man = man["sounds"]
+    for nest in ("sounds", "voices"):          # make_sfx.py / make_voices.py nest their sets
+        if isinstance(man.get(nest), dict):
+            man = man[nest]
+            break
     flat = {}
     for name, node in man.items():
         if name in ("lines", "_meta", "meta"):
