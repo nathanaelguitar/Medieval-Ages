@@ -738,6 +738,8 @@ function updArrow(a,dt){
  if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team,a.src);hitFx(a.tx,a.ty);playAt('arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
+/* How far a unit fighting on its own initiative may stray from its post. */
+const leash=u=>u.team===0?4.5:9;
 function damage(t,amt,fromTeam,src){
  if(t.dead||t.hp<=0)return;
  /* Return fire. A soldier that is idle, or marching with no unit to fight, turns on whoever hit
@@ -746,7 +748,10 @@ function damage(t,amt,fromTeam,src){
     instead (below), and a unit already fighting another unit keeps its target. */
  if(t.kind==='unit'&&t.type!=='vill'&&src&&src.kind==='unit'&&!src.dead&&src.team!==t.team&&!t.garrisoned){
   const o=t.order;
-  if(o.type==='idle'){t.order={type:'attack',target:src};t.path=null;t.nT=0}
+  /* defensive stance: the player's units only answer a foe they can reach without leaving their
+     post; the AI's troops answer from much further (a long leash) */
+  const reach=leash(t)+DEFS[t.type].rng;
+  if(o.type==='idle'&&dist2(t.x,t.y,src.x,src.y)<=reach*reach){t.order={type:'attack',target:src,auto:true,ax:t.x,ay:t.y};t.path=null;t.nT=0}
   else if(o.type==='amove'&&(!o.tgt||o.tgt.dead||o.tgt.kind==='bld'))o.tgt=src}
  t.hp-=amt;t.flash=0.15;
  bleed(t,amt);
@@ -961,7 +966,7 @@ function updUnit(u,dt){
  u.moving=!!u.drove;u.drove=false;u.cd-=dt;if(u.flash>0)u.flash-=dt;
  const o=u.order;
  switch(o.type){
-  case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e}}break;   /* the AI's idle troops hold their ground over a wider radius */
+  case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e,auto:true,ax:u.x,ay:u.y}}break;   /* the AI's idle troops watch a wider radius */
   case 'drive':{const b=u.type==='vill'?nearbyBuild(u):null;if(b)assignBuild(u,b);break}
   case 'move':{
    const reached=followPath(u,dt);
@@ -973,6 +978,18 @@ function updUnit(u,dt){
    if(o.tgt)combat(u,o.tgt,dt);
    else if(followPath(u,dt))u.order={type:'idle'};break;
   case 'attack':{const t=o.target;
+   /* A fight the unit started itself (o.auto: it was attacked or an enemy came close) is a
+      defensive stance: it fights near its post but does not chase. Once the foe is out of reach
+      and the unit has strayed past its leash, or the foe is gone with nobody else near, it walks
+      back to where it stood. An attack the player ordered has no leash. */
+   if(o.auto){
+    const L=leash(u),far=dist2(u.x,u.y,o.ax,o.ay)>L*L;
+    if(!t||t.dead||t.hp<=0){const e=acquire(u,4.2);
+     if(e&&dist2(e.x,e.y,o.ax,o.ay)<(L+DEFS[u.type].rng)**2)o.target=e;
+     else{u.order={type:'move'};u.path=null;u.nT=0;setPath(u,o.ax,o.ay)}break}
+    /* past the leash the fight is over, even if the foe stays just in reach while backing off --
+       otherwise a retreating enemy drags the defender along at matching speed */
+    if(far){u.order={type:'move'};u.path=null;u.nT=0;setPath(u,o.ax,o.ay);break}}
    if(!t||t.dead||t.hp<=0){const e=acquire(u,6.5);if(e)o.target=e;else u.order={type:'idle'};break}
    combat(u,t,dt);break}
   case 'gather':gatherStep(u,dt);break;
