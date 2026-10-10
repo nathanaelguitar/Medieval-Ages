@@ -117,6 +117,14 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .bigbtn{margin-top:20px;font-size:17px;font-weight:800;letter-spacing:.04em;color:#241a08;background:linear-gradient(#ecd29a,#c9a253);border:1px solid #8a6a2c;border-radius:14px;padding:13px 34px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
 .bigbtn:active{transform:scale(.96)}
 .tip{margin-top:14px;font-size:11px;color:#8d8874}
+/* Level select: a compact row of numbered buttons; locked ones are greyed with a padlock. */
+#lvRow{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:16px;max-width:min(560px,94vw)}
+.lvBtn{position:relative;min-width:40px;height:38px;padding:0 6px;font-size:15px;font-weight:800;color:#efe8d6;background:rgba(10,14,9,.78);border:1px solid rgba(255,255,255,.2);border-radius:10px}
+.lvBtn.sel{color:#241a08;background:linear-gradient(#ecd29a,#c9a253);border-color:#8a6a2c}
+.lvBtn.lock{opacity:.4;color:#b9b29c}
+.lvBtn svg{width:14px;height:14px;vertical-align:-2px}
+#lvName{margin-top:6px;font-size:12px;color:#b9b29c;font-style:italic;min-height:1.2em}
+#plv{font-size:11px;opacity:.8;padding:3px 8px;letter-spacing:.03em}
 @media (max-width:480px){
  .pill{font-size:11px;padding:3px 7px}.pill svg{width:12px;height:12px}
  #mm{width:112px;height:63px}
@@ -131,6 +139,9 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
  .how{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;text-align:left;font-size:11.5px;padding:9px 14px;max-width:min(720px,94vw);border-radius:11px}
  .bigbtn{margin-top:11px;padding:9px 24px;font-size:15px}
  .tip{margin-top:6px;font-size:10px}
+ #lvRow{margin-top:9px;gap:5px}
+ .lvBtn{min-width:36px;height:30px;font-size:13.5px;border-radius:8px}
+ #lvName{margin-top:3px;font-size:11px}
 }
 </style>
 </head>
@@ -139,7 +150,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 <div id="vig"></div>
 <div id="hud">
  <div id="resbar">
-  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Settings"></div>
+  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="plv"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Settings"></div>
  </div>
  <div id="mmWrap" class="ui"><canvas id="mm" width="150" height="84"></canvas></div>
  <div id="panel" class="ui"></div>
@@ -173,12 +184,14 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
   <div><b>Market</b>: trade gathered resources to rebalance your economy · the top HUD shows idle villagers</div>
   <div><b>Goal</b>: gather, build, raise an army… and raze the red Town Center</div>
  </div>
+ <div id="lvRow"></div><div id="lvName"></div>
  <button class="bigbtn" id="startBtn">Begin the Skirmish</button>
  <p class="tip">Best in landscape · In Safari: Share → “Add to Home Screen” for full-screen play</p>
 </div>
 <div id="endOv" class="ov ui" style="display:none">
  <h1 id="endTitle">Victory</h1>
  <p class="sub" id="endSub"></p>
+ <button class="bigbtn" id="nextBtn" style="display:none">Next Level</button>
  <button class="bigbtn" id="againBtn">Play Again</button>
 </div>
 
@@ -281,6 +294,35 @@ const lastTap={t:0,x:0,y:0,ty:null};
 const cv=$('game'),ctx=cv.getContext('2d');
 const mm=$('mm'),mctx=mm.getContext('2d');
 let cw=0,ch=0,dpr=1;
+/* ============ levels ============
+   One row per level; the enemy AI reads everything from LV (the active row). Level 6 is the
+   original single skirmish; below it the enemy is slower and smaller, above it faster and bigger.
+   name   : shown under the level buttons
+   first  : seconds until the first attack may launch      gap : seconds between waves
+   send   : minimum army needed to launch a wave           wave: idle count that grows the threshold
+   step/max: how much (and up to what) wave grows per launch
+   archer : share of barracks output that is archers       milCap: army size the AI stops training at
+   econ   : multiplier on the AI's passive income trickle  gather: its villagers' gather-rate multiplier
+   vills  : villager cap     v0: starting villagers (max 9)   res: multiplier on its starting stock
+   raxAt  : earliest second it may lay a barracks          rax: barracks count   rq: barracks queue depth */
+const LEVELS=[
+ {name:'The Quiet Border', first:420,gap:240,send:2,wave:3, step:1,max:5, archer:.10,milCap:5, econ:.55,gather:.6, vills:5, v0:3,res:.6, raxAt:150,rax:1,rq:1},
+ {name:'Sleepy Scouts',    first:390,gap:220,send:2,wave:3, step:1,max:6, archer:.15,milCap:6, econ:.65,gather:.7, vills:6, v0:4,res:.7, raxAt:120,rax:1,rq:1},
+ {name:'Local Raiders',    first:340,gap:200,send:3,wave:4, step:1,max:7, archer:.20,milCap:8, econ:.75,gather:.8, vills:7, v0:4,res:.8, raxAt:90, rax:1,rq:1},
+ {name:'Border Skirmish',  first:300,gap:185,send:3,wave:4, step:2,max:8, archer:.22,milCap:10,econ:.85,gather:.9, vills:8, v0:5,res:.9, raxAt:60, rax:1,rq:2},
+ {name:'Rising Tension',   first:270,gap:170,send:3,wave:5, step:2,max:10,archer:.26,milCap:12,econ:.93,gather:.95,vills:9, v0:6,res:1,  raxAt:0,  rax:1,rq:2},
+ {name:'The Skirmish',     first:240,gap:150,send:3,wave:5, step:2,max:12,archer:.30,milCap:14,econ:1,  gather:1,  vills:9, v0:6,res:1,  raxAt:0,  rax:1,rq:2},
+ {name:'Hardened Foe',     first:215,gap:130,send:4,wave:6, step:2,max:14,archer:.36,milCap:17,econ:1.15,gather:1.1,vills:10,v0:7,res:1.15,raxAt:0, rax:1,rq:2},
+ {name:'War Host',         first:195,gap:110,send:5,wave:7, step:2,max:16,archer:.42,milCap:20,econ:1.3,gather:1.2,vills:11,v0:8,res:1.25,raxAt:0, rax:2,rq:2},
+ {name:'Iron Tide',        first:175,gap:90, send:6,wave:8, step:2,max:18,archer:.48,milCap:23,econ:1.5,gather:1.35,vills:12,v0:8,res:1.4,raxAt:0,rax:2,rq:3},
+ {name:'No Mercy',         first:165,gap:70, send:8,wave:10,step:2,max:22,archer:.55,milCap:24,econ:1.8,gather:1.5,vills:14,v0:9,res:1.6,  raxAt:0, rax:2,rq:3}];
+/* Progress lives in localStorage; every access is wrapped because storage can throw (private mode). */
+let unlocked=1,level=1,LV=LEVELS[0];
+try{const u=parseInt(localStorage.getItem('pe_level_unlocked'),10);if(u>=1)unlocked=Math.min(LEVELS.length,u)}catch(_){}
+level=unlocked;
+/* Again/Next reload the page; the level to start on rides through localStorage and is consumed once. */
+try{const n=parseInt(localStorage.getItem('pe_level_next'),10);localStorage.removeItem('pe_level_next');
+ if(n>=1&&n<=unlocked)level=n}catch(_){}
 const ai={t:0,wave:5,next:240};
 const selMil=()=>selection.filter(s=>s.kind==='unit'&&s.team===0&&s.type!=='vill'&&!s.dead&&!s.garrisoned);
 const selUnits=t=>selection.filter(s=>s.kind==='unit'&&s.team===t&&!s.dead&&!s.garrisoned);
@@ -708,8 +750,11 @@ function kill(t){
 function checkEnd(){if(over)return;
  if(!buildings.some(b=>!b.dead&&b.team===1&&b.type==='tc'))end(true);
  else if(!buildings.some(b=>!b.dead&&b.team===0&&b.type==='tc'))end(false)}
+/* Winning unlocks the next level; a defeat or resign never does. */
 function end(win,resigned){if(over)return;over=true;sfx(win?'done':'crash');
- setTimeout(()=>{$('endTitle').textContent=win?'Victory':'Defeat';$('endSub').textContent=win?'The enemy Town Center lies in ruins.':resigned?'You laid down your arms.':'Your Town Center has been destroyed.';$('endOv').style.display='flex'},900)}
+ if(win&&level<LEVELS.length&&level>=unlocked){unlocked=level+1;try{localStorage.setItem('pe_level_unlocked',unlocked)}catch(_){}}
+ const hasNext=win&&level<LEVELS.length;
+ setTimeout(()=>{$('endTitle').textContent=win?'Victory':'Defeat';$('endSub').textContent=win?'The enemy Town Center lies in ruins.':resigned?'You laid down your arms.':'Your Town Center has been destroyed.';$('nextBtn').style.display=hasNext?'':'none';$('againBtn').textContent=win?'Play Again':'Try Again';$('endOv').style.display='flex'},900)}
 function acquire(u,r){
  let best=null,bd=r*r;
  for(const t of units){if(t.dead||t.garrisoned||t.team===u.team)continue;const d=dist2(u.x,u.y,t.x,t.y);if(d<bd){bd=d;best=t}}
@@ -809,7 +854,7 @@ function gatherStep(u,dt){
  }else if(o.phase==='work'){
   u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.anim+=dt*9;
   u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';
-  const take=Math.min(1.1*dt,r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
+  const take=Math.min(1.1*dt*(u.team===1?LV.gather:1),r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
   if(r.animal){ /* wounded game bolts, so the villager has to give chase */
    r.flee=0.55;const dx=r.gx-u.x,dy=r.gy-u.y,d=Math.hypot(dx,dy)||1;
    r.fx=dx/d*1.8;r.fy=dy/d*1.8;r.face=(dx-dy)>=0?1:-1}
@@ -916,26 +961,32 @@ function aiPlace(type){
    assignBuild(v,b)});
   return}}
 function aiThink(){
- res[1].w+=1.1;res[1].f+=1.1;res[1].g+=0.7;res[1].s+=0.7;
+ res[1].w+=1.1*LV.econ;res[1].f+=1.1*LV.econ;res[1].g+=0.7*LV.econ;res[1].s+=0.7*LV.econ;
  const my=units.filter(u=>u.team===1&&!u.dead);
  const vills=my.filter(u=>u.type==='vill');
  const mil=my.filter(u=>u.type!=='vill');
  const tc=buildings.find(b=>b.team===1&&b.type==='tc'&&b.done&&!b.dead);
  if(!tc)return;
  const ptc=buildings.find(b=>b.team===0&&b.type==='tc'&&!b.dead);
- const bar=buildings.find(b=>b.team===1&&b.type==='barracks'&&b.done&&!b.dead);
- if(vills.length<9&&tc.queue.length===0&&canAfford(1,DEFS.vill.cost)&&popOf(1)<popCap[1])tryQueue(tc,'vill');
+ const raxs=buildings.filter(b=>b.team===1&&b.type==='barracks'&&!b.dead);
+ const bar=raxs.find(b=>b.done);
+ if(vills.length<LV.vills&&tc.queue.length===0&&canAfford(1,DEFS.vill.cost)&&popOf(1)<popCap[1])tryQueue(tc,'vill');
  if(popCap[1]-popOf(1)<3&&res[1].w>=30&&!buildings.some(b=>b.team===1&&b.type==='house'&&!b.done&&!b.dead))aiPlace('house');
- if(!bar&&res[1].w>=125&&!buildings.some(b=>b.team===1&&b.type==='barracks'&&!b.done&&!b.dead))aiPlace('barracks');
- if(bar&&bar.queue.length<2&&mil.length<14)tryQueue(bar,Math.random()<0.3?'archer':'swords');
+ if(time>=LV.raxAt&&raxs.length<LV.rax&&res[1].w>=125&&!raxs.some(b=>!b.done))aiPlace('barracks');
+ if(mil.length<LV.milCap){const q=raxs.filter(b=>b.done&&b.queue.length<LV.rq).sort((a,b)=>a.queue.length-b.queue.length)[0];
+  if(q)tryQueue(q,Math.random()<LV.archer?'archer':'swords')}
+ /* A site can be orphaned when a later placement re-tasks its builders (two barracks, a house in
+    between); without this it would stay unbuilt and block the AI's next house, capping its pop. */
+ buildings.forEach(b=>{if(b.team!==1||b.done||b.dead||vills.some(v=>v.order.type==='build'&&v.order.b===b))return;
+  vills.filter(v=>v.order.type!=='build').slice(0,2).forEach(v=>assignBuild(v,b))});
  vills.forEach(v=>{if(v.order.type==='idle'){
   const k=['tree','berry','gold','stone'][v.id%4];
   const r=findResByKind(k,v.x,v.y,14);if(r)setGather(v,r)}});
  if(ptc){
   const idle=mil.filter(u=>u.order.type==='idle');
-  if(time>ai.next&&((mil.length>=3)||idle.length>=ai.wave)){
-   if(idle.length>=ai.wave)ai.wave=Math.min(ai.wave+2,12);
-   ai.next=time+150;
+  if(time>ai.next&&((mil.length>=LV.send)||idle.length>=ai.wave)){
+   if(idle.length>=ai.wave)ai.wave=Math.min(ai.wave+LV.step,LV.max);
+   ai.next=time+LV.gap;
    mil.forEach(u=>{u.order={type:'amove',x:ptc.cx+rnd(-2,2),y:ptc.cy+rnd(-2,2),tgt:null};u.path=null;u.nT=0;setPath(u,u.order.x,u.order.y)});
    notice('⚔ The enemy army is marching!');sfx('horn')   /* the horn still sounds every wave */}}}
 
@@ -2339,10 +2390,19 @@ blockBorders();
 const ptc=buildings.find(b=>b.team===0&&b.type==='tc');
 const etc=buildings.find(b=>b.team===1&&b.type==='tc');
 for(let i=0;i<3;i++){const s=freeTileAround(ptc);mkUnit(0,'vill',s[0]+0.5,s[1]+0.5)}
-for(let i=0;i<6;i++){const s=freeTileAround(etc);
- const u=mkUnit(1,'vill',s[0]+0.5,s[1]+0.5);
- const r=findResByKind(['tree','tree','berry','berry','gold','boar'][i],s[0],s[1],16);
- if(r)setGather(u,r)}
+/* Arms the enemy for level n: AI timers, starting stock and starting villagers. Runs at load and
+   again on Begin (the player may have picked another level); nothing has ticked before then. */
+function applyLevel(n){
+ level=n;LV=LEVELS[n-1];
+ ai.wave=LV.wave;ai.next=LV.first;
+ res[1]={w:Math.round(350*LV.res),f:Math.round(350*LV.res),g:Math.round(220*LV.res),s:Math.round(220*LV.res)};
+ units.forEach(u=>{if(u.team===1&&u.type==='vill')u.dead=true});units=units.filter(u=>!u.dead);
+ for(let i=0;i<LV.v0;i++){const s=freeTileAround(etc);
+  const u=mkUnit(1,'vill',s[0]+0.5,s[1]+0.5);
+  const r=findResByKind(['tree','tree','berry','berry','gold','boar','tree','berry','stone'][i],s[0],s[1],16);
+  if(r)setGather(u,r)}
+ $('plv').textContent='Lv '+n}
+applyLevel(level);
 selection=units.filter(u=>u.team===0);
 refreshPanel(true);
 {const c=w2s(11,43);camX=c[0];camY=c[1];clampCam()}
@@ -2381,8 +2441,22 @@ function scheduleTut(){
   e.preventDefault();if(!started||over)return;setPaused(!paused)});
  $('startBtn').addEventListener('click',()=>{
   initAudio();if(AC&&AC.resume)AC.resume();initMusic();loadBank('sfx');loadBank('voice');
+  if(picked!==level)applyLevel(picked);
   $('startOv').style.display='none';started=true;sfx('horn');scheduleTut()});
- $('againBtn').addEventListener('click',()=>location.reload());
+ /* Level buttons: locked ones are inert. `picked` is applied when Begin is pressed. */
+ let picked=level;
+ const ICO_LOCK='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z"/></svg>';
+ function drawLevels(){
+  $('lvRow').innerHTML='';
+  LEVELS.forEach((L,i)=>{const n=i+1,b=document.createElement('button');
+   const lk=n>unlocked;b.className='lvBtn'+(n===picked?' sel':'')+(lk?' lock':'');
+   b.innerHTML=lk?ICO_LOCK:n;b.setAttribute('aria-label','Level '+n+(lk?' (locked)':''));
+   b.addEventListener('click',()=>{if(lk)return;picked=n;sfx('sel');drawLevels()});$('lvRow').appendChild(b)});
+  $('lvName').textContent='Level '+picked+' · '+LEVELS[picked-1].name}
+ drawLevels();
+ const again=n=>{try{localStorage.setItem('pe_level_next',n)}catch(_){}location.reload()};
+ $('againBtn').addEventListener('click',()=>again(level));
+ $('nextBtn').addEventListener('click',()=>again(Math.min(LEVELS.length,level+1)));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.resume)AC.resume();lastT=0});
 requestAnimationFrame(frame);
 </script>
