@@ -2130,8 +2130,8 @@ function showHP(u){
 /* Silhouettes. A unit standing behind a building or a tree is drawn again as a flat shape in its
    side's colour, but only where the thing in front covers it -- the unit offscreen, masked by the
    occluder drawn into a second canvas, tinted, then laid over the scene. */
-const silC=document.createElement('canvas'),silX=silC.getContext('2d',{willReadFrequently:true});
-const mskC=document.createElement('canvas'),mskX=mskC.getContext('2d',{willReadFrequently:true});
+const silC=document.createElement('canvas'),silX=silC.getContext('2d');
+const mskC=document.createElement('canvas'),mskX=mskC.getContext('2d');
 function occBox(o){
  if(o.kind==='bld'){if(o.type==='farm'||(DEFS[o.type].hh||0)<20)return null;
   const B=w2s(o.tx+o.size,o.ty),C=w2s(o.tx+o.size,o.ty+o.size),D=w2s(o.tx,o.ty+o.size),A=w2s(o.tx,o.ty);return[D[0],B[0],A[1]-o.hh*1.8,C[1]]}
@@ -2143,17 +2143,13 @@ function silhouette(h,o){
  if(rw<=0||rh<=0)return;
  for(const X of [silX,mskX]){X.setTransform(1,0,0,1,0,0);X.globalCompositeOperation='source-over';X.globalAlpha=1;X.clearRect(rx,ry,rw,rh);X.save();X.beginPath();X.rect(rx,ry,rw,rh);X.clip();X.setTransform(M)}
  try{ctx=silX;drawUnit(h.u);ctx=mskX;if(o.kind==='bld')drawBuilding(o);else drawRes(o)}finally{ctx=mainCtx}
- /* only solid parts of the occluder count: its ground shadow is drawn half-transparent, and a unit
-    walking through a tree's shadow is not hidden by it (it used to turn wholly blue there) */
- mskX.setTransform(1,0,0,1,0,0);const md=mskX.getImageData(rx,ry,rw,rh),mp=md.data;
- for(let i=3;i<mp.length;i+=4)mp[i]=mp[i]>170?255:0;
- mskX.putImageData(md,rx,ry);
- /* and only a unit that is substantially hidden gets the outline: a sliver of overlap at an
-    occluder's edge would otherwise paint the whole visible unit blue */
+ /* Only what covers the unit above its feet counts: an occluder's shadow and footing lie flat on the
+    ground at foot level, and a unit walking through a tree's shadow used to turn wholly blue. (No
+    getImageData here: on the device the art loads from file://, which taints the canvas, and the
+    read threw mid-frame, so everything after it in the draw list vanished.) */
+ const footY=M.transformPoint({x:0,y:h.y1-11}).y;   /* ~9 px above the feet, in world space */
+ mskX.setTransform(1,0,0,1,0,0);mskX.globalCompositeOperation='destination-out';mskX.fillRect(rx,Math.max(ry,footY),rw,ry+rh-Math.max(ry,footY));mskX.globalCompositeOperation='source-over';
  silX.setTransform(1,0,0,1,0,0);
- const ud=silX.getImageData(rx,ry,rw,rh).data;let body=0,hidden=0;
- for(let i=3;i<ud.length;i+=4)if(ud[i]>40){body++;if(mp[i]===255)hidden++}
- if(!body||hidden/body<0.3){silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';return}
  silX.globalCompositeOperation='destination-in';silX.drawImage(mskC,0,0);
  silX.globalCompositeOperation='source-in';silX.fillStyle=TEAMR[h.u.team];silX.fillRect(rx,ry,rw,rh);
  silX.restore();mskX.restore();silX.globalCompositeOperation='source-over';
@@ -2582,7 +2578,7 @@ function render(){
  const hid=[];for(const d of dl)if(d[1]===2&&!d[2].garrisoned){const[sx,sy]=w2s(d[2].x,d[2].y);hid.push({u:d[2],z:d[0],x0:sx-10,x1:sx+10,y0:sy-42,y1:sy+2})}
  for(const d of dl){if(d[1]===0)drawRes(d[2]);else if(d[1]===1)drawBuilding(d[2]);else if(d[1]===3)drawCorpse(d[2]);else drawUnit(d[2]);
   if(hid.length&&(d[1]===1||(d[1]===0&&d[2].kind==='tree'))){const bb=occBox(d[2]);
-   if(bb)for(const h of hid)if(h.z<d[0]&&h.x1>bb[0]&&h.x0<bb[1]&&h.y1>bb[2]&&h.y0<bb[3])silhouette(h,d[2])}}
+   if(bb)for(const h of hid)if(h.z<d[0]&&h.x1>bb[0]&&h.x0<bb[1]&&h.y1>bb[2]&&h.y0<bb[3]){try{silhouette(h,d[2])}catch(_){ctx=mainCtx}}}}
  // arrows: drawn at their arc height and pointed along the flight, with a faint trail
  for(const a of arrows){if(a.dead)continue;
   const p=a.trav!==undefined?clamp(a.trav/(a.trav+(a.rem||0)+1e-6),0,1):1;
