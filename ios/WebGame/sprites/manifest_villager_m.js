@@ -7,9 +7,11 @@ window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {
    "carry",
    "chop",
    "death",
+   "gather",
    "hoe",
    "idle",
    "mine",
+   "shoot",
    "walk"
   ],
   "dirs": 8,
@@ -4975,6 +4977,1062 @@ window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {
   "h": 176,
   "w": 176
  },
+ "villager_m_blue_gather_d0": {
+  "clip": "gather",
+  "dir": 0,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d0_0.png",
+   "villager_m_blue_gather_d0_1.png",
+   "villager_m_blue_gather_d0_2.png",
+   "villager_m_blue_gather_d0_3.png",
+   "villager_m_blue_gather_d0_4.png",
+   "villager_m_blue_gather_d0_5.png",
+   "villager_m_blue_gather_d0_6.png",
+   "villager_m_blue_gather_d0_7.png",
+   "villager_m_blue_gather_d0_8.png",
+   "villager_m_blue_gather_d0_9.png",
+   "villager_m_blue_gather_d0_10.png",
+   "villager_m_blue_gather_d0_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d0_0": {
+  "file": "villager_m_blue_gather_d0_0.png",
+  "fill": 0.0881,
+  "fp_cx": 78.64,
+  "fp_cy": 154.14,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_1": {
+  "file": "villager_m_blue_gather_d0_1.png",
+  "fill": 0.0883,
+  "fp_cx": 78.42,
+  "fp_cy": 154.04,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_10": {
+  "file": "villager_m_blue_gather_d0_10.png",
+  "fill": 0.0902,
+  "fp_cx": 78.16,
+  "fp_cy": 154.1,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_11": {
+  "file": "villager_m_blue_gather_d0_11.png",
+  "fill": 0.0889,
+  "fp_cx": 78.42,
+  "fp_cy": 154.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_2": {
+  "file": "villager_m_blue_gather_d0_2.png",
+  "fill": 0.088,
+  "fp_cx": 78.04,
+  "fp_cy": 153.9,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_3": {
+  "file": "villager_m_blue_gather_d0_3.png",
+  "fill": 0.0894,
+  "fp_cx": 78.34,
+  "fp_cy": 154.24,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_4": {
+  "file": "villager_m_blue_gather_d0_4.png",
+  "fill": 0.0902,
+  "fp_cx": 79.16,
+  "fp_cy": 154.84,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_5": {
+  "file": "villager_m_blue_gather_d0_5.png",
+  "fill": 0.093,
+  "fp_cx": 77.62,
+  "fp_cy": 154.02,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_6": {
+  "file": "villager_m_blue_gather_d0_6.png",
+  "fill": 0.0927,
+  "fp_cx": 76.3,
+  "fp_cy": 153.3,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_7": {
+  "file": "villager_m_blue_gather_d0_7.png",
+  "fill": 0.0928,
+  "fp_cx": 76.26,
+  "fp_cy": 153.26,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_8": {
+  "file": "villager_m_blue_gather_d0_8.png",
+  "fill": 0.0923,
+  "fp_cx": 76.6,
+  "fp_cy": 153.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d0_9": {
+  "file": "villager_m_blue_gather_d0_9.png",
+  "fill": 0.0911,
+  "fp_cx": 77.48,
+  "fp_cy": 153.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1": {
+  "clip": "gather",
+  "dir": 1,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d1_0.png",
+   "villager_m_blue_gather_d1_1.png",
+   "villager_m_blue_gather_d1_2.png",
+   "villager_m_blue_gather_d1_3.png",
+   "villager_m_blue_gather_d1_4.png",
+   "villager_m_blue_gather_d1_5.png",
+   "villager_m_blue_gather_d1_6.png",
+   "villager_m_blue_gather_d1_7.png",
+   "villager_m_blue_gather_d1_8.png",
+   "villager_m_blue_gather_d1_9.png",
+   "villager_m_blue_gather_d1_10.png",
+   "villager_m_blue_gather_d1_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d1_0": {
+  "file": "villager_m_blue_gather_d1_0.png",
+  "fill": 0.0945,
+  "fp_cx": 78.86,
+  "fp_cy": 147.28,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_1": {
+  "file": "villager_m_blue_gather_d1_1.png",
+  "fill": 0.0938,
+  "fp_cx": 78.58,
+  "fp_cy": 147.28,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_10": {
+  "file": "villager_m_blue_gather_d1_10.png",
+  "fill": 0.0953,
+  "fp_cx": 78.48,
+  "fp_cy": 147.42,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_11": {
+  "file": "villager_m_blue_gather_d1_11.png",
+  "fill": 0.0942,
+  "fp_cx": 78.68,
+  "fp_cy": 147.34,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_2": {
+  "file": "villager_m_blue_gather_d1_2.png",
+  "fill": 0.0931,
+  "fp_cx": 78.1,
+  "fp_cy": 147.32,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_3": {
+  "file": "villager_m_blue_gather_d1_3.png",
+  "fill": 0.0959,
+  "fp_cx": 78.78,
+  "fp_cy": 147.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_4": {
+  "file": "villager_m_blue_gather_d1_4.png",
+  "fill": 0.0978,
+  "fp_cx": 80.24,
+  "fp_cy": 147.6,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_5": {
+  "file": "villager_m_blue_gather_d1_5.png",
+  "fill": 0.0973,
+  "fp_cx": 77.98,
+  "fp_cy": 147.56,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_6": {
+  "file": "villager_m_blue_gather_d1_6.png",
+  "fill": 0.0964,
+  "fp_cx": 76.0,
+  "fp_cy": 147.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_7": {
+  "file": "villager_m_blue_gather_d1_7.png",
+  "fill": 0.0961,
+  "fp_cx": 75.92,
+  "fp_cy": 147.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_8": {
+  "file": "villager_m_blue_gather_d1_8.png",
+  "fill": 0.0961,
+  "fp_cx": 76.42,
+  "fp_cy": 147.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d1_9": {
+  "file": "villager_m_blue_gather_d1_9.png",
+  "fill": 0.0981,
+  "fp_cx": 77.64,
+  "fp_cy": 147.48,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2": {
+  "clip": "gather",
+  "dir": 2,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d2_0.png",
+   "villager_m_blue_gather_d2_1.png",
+   "villager_m_blue_gather_d2_2.png",
+   "villager_m_blue_gather_d2_3.png",
+   "villager_m_blue_gather_d2_4.png",
+   "villager_m_blue_gather_d2_5.png",
+   "villager_m_blue_gather_d2_6.png",
+   "villager_m_blue_gather_d2_7.png",
+   "villager_m_blue_gather_d2_8.png",
+   "villager_m_blue_gather_d2_9.png",
+   "villager_m_blue_gather_d2_10.png",
+   "villager_m_blue_gather_d2_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d2_0": {
+  "file": "villager_m_blue_gather_d2_0.png",
+  "fill": 0.0777,
+  "fp_cx": 72.1,
+  "fp_cy": 141.68,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_1": {
+  "file": "villager_m_blue_gather_d2_1.png",
+  "fill": 0.0772,
+  "fp_cx": 71.92,
+  "fp_cy": 141.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_10": {
+  "file": "villager_m_blue_gather_d2_10.png",
+  "fill": 0.0795,
+  "fp_cx": 72.04,
+  "fp_cy": 141.92,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_11": {
+  "file": "villager_m_blue_gather_d2_11.png",
+  "fill": 0.078,
+  "fp_cx": 72.06,
+  "fp_cy": 141.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_2": {
+  "file": "villager_m_blue_gather_d2_2.png",
+  "fill": 0.0766,
+  "fp_cx": 71.64,
+  "fp_cy": 141.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_3": {
+  "file": "villager_m_blue_gather_d2_3.png",
+  "fill": 0.0775,
+  "fp_cx": 72.3,
+  "fp_cy": 141.82,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_4": {
+  "file": "villager_m_blue_gather_d2_4.png",
+  "fill": 0.0798,
+  "fp_cx": 73.52,
+  "fp_cy": 141.42,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_5": {
+  "file": "villager_m_blue_gather_d2_5.png",
+  "fill": 0.0806,
+  "fp_cx": 71.88,
+  "fp_cy": 142.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_6": {
+  "file": "villager_m_blue_gather_d2_6.png",
+  "fill": 0.0792,
+  "fp_cx": 70.42,
+  "fp_cy": 142.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_7": {
+  "file": "villager_m_blue_gather_d2_7.png",
+  "fill": 0.0794,
+  "fp_cx": 70.36,
+  "fp_cy": 142.88,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_8": {
+  "file": "villager_m_blue_gather_d2_8.png",
+  "fill": 0.0792,
+  "fp_cx": 70.7,
+  "fp_cy": 142.7,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d2_9": {
+  "file": "villager_m_blue_gather_d2_9.png",
+  "fill": 0.0798,
+  "fp_cx": 71.54,
+  "fp_cy": 142.26,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3": {
+  "clip": "gather",
+  "dir": 3,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d3_0.png",
+   "villager_m_blue_gather_d3_1.png",
+   "villager_m_blue_gather_d3_2.png",
+   "villager_m_blue_gather_d3_3.png",
+   "villager_m_blue_gather_d3_4.png",
+   "villager_m_blue_gather_d3_5.png",
+   "villager_m_blue_gather_d3_6.png",
+   "villager_m_blue_gather_d3_7.png",
+   "villager_m_blue_gather_d3_8.png",
+   "villager_m_blue_gather_d3_9.png",
+   "villager_m_blue_gather_d3_10.png",
+   "villager_m_blue_gather_d3_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d3_0": {
+  "file": "villager_m_blue_gather_d3_0.png",
+  "fill": 0.0759,
+  "fp_cx": 79.46,
+  "fp_cy": 144.3,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_1": {
+  "file": "villager_m_blue_gather_d3_1.png",
+  "fill": 0.0761,
+  "fp_cx": 79.48,
+  "fp_cy": 144.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_10": {
+  "file": "villager_m_blue_gather_d3_10.png",
+  "fill": 0.0755,
+  "fp_cx": 79.76,
+  "fp_cy": 144.48,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_11": {
+  "file": "villager_m_blue_gather_d3_11.png",
+  "fill": 0.0766,
+  "fp_cx": 79.6,
+  "fp_cy": 144.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_2": {
+  "file": "villager_m_blue_gather_d3_2.png",
+  "fill": 0.0756,
+  "fp_cx": 79.56,
+  "fp_cy": 144.68,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_3": {
+  "file": "villager_m_blue_gather_d3_3.png",
+  "fill": 0.0736,
+  "fp_cx": 79.82,
+  "fp_cy": 144.34,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_4": {
+  "file": "villager_m_blue_gather_d3_4.png",
+  "fill": 0.0739,
+  "fp_cx": 80.1,
+  "fp_cy": 143.62,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_5": {
+  "file": "villager_m_blue_gather_d3_5.png",
+  "fill": 0.0759,
+  "fp_cx": 80.04,
+  "fp_cy": 144.74,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_6": {
+  "file": "villager_m_blue_gather_d3_6.png",
+  "fill": 0.0777,
+  "fp_cx": 79.92,
+  "fp_cy": 145.72,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_7": {
+  "file": "villager_m_blue_gather_d3_7.png",
+  "fill": 0.0775,
+  "fp_cx": 79.92,
+  "fp_cy": 145.76,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_8": {
+  "file": "villager_m_blue_gather_d3_8.png",
+  "fill": 0.0772,
+  "fp_cx": 79.9,
+  "fp_cy": 145.52,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d3_9": {
+  "file": "villager_m_blue_gather_d3_9.png",
+  "fill": 0.0759,
+  "fp_cx": 79.88,
+  "fp_cy": 144.92,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4": {
+  "clip": "gather",
+  "dir": 4,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d4_0.png",
+   "villager_m_blue_gather_d4_1.png",
+   "villager_m_blue_gather_d4_2.png",
+   "villager_m_blue_gather_d4_3.png",
+   "villager_m_blue_gather_d4_4.png",
+   "villager_m_blue_gather_d4_5.png",
+   "villager_m_blue_gather_d4_6.png",
+   "villager_m_blue_gather_d4_7.png",
+   "villager_m_blue_gather_d4_8.png",
+   "villager_m_blue_gather_d4_9.png",
+   "villager_m_blue_gather_d4_10.png",
+   "villager_m_blue_gather_d4_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d4_0": {
+  "file": "villager_m_blue_gather_d4_0.png",
+  "fill": 0.0848,
+  "fp_cx": 81.36,
+  "fp_cy": 153.1,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_1": {
+  "file": "villager_m_blue_gather_d4_1.png",
+  "fill": 0.085,
+  "fp_cx": 81.58,
+  "fp_cy": 153.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_10": {
+  "file": "villager_m_blue_gather_d4_10.png",
+  "fill": 0.0864,
+  "fp_cx": 81.84,
+  "fp_cy": 153.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_11": {
+  "file": "villager_m_blue_gather_d4_11.png",
+  "fill": 0.0853,
+  "fp_cx": 81.58,
+  "fp_cy": 153.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_2": {
+  "file": "villager_m_blue_gather_d4_2.png",
+  "fill": 0.0841,
+  "fp_cx": 81.96,
+  "fp_cy": 153.34,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_3": {
+  "file": "villager_m_blue_gather_d4_3.png",
+  "fill": 0.0856,
+  "fp_cx": 81.66,
+  "fp_cy": 153.0,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_4": {
+  "file": "villager_m_blue_gather_d4_4.png",
+  "fill": 0.0859,
+  "fp_cx": 80.84,
+  "fp_cy": 152.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_5": {
+  "file": "villager_m_blue_gather_d4_5.png",
+  "fill": 0.0898,
+  "fp_cx": 82.38,
+  "fp_cy": 153.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_6": {
+  "file": "villager_m_blue_gather_d4_6.png",
+  "fill": 0.0908,
+  "fp_cx": 83.7,
+  "fp_cy": 153.94,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_7": {
+  "file": "villager_m_blue_gather_d4_7.png",
+  "fill": 0.0898,
+  "fp_cx": 83.74,
+  "fp_cy": 153.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_8": {
+  "file": "villager_m_blue_gather_d4_8.png",
+  "fill": 0.0894,
+  "fp_cx": 83.4,
+  "fp_cy": 153.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d4_9": {
+  "file": "villager_m_blue_gather_d4_9.png",
+  "fill": 0.0875,
+  "fp_cx": 82.52,
+  "fp_cy": 153.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5": {
+  "clip": "gather",
+  "dir": 5,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d5_0.png",
+   "villager_m_blue_gather_d5_1.png",
+   "villager_m_blue_gather_d5_2.png",
+   "villager_m_blue_gather_d5_3.png",
+   "villager_m_blue_gather_d5_4.png",
+   "villager_m_blue_gather_d5_5.png",
+   "villager_m_blue_gather_d5_6.png",
+   "villager_m_blue_gather_d5_7.png",
+   "villager_m_blue_gather_d5_8.png",
+   "villager_m_blue_gather_d5_9.png",
+   "villager_m_blue_gather_d5_10.png",
+   "villager_m_blue_gather_d5_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d5_0": {
+  "file": "villager_m_blue_gather_d5_0.png",
+  "fill": 0.0878,
+  "fp_cx": 81.14,
+  "fp_cy": 149.62,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_1": {
+  "file": "villager_m_blue_gather_d5_1.png",
+  "fill": 0.0887,
+  "fp_cx": 81.42,
+  "fp_cy": 149.6,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_10": {
+  "file": "villager_m_blue_gather_d5_10.png",
+  "fill": 0.0883,
+  "fp_cx": 81.52,
+  "fp_cy": 149.46,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_11": {
+  "file": "villager_m_blue_gather_d5_11.png",
+  "fill": 0.0881,
+  "fp_cx": 81.32,
+  "fp_cy": 149.54,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_2": {
+  "file": "villager_m_blue_gather_d5_2.png",
+  "fill": 0.088,
+  "fp_cx": 81.9,
+  "fp_cy": 149.56,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_3": {
+  "file": "villager_m_blue_gather_d5_3.png",
+  "fill": 0.0892,
+  "fp_cx": 81.22,
+  "fp_cy": 149.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_4": {
+  "file": "villager_m_blue_gather_d5_4.png",
+  "fill": 0.0892,
+  "fp_cx": 79.76,
+  "fp_cy": 149.3,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_5": {
+  "file": "villager_m_blue_gather_d5_5.png",
+  "fill": 0.0902,
+  "fp_cx": 82.02,
+  "fp_cy": 149.32,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_6": {
+  "file": "villager_m_blue_gather_d5_6.png",
+  "fill": 0.0884,
+  "fp_cx": 84.0,
+  "fp_cy": 149.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_7": {
+  "file": "villager_m_blue_gather_d5_7.png",
+  "fill": 0.0892,
+  "fp_cx": 84.08,
+  "fp_cy": 149.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_8": {
+  "file": "villager_m_blue_gather_d5_8.png",
+  "fill": 0.0889,
+  "fp_cx": 83.58,
+  "fp_cy": 149.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d5_9": {
+  "file": "villager_m_blue_gather_d5_9.png",
+  "fill": 0.0886,
+  "fp_cx": 82.36,
+  "fp_cy": 149.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6": {
+  "clip": "gather",
+  "dir": 6,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d6_0.png",
+   "villager_m_blue_gather_d6_1.png",
+   "villager_m_blue_gather_d6_2.png",
+   "villager_m_blue_gather_d6_3.png",
+   "villager_m_blue_gather_d6_4.png",
+   "villager_m_blue_gather_d6_5.png",
+   "villager_m_blue_gather_d6_6.png",
+   "villager_m_blue_gather_d6_7.png",
+   "villager_m_blue_gather_d6_8.png",
+   "villager_m_blue_gather_d6_9.png",
+   "villager_m_blue_gather_d6_10.png",
+   "villager_m_blue_gather_d6_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d6_0": {
+  "file": "villager_m_blue_gather_d6_0.png",
+  "fill": 0.0667,
+  "fp_cx": 87.9,
+  "fp_cy": 143.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_1": {
+  "file": "villager_m_blue_gather_d6_1.png",
+  "fill": 0.0658,
+  "fp_cx": 88.08,
+  "fp_cy": 143.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_10": {
+  "file": "villager_m_blue_gather_d6_10.png",
+  "fill": 0.0677,
+  "fp_cx": 87.96,
+  "fp_cy": 143.72,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_11": {
+  "file": "villager_m_blue_gather_d6_11.png",
+  "fill": 0.0659,
+  "fp_cx": 87.94,
+  "fp_cy": 143.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_2": {
+  "file": "villager_m_blue_gather_d6_2.png",
+  "fill": 0.0664,
+  "fp_cx": 88.36,
+  "fp_cy": 143.66,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_3": {
+  "file": "villager_m_blue_gather_d6_3.png",
+  "fill": 0.0678,
+  "fp_cx": 87.7,
+  "fp_cy": 143.82,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_4": {
+  "file": "villager_m_blue_gather_d6_4.png",
+  "fill": 0.07,
+  "fp_cx": 86.48,
+  "fp_cy": 144.22,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_5": {
+  "file": "villager_m_blue_gather_d6_5.png",
+  "fill": 0.0698,
+  "fp_cx": 88.12,
+  "fp_cy": 143.46,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_6": {
+  "file": "villager_m_blue_gather_d6_6.png",
+  "fill": 0.0691,
+  "fp_cx": 89.58,
+  "fp_cy": 142.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_7": {
+  "file": "villager_m_blue_gather_d6_7.png",
+  "fill": 0.0689,
+  "fp_cx": 89.64,
+  "fp_cy": 142.78,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_8": {
+  "file": "villager_m_blue_gather_d6_8.png",
+  "fill": 0.0691,
+  "fp_cx": 89.3,
+  "fp_cy": 142.96,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d6_9": {
+  "file": "villager_m_blue_gather_d6_9.png",
+  "fill": 0.0697,
+  "fp_cx": 88.46,
+  "fp_cy": 143.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7": {
+  "clip": "gather",
+  "dir": 7,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_blue_gather_d7_0.png",
+   "villager_m_blue_gather_d7_1.png",
+   "villager_m_blue_gather_d7_2.png",
+   "villager_m_blue_gather_d7_3.png",
+   "villager_m_blue_gather_d7_4.png",
+   "villager_m_blue_gather_d7_5.png",
+   "villager_m_blue_gather_d7_6.png",
+   "villager_m_blue_gather_d7_7.png",
+   "villager_m_blue_gather_d7_8.png",
+   "villager_m_blue_gather_d7_9.png",
+   "villager_m_blue_gather_d7_10.png",
+   "villager_m_blue_gather_d7_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "blue"
+ },
+ "villager_m_blue_gather_d7_0": {
+  "file": "villager_m_blue_gather_d7_0.png",
+  "fill": 0.0669,
+  "fp_cx": 80.54,
+  "fp_cy": 146.58,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_1": {
+  "file": "villager_m_blue_gather_d7_1.png",
+  "fill": 0.067,
+  "fp_cx": 80.52,
+  "fp_cy": 146.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_10": {
+  "file": "villager_m_blue_gather_d7_10.png",
+  "fill": 0.0711,
+  "fp_cx": 80.24,
+  "fp_cy": 146.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_11": {
+  "file": "villager_m_blue_gather_d7_11.png",
+  "fill": 0.0692,
+  "fp_cx": 80.4,
+  "fp_cy": 146.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_2": {
+  "file": "villager_m_blue_gather_d7_2.png",
+  "fill": 0.0658,
+  "fp_cx": 80.44,
+  "fp_cy": 146.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_3": {
+  "file": "villager_m_blue_gather_d7_3.png",
+  "fill": 0.0652,
+  "fp_cx": 80.18,
+  "fp_cy": 146.56,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_4": {
+  "file": "villager_m_blue_gather_d7_4.png",
+  "fill": 0.0673,
+  "fp_cx": 79.9,
+  "fp_cy": 147.28,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_5": {
+  "file": "villager_m_blue_gather_d7_5.png",
+  "fill": 0.0722,
+  "fp_cx": 79.96,
+  "fp_cy": 146.14,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_6": {
+  "file": "villager_m_blue_gather_d7_6.png",
+  "fill": 0.0742,
+  "fp_cx": 80.08,
+  "fp_cy": 145.16,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_7": {
+  "file": "villager_m_blue_gather_d7_7.png",
+  "fill": 0.0742,
+  "fp_cx": 80.08,
+  "fp_cy": 145.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_8": {
+  "file": "villager_m_blue_gather_d7_8.png",
+  "fill": 0.0745,
+  "fp_cx": 80.1,
+  "fp_cy": 145.36,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_blue_gather_d7_9": {
+  "file": "villager_m_blue_gather_d7_9.png",
+  "fill": 0.0734,
+  "fp_cx": 80.12,
+  "fp_cy": 145.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
  "villager_m_blue_hoe_d0": {
   "clip": "hoe",
   "dir": 0,
@@ -7651,6 +8709,1062 @@ window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {
   "fill": 0.0664,
   "fp_cx": 96.0,
   "fp_cy": 171.0,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0": {
+  "clip": "shoot",
+  "dir": 0,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d0_0.png",
+   "villager_m_blue_shoot_d0_1.png",
+   "villager_m_blue_shoot_d0_2.png",
+   "villager_m_blue_shoot_d0_3.png",
+   "villager_m_blue_shoot_d0_4.png",
+   "villager_m_blue_shoot_d0_5.png",
+   "villager_m_blue_shoot_d0_6.png",
+   "villager_m_blue_shoot_d0_7.png",
+   "villager_m_blue_shoot_d0_8.png",
+   "villager_m_blue_shoot_d0_9.png",
+   "villager_m_blue_shoot_d0_10.png",
+   "villager_m_blue_shoot_d0_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d0_0": {
+  "file": "villager_m_blue_shoot_d0_0.png",
+  "fill": 0.075,
+  "fp_cx": 94.14,
+  "fp_cy": 183.14,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_1": {
+  "file": "villager_m_blue_shoot_d0_1.png",
+  "fill": 0.0796,
+  "fp_cx": 96.5,
+  "fp_cy": 184.36,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_10": {
+  "file": "villager_m_blue_shoot_d0_10.png",
+  "fill": 0.0825,
+  "fp_cx": 91.88,
+  "fp_cy": 182.08,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_11": {
+  "file": "villager_m_blue_shoot_d0_11.png",
+  "fill": 0.0779,
+  "fp_cx": 93.4,
+  "fp_cy": 182.72,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_2": {
+  "file": "villager_m_blue_shoot_d0_2.png",
+  "fill": 0.0793,
+  "fp_cx": 96.64,
+  "fp_cy": 184.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_3": {
+  "file": "villager_m_blue_shoot_d0_3.png",
+  "fill": 0.0801,
+  "fp_cx": 95.48,
+  "fp_cy": 184.16,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_4": {
+  "file": "villager_m_blue_shoot_d0_4.png",
+  "fill": 0.08,
+  "fp_cx": 94.0,
+  "fp_cy": 183.44,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_5": {
+  "file": "villager_m_blue_shoot_d0_5.png",
+  "fill": 0.0893,
+  "fp_cx": 93.28,
+  "fp_cy": 183.12,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_6": {
+  "file": "villager_m_blue_shoot_d0_6.png",
+  "fill": 0.0866,
+  "fp_cx": 93.04,
+  "fp_cy": 183.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_7": {
+  "file": "villager_m_blue_shoot_d0_7.png",
+  "fill": 0.0932,
+  "fp_cx": 91.92,
+  "fp_cy": 183.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_8": {
+  "file": "villager_m_blue_shoot_d0_8.png",
+  "fill": 0.0845,
+  "fp_cx": 92.28,
+  "fp_cy": 182.44,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d0_9": {
+  "file": "villager_m_blue_shoot_d0_9.png",
+  "fill": 0.0818,
+  "fp_cx": 91.76,
+  "fp_cy": 182.14,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1": {
+  "clip": "shoot",
+  "dir": 1,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d1_0.png",
+   "villager_m_blue_shoot_d1_1.png",
+   "villager_m_blue_shoot_d1_2.png",
+   "villager_m_blue_shoot_d1_3.png",
+   "villager_m_blue_shoot_d1_4.png",
+   "villager_m_blue_shoot_d1_5.png",
+   "villager_m_blue_shoot_d1_6.png",
+   "villager_m_blue_shoot_d1_7.png",
+   "villager_m_blue_shoot_d1_8.png",
+   "villager_m_blue_shoot_d1_9.png",
+   "villager_m_blue_shoot_d1_10.png",
+   "villager_m_blue_shoot_d1_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d1_0": {
+  "file": "villager_m_blue_shoot_d1_0.png",
+  "fill": 0.063,
+  "fp_cx": 90.26,
+  "fp_cy": 178.02,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_1": {
+  "file": "villager_m_blue_shoot_d1_1.png",
+  "fill": 0.0755,
+  "fp_cx": 93.66,
+  "fp_cy": 178.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_10": {
+  "file": "villager_m_blue_shoot_d1_10.png",
+  "fill": 0.0805,
+  "fp_cx": 87.18,
+  "fp_cy": 178.08,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_11": {
+  "file": "villager_m_blue_shoot_d1_11.png",
+  "fill": 0.07,
+  "fp_cx": 89.16,
+  "fp_cy": 178.0,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_2": {
+  "file": "villager_m_blue_shoot_d1_2.png",
+  "fill": 0.0812,
+  "fp_cx": 94.16,
+  "fp_cy": 178.2,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_3": {
+  "file": "villager_m_blue_shoot_d1_3.png",
+  "fill": 0.0819,
+  "fp_cx": 92.64,
+  "fp_cy": 178.26,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_4": {
+  "file": "villager_m_blue_shoot_d1_4.png",
+  "fill": 0.0815,
+  "fp_cx": 90.6,
+  "fp_cy": 178.28,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_5": {
+  "file": "villager_m_blue_shoot_d1_5.png",
+  "fill": 0.0853,
+  "fp_cx": 89.64,
+  "fp_cy": 178.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_6": {
+  "file": "villager_m_blue_shoot_d1_6.png",
+  "fill": 0.0851,
+  "fp_cx": 89.36,
+  "fp_cy": 178.34,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_7": {
+  "file": "villager_m_blue_shoot_d1_7.png",
+  "fill": 0.091,
+  "fp_cx": 88.96,
+  "fp_cy": 178.94,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_8": {
+  "file": "villager_m_blue_shoot_d1_8.png",
+  "fill": 0.082,
+  "fp_cx": 87.98,
+  "fp_cy": 178.18,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d1_9": {
+  "file": "villager_m_blue_shoot_d1_9.png",
+  "fill": 0.0824,
+  "fp_cx": 87.16,
+  "fp_cy": 178.16,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2": {
+  "clip": "shoot",
+  "dir": 2,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d2_0.png",
+   "villager_m_blue_shoot_d2_1.png",
+   "villager_m_blue_shoot_d2_2.png",
+   "villager_m_blue_shoot_d2_3.png",
+   "villager_m_blue_shoot_d2_4.png",
+   "villager_m_blue_shoot_d2_5.png",
+   "villager_m_blue_shoot_d2_6.png",
+   "villager_m_blue_shoot_d2_7.png",
+   "villager_m_blue_shoot_d2_8.png",
+   "villager_m_blue_shoot_d2_9.png",
+   "villager_m_blue_shoot_d2_10.png",
+   "villager_m_blue_shoot_d2_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d2_0": {
+  "file": "villager_m_blue_shoot_d2_0.png",
+  "fill": 0.0637,
+  "fp_cx": 95.52,
+  "fp_cy": 174.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_1": {
+  "file": "villager_m_blue_shoot_d2_1.png",
+  "fill": 0.063,
+  "fp_cx": 97.98,
+  "fp_cy": 173.5,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_10": {
+  "file": "villager_m_blue_shoot_d2_10.png",
+  "fill": 0.0629,
+  "fp_cx": 93.44,
+  "fp_cy": 175.8,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_11": {
+  "file": "villager_m_blue_shoot_d2_11.png",
+  "fill": 0.0589,
+  "fp_cx": 94.72,
+  "fp_cy": 175.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_2": {
+  "file": "villager_m_blue_shoot_d2_2.png",
+  "fill": 0.0636,
+  "fp_cx": 98.56,
+  "fp_cy": 173.42,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_3": {
+  "file": "villager_m_blue_shoot_d2_3.png",
+  "fill": 0.0676,
+  "fp_cx": 97.56,
+  "fp_cy": 174.0,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_4": {
+  "file": "villager_m_blue_shoot_d2_4.png",
+  "fill": 0.0636,
+  "fp_cx": 96.14,
+  "fp_cy": 174.74,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_5": {
+  "file": "villager_m_blue_shoot_d2_5.png",
+  "fill": 0.0609,
+  "fp_cx": 95.52,
+  "fp_cy": 175.1,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_6": {
+  "file": "villager_m_blue_shoot_d2_6.png",
+  "fill": 0.061,
+  "fp_cx": 95.34,
+  "fp_cy": 175.22,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_7": {
+  "file": "villager_m_blue_shoot_d2_7.png",
+  "fill": 0.0602,
+  "fp_cx": 95.9,
+  "fp_cy": 175.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_8": {
+  "file": "villager_m_blue_shoot_d2_8.png",
+  "fill": 0.0636,
+  "fp_cx": 94.16,
+  "fp_cy": 175.6,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d2_9": {
+  "file": "villager_m_blue_shoot_d2_9.png",
+  "fill": 0.0658,
+  "fp_cx": 93.54,
+  "fp_cy": 175.86,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3": {
+  "clip": "shoot",
+  "dir": 3,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d3_0.png",
+   "villager_m_blue_shoot_d3_1.png",
+   "villager_m_blue_shoot_d3_2.png",
+   "villager_m_blue_shoot_d3_3.png",
+   "villager_m_blue_shoot_d3_4.png",
+   "villager_m_blue_shoot_d3_5.png",
+   "villager_m_blue_shoot_d3_6.png",
+   "villager_m_blue_shoot_d3_7.png",
+   "villager_m_blue_shoot_d3_8.png",
+   "villager_m_blue_shoot_d3_9.png",
+   "villager_m_blue_shoot_d3_10.png",
+   "villager_m_blue_shoot_d3_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d3_0": {
+  "file": "villager_m_blue_shoot_d3_0.png",
+  "fill": 0.076,
+  "fp_cx": 94.48,
+  "fp_cy": 176.24,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_1": {
+  "file": "villager_m_blue_shoot_d3_1.png",
+  "fill": 0.0712,
+  "fp_cx": 94.54,
+  "fp_cy": 174.52,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_10": {
+  "file": "villager_m_blue_shoot_d3_10.png",
+  "fill": 0.0685,
+  "fp_cx": 94.58,
+  "fp_cy": 177.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_11": {
+  "file": "villager_m_blue_shoot_d3_11.png",
+  "fill": 0.0738,
+  "fp_cx": 94.42,
+  "fp_cy": 176.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_2": {
+  "file": "villager_m_blue_shoot_d3_2.png",
+  "fill": 0.0702,
+  "fp_cx": 94.84,
+  "fp_cy": 174.28,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_3": {
+  "file": "villager_m_blue_shoot_d3_3.png",
+  "fill": 0.0702,
+  "fp_cx": 94.96,
+  "fp_cy": 175.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_4": {
+  "file": "villager_m_blue_shoot_d3_4.png",
+  "fill": 0.0706,
+  "fp_cx": 95.02,
+  "fp_cy": 176.06,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_5": {
+  "file": "villager_m_blue_shoot_d3_5.png",
+  "fill": 0.0729,
+  "fp_cx": 95.08,
+  "fp_cy": 176.54,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_6": {
+  "file": "villager_m_blue_shoot_d3_6.png",
+  "fill": 0.0727,
+  "fp_cx": 95.1,
+  "fp_cy": 176.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_7": {
+  "file": "villager_m_blue_shoot_d3_7.png",
+  "fill": 0.075,
+  "fp_cx": 96.3,
+  "fp_cy": 176.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_8": {
+  "file": "villager_m_blue_shoot_d3_8.png",
+  "fill": 0.0699,
+  "fp_cx": 94.82,
+  "fp_cy": 177.38,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d3_9": {
+  "file": "villager_m_blue_shoot_d3_9.png",
+  "fill": 0.0691,
+  "fp_cx": 94.74,
+  "fp_cy": 177.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4": {
+  "clip": "shoot",
+  "dir": 4,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d4_0.png",
+   "villager_m_blue_shoot_d4_1.png",
+   "villager_m_blue_shoot_d4_2.png",
+   "villager_m_blue_shoot_d4_3.png",
+   "villager_m_blue_shoot_d4_4.png",
+   "villager_m_blue_shoot_d4_5.png",
+   "villager_m_blue_shoot_d4_6.png",
+   "villager_m_blue_shoot_d4_7.png",
+   "villager_m_blue_shoot_d4_8.png",
+   "villager_m_blue_shoot_d4_9.png",
+   "villager_m_blue_shoot_d4_10.png",
+   "villager_m_blue_shoot_d4_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d4_0": {
+  "file": "villager_m_blue_shoot_d4_0.png",
+  "fill": 0.0755,
+  "fp_cx": 97.86,
+  "fp_cy": 182.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_1": {
+  "file": "villager_m_blue_shoot_d4_1.png",
+  "fill": 0.0775,
+  "fp_cx": 95.5,
+  "fp_cy": 181.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_10": {
+  "file": "villager_m_blue_shoot_d4_10.png",
+  "fill": 0.078,
+  "fp_cx": 100.12,
+  "fp_cy": 183.92,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_11": {
+  "file": "villager_m_blue_shoot_d4_11.png",
+  "fill": 0.0753,
+  "fp_cx": 98.6,
+  "fp_cy": 183.28,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_2": {
+  "file": "villager_m_blue_shoot_d4_2.png",
+  "fill": 0.0791,
+  "fp_cx": 95.36,
+  "fp_cy": 181.36,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_3": {
+  "file": "villager_m_blue_shoot_d4_3.png",
+  "fill": 0.0809,
+  "fp_cx": 96.52,
+  "fp_cy": 181.86,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_4": {
+  "file": "villager_m_blue_shoot_d4_4.png",
+  "fill": 0.083,
+  "fp_cx": 98.0,
+  "fp_cy": 182.56,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_5": {
+  "file": "villager_m_blue_shoot_d4_5.png",
+  "fill": 0.0902,
+  "fp_cx": 98.72,
+  "fp_cy": 182.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_6": {
+  "file": "villager_m_blue_shoot_d4_6.png",
+  "fill": 0.089,
+  "fp_cx": 98.96,
+  "fp_cy": 182.96,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_7": {
+  "file": "villager_m_blue_shoot_d4_7.png",
+  "fill": 0.0917,
+  "fp_cx": 100.08,
+  "fp_cy": 182.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_8": {
+  "file": "villager_m_blue_shoot_d4_8.png",
+  "fill": 0.0814,
+  "fp_cx": 99.72,
+  "fp_cy": 183.56,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d4_9": {
+  "file": "villager_m_blue_shoot_d4_9.png",
+  "fill": 0.0788,
+  "fp_cx": 100.24,
+  "fp_cy": 183.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5": {
+  "clip": "shoot",
+  "dir": 5,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d5_0.png",
+   "villager_m_blue_shoot_d5_1.png",
+   "villager_m_blue_shoot_d5_2.png",
+   "villager_m_blue_shoot_d5_3.png",
+   "villager_m_blue_shoot_d5_4.png",
+   "villager_m_blue_shoot_d5_5.png",
+   "villager_m_blue_shoot_d5_6.png",
+   "villager_m_blue_shoot_d5_7.png",
+   "villager_m_blue_shoot_d5_8.png",
+   "villager_m_blue_shoot_d5_9.png",
+   "villager_m_blue_shoot_d5_10.png",
+   "villager_m_blue_shoot_d5_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d5_0": {
+  "file": "villager_m_blue_shoot_d5_0.png",
+  "fill": 0.0627,
+  "fp_cx": 101.74,
+  "fp_cy": 178.62,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_1": {
+  "file": "villager_m_blue_shoot_d5_1.png",
+  "fill": 0.0727,
+  "fp_cx": 98.34,
+  "fp_cy": 178.58,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_10": {
+  "file": "villager_m_blue_shoot_d5_10.png",
+  "fill": 0.0762,
+  "fp_cx": 104.82,
+  "fp_cy": 178.56,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_11": {
+  "file": "villager_m_blue_shoot_d5_11.png",
+  "fill": 0.0696,
+  "fp_cx": 102.84,
+  "fp_cy": 178.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_2": {
+  "file": "villager_m_blue_shoot_d5_2.png",
+  "fill": 0.0785,
+  "fp_cx": 97.84,
+  "fp_cy": 178.42,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_3": {
+  "file": "villager_m_blue_shoot_d5_3.png",
+  "fill": 0.0801,
+  "fp_cx": 99.36,
+  "fp_cy": 178.38,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_4": {
+  "file": "villager_m_blue_shoot_d5_4.png",
+  "fill": 0.0853,
+  "fp_cx": 101.4,
+  "fp_cy": 178.34,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_5": {
+  "file": "villager_m_blue_shoot_d5_5.png",
+  "fill": 0.0872,
+  "fp_cx": 102.36,
+  "fp_cy": 178.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_6": {
+  "file": "villager_m_blue_shoot_d5_6.png",
+  "fill": 0.0849,
+  "fp_cx": 102.64,
+  "fp_cy": 178.3,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_7": {
+  "file": "villager_m_blue_shoot_d5_7.png",
+  "fill": 0.0851,
+  "fp_cx": 103.04,
+  "fp_cy": 177.7,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_8": {
+  "file": "villager_m_blue_shoot_d5_8.png",
+  "fill": 0.079,
+  "fp_cx": 104.02,
+  "fp_cy": 178.44,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d5_9": {
+  "file": "villager_m_blue_shoot_d5_9.png",
+  "fill": 0.0773,
+  "fp_cx": 104.84,
+  "fp_cy": 178.48,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6": {
+  "clip": "shoot",
+  "dir": 6,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d6_0.png",
+   "villager_m_blue_shoot_d6_1.png",
+   "villager_m_blue_shoot_d6_2.png",
+   "villager_m_blue_shoot_d6_3.png",
+   "villager_m_blue_shoot_d6_4.png",
+   "villager_m_blue_shoot_d6_5.png",
+   "villager_m_blue_shoot_d6_6.png",
+   "villager_m_blue_shoot_d6_7.png",
+   "villager_m_blue_shoot_d6_8.png",
+   "villager_m_blue_shoot_d6_9.png",
+   "villager_m_blue_shoot_d6_10.png",
+   "villager_m_blue_shoot_d6_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d6_0": {
+  "file": "villager_m_blue_shoot_d6_0.png",
+  "fill": 0.0624,
+  "fp_cx": 96.48,
+  "fp_cy": 176.06,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_1": {
+  "file": "villager_m_blue_shoot_d6_1.png",
+  "fill": 0.0598,
+  "fp_cx": 94.02,
+  "fp_cy": 177.24,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_10": {
+  "file": "villager_m_blue_shoot_d6_10.png",
+  "fill": 0.06,
+  "fp_cx": 98.56,
+  "fp_cy": 174.92,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_11": {
+  "file": "villager_m_blue_shoot_d6_11.png",
+  "fill": 0.0596,
+  "fp_cx": 97.28,
+  "fp_cy": 175.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_2": {
+  "file": "villager_m_blue_shoot_d6_2.png",
+  "fill": 0.0597,
+  "fp_cx": 93.44,
+  "fp_cy": 177.3,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_3": {
+  "file": "villager_m_blue_shoot_d6_3.png",
+  "fill": 0.0614,
+  "fp_cx": 94.44,
+  "fp_cy": 176.72,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_4": {
+  "file": "villager_m_blue_shoot_d6_4.png",
+  "fill": 0.0615,
+  "fp_cx": 95.86,
+  "fp_cy": 175.98,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_5": {
+  "file": "villager_m_blue_shoot_d6_5.png",
+  "fill": 0.0585,
+  "fp_cx": 96.48,
+  "fp_cy": 175.62,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_6": {
+  "file": "villager_m_blue_shoot_d6_6.png",
+  "fill": 0.0577,
+  "fp_cx": 96.66,
+  "fp_cy": 175.52,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_7": {
+  "file": "villager_m_blue_shoot_d6_7.png",
+  "fill": 0.0562,
+  "fp_cx": 96.1,
+  "fp_cy": 174.94,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_8": {
+  "file": "villager_m_blue_shoot_d6_8.png",
+  "fill": 0.0595,
+  "fp_cx": 97.84,
+  "fp_cy": 175.12,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d6_9": {
+  "file": "villager_m_blue_shoot_d6_9.png",
+  "fill": 0.0621,
+  "fp_cx": 98.46,
+  "fp_cy": 174.86,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7": {
+  "clip": "shoot",
+  "dir": 7,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_blue_shoot_d7_0.png",
+   "villager_m_blue_shoot_d7_1.png",
+   "villager_m_blue_shoot_d7_2.png",
+   "villager_m_blue_shoot_d7_3.png",
+   "villager_m_blue_shoot_d7_4.png",
+   "villager_m_blue_shoot_d7_5.png",
+   "villager_m_blue_shoot_d7_6.png",
+   "villager_m_blue_shoot_d7_7.png",
+   "villager_m_blue_shoot_d7_8.png",
+   "villager_m_blue_shoot_d7_9.png",
+   "villager_m_blue_shoot_d7_10.png",
+   "villager_m_blue_shoot_d7_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "blue"
+ },
+ "villager_m_blue_shoot_d7_0": {
+  "file": "villager_m_blue_shoot_d7_0.png",
+  "fill": 0.0755,
+  "fp_cx": 97.52,
+  "fp_cy": 178.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_1": {
+  "file": "villager_m_blue_shoot_d7_1.png",
+  "fill": 0.0743,
+  "fp_cx": 97.46,
+  "fp_cy": 180.34,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_10": {
+  "file": "villager_m_blue_shoot_d7_10.png",
+  "fill": 0.0735,
+  "fp_cx": 97.42,
+  "fp_cy": 177.1,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_11": {
+  "file": "villager_m_blue_shoot_d7_11.png",
+  "fill": 0.0764,
+  "fp_cx": 97.58,
+  "fp_cy": 178.08,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_2": {
+  "file": "villager_m_blue_shoot_d7_2.png",
+  "fill": 0.0704,
+  "fp_cx": 97.16,
+  "fp_cy": 180.58,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_3": {
+  "file": "villager_m_blue_shoot_d7_3.png",
+  "fill": 0.0674,
+  "fp_cx": 97.04,
+  "fp_cy": 179.82,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_4": {
+  "file": "villager_m_blue_shoot_d7_4.png",
+  "fill": 0.0659,
+  "fp_cx": 96.98,
+  "fp_cy": 178.8,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_5": {
+  "file": "villager_m_blue_shoot_d7_5.png",
+  "fill": 0.0713,
+  "fp_cx": 96.92,
+  "fp_cy": 178.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_6": {
+  "file": "villager_m_blue_shoot_d7_6.png",
+  "fill": 0.0692,
+  "fp_cx": 96.9,
+  "fp_cy": 178.18,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_7": {
+  "file": "villager_m_blue_shoot_d7_7.png",
+  "fill": 0.071,
+  "fp_cx": 95.7,
+  "fp_cy": 177.98,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_8": {
+  "file": "villager_m_blue_shoot_d7_8.png",
+  "fill": 0.0709,
+  "fp_cx": 97.18,
+  "fp_cy": 177.5,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_blue_shoot_d7_9": {
+  "file": "villager_m_blue_shoot_d7_9.png",
+  "fill": 0.0714,
+  "fp_cx": 97.26,
+  "fp_cy": 177.08,
   "fp_w": 45.64,
   "h": 192,
   "w": 192
@@ -13655,6 +15769,1062 @@ window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {
   "h": 176,
   "w": 176
  },
+ "villager_m_red_gather_d0": {
+  "clip": "gather",
+  "dir": 0,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d0_0.png",
+   "villager_m_red_gather_d0_1.png",
+   "villager_m_red_gather_d0_2.png",
+   "villager_m_red_gather_d0_3.png",
+   "villager_m_red_gather_d0_4.png",
+   "villager_m_red_gather_d0_5.png",
+   "villager_m_red_gather_d0_6.png",
+   "villager_m_red_gather_d0_7.png",
+   "villager_m_red_gather_d0_8.png",
+   "villager_m_red_gather_d0_9.png",
+   "villager_m_red_gather_d0_10.png",
+   "villager_m_red_gather_d0_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d0_0": {
+  "file": "villager_m_red_gather_d0_0.png",
+  "fill": 0.0881,
+  "fp_cx": 78.64,
+  "fp_cy": 154.14,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_1": {
+  "file": "villager_m_red_gather_d0_1.png",
+  "fill": 0.0883,
+  "fp_cx": 78.42,
+  "fp_cy": 154.04,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_10": {
+  "file": "villager_m_red_gather_d0_10.png",
+  "fill": 0.0902,
+  "fp_cx": 78.16,
+  "fp_cy": 154.1,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_11": {
+  "file": "villager_m_red_gather_d0_11.png",
+  "fill": 0.0889,
+  "fp_cx": 78.42,
+  "fp_cy": 154.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_2": {
+  "file": "villager_m_red_gather_d0_2.png",
+  "fill": 0.088,
+  "fp_cx": 78.04,
+  "fp_cy": 153.9,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_3": {
+  "file": "villager_m_red_gather_d0_3.png",
+  "fill": 0.0894,
+  "fp_cx": 78.34,
+  "fp_cy": 154.24,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_4": {
+  "file": "villager_m_red_gather_d0_4.png",
+  "fill": 0.0902,
+  "fp_cx": 79.16,
+  "fp_cy": 154.84,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_5": {
+  "file": "villager_m_red_gather_d0_5.png",
+  "fill": 0.093,
+  "fp_cx": 77.62,
+  "fp_cy": 154.02,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_6": {
+  "file": "villager_m_red_gather_d0_6.png",
+  "fill": 0.0927,
+  "fp_cx": 76.3,
+  "fp_cy": 153.3,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_7": {
+  "file": "villager_m_red_gather_d0_7.png",
+  "fill": 0.0928,
+  "fp_cx": 76.26,
+  "fp_cy": 153.26,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_8": {
+  "file": "villager_m_red_gather_d0_8.png",
+  "fill": 0.0923,
+  "fp_cx": 76.6,
+  "fp_cy": 153.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d0_9": {
+  "file": "villager_m_red_gather_d0_9.png",
+  "fill": 0.0911,
+  "fp_cx": 77.48,
+  "fp_cy": 153.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1": {
+  "clip": "gather",
+  "dir": 1,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d1_0.png",
+   "villager_m_red_gather_d1_1.png",
+   "villager_m_red_gather_d1_2.png",
+   "villager_m_red_gather_d1_3.png",
+   "villager_m_red_gather_d1_4.png",
+   "villager_m_red_gather_d1_5.png",
+   "villager_m_red_gather_d1_6.png",
+   "villager_m_red_gather_d1_7.png",
+   "villager_m_red_gather_d1_8.png",
+   "villager_m_red_gather_d1_9.png",
+   "villager_m_red_gather_d1_10.png",
+   "villager_m_red_gather_d1_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d1_0": {
+  "file": "villager_m_red_gather_d1_0.png",
+  "fill": 0.0945,
+  "fp_cx": 78.86,
+  "fp_cy": 147.28,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_1": {
+  "file": "villager_m_red_gather_d1_1.png",
+  "fill": 0.0938,
+  "fp_cx": 78.58,
+  "fp_cy": 147.28,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_10": {
+  "file": "villager_m_red_gather_d1_10.png",
+  "fill": 0.0953,
+  "fp_cx": 78.48,
+  "fp_cy": 147.42,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_11": {
+  "file": "villager_m_red_gather_d1_11.png",
+  "fill": 0.0942,
+  "fp_cx": 78.68,
+  "fp_cy": 147.34,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_2": {
+  "file": "villager_m_red_gather_d1_2.png",
+  "fill": 0.0931,
+  "fp_cx": 78.1,
+  "fp_cy": 147.32,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_3": {
+  "file": "villager_m_red_gather_d1_3.png",
+  "fill": 0.0959,
+  "fp_cx": 78.78,
+  "fp_cy": 147.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_4": {
+  "file": "villager_m_red_gather_d1_4.png",
+  "fill": 0.0978,
+  "fp_cx": 80.24,
+  "fp_cy": 147.6,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_5": {
+  "file": "villager_m_red_gather_d1_5.png",
+  "fill": 0.0973,
+  "fp_cx": 77.98,
+  "fp_cy": 147.56,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_6": {
+  "file": "villager_m_red_gather_d1_6.png",
+  "fill": 0.0964,
+  "fp_cx": 76.0,
+  "fp_cy": 147.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_7": {
+  "file": "villager_m_red_gather_d1_7.png",
+  "fill": 0.0963,
+  "fp_cx": 75.92,
+  "fp_cy": 147.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_8": {
+  "file": "villager_m_red_gather_d1_8.png",
+  "fill": 0.0961,
+  "fp_cx": 76.42,
+  "fp_cy": 147.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d1_9": {
+  "file": "villager_m_red_gather_d1_9.png",
+  "fill": 0.0981,
+  "fp_cx": 77.64,
+  "fp_cy": 147.48,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2": {
+  "clip": "gather",
+  "dir": 2,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d2_0.png",
+   "villager_m_red_gather_d2_1.png",
+   "villager_m_red_gather_d2_2.png",
+   "villager_m_red_gather_d2_3.png",
+   "villager_m_red_gather_d2_4.png",
+   "villager_m_red_gather_d2_5.png",
+   "villager_m_red_gather_d2_6.png",
+   "villager_m_red_gather_d2_7.png",
+   "villager_m_red_gather_d2_8.png",
+   "villager_m_red_gather_d2_9.png",
+   "villager_m_red_gather_d2_10.png",
+   "villager_m_red_gather_d2_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d2_0": {
+  "file": "villager_m_red_gather_d2_0.png",
+  "fill": 0.0777,
+  "fp_cx": 72.1,
+  "fp_cy": 141.68,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_1": {
+  "file": "villager_m_red_gather_d2_1.png",
+  "fill": 0.0772,
+  "fp_cx": 71.92,
+  "fp_cy": 141.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_10": {
+  "file": "villager_m_red_gather_d2_10.png",
+  "fill": 0.0795,
+  "fp_cx": 72.04,
+  "fp_cy": 141.92,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_11": {
+  "file": "villager_m_red_gather_d2_11.png",
+  "fill": 0.078,
+  "fp_cx": 72.06,
+  "fp_cy": 141.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_2": {
+  "file": "villager_m_red_gather_d2_2.png",
+  "fill": 0.0766,
+  "fp_cx": 71.64,
+  "fp_cy": 141.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_3": {
+  "file": "villager_m_red_gather_d2_3.png",
+  "fill": 0.0775,
+  "fp_cx": 72.3,
+  "fp_cy": 141.82,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_4": {
+  "file": "villager_m_red_gather_d2_4.png",
+  "fill": 0.0798,
+  "fp_cx": 73.52,
+  "fp_cy": 141.42,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_5": {
+  "file": "villager_m_red_gather_d2_5.png",
+  "fill": 0.0806,
+  "fp_cx": 71.88,
+  "fp_cy": 142.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_6": {
+  "file": "villager_m_red_gather_d2_6.png",
+  "fill": 0.0792,
+  "fp_cx": 70.42,
+  "fp_cy": 142.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_7": {
+  "file": "villager_m_red_gather_d2_7.png",
+  "fill": 0.0794,
+  "fp_cx": 70.36,
+  "fp_cy": 142.88,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_8": {
+  "file": "villager_m_red_gather_d2_8.png",
+  "fill": 0.0792,
+  "fp_cx": 70.7,
+  "fp_cy": 142.7,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d2_9": {
+  "file": "villager_m_red_gather_d2_9.png",
+  "fill": 0.0798,
+  "fp_cx": 71.54,
+  "fp_cy": 142.26,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3": {
+  "clip": "gather",
+  "dir": 3,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d3_0.png",
+   "villager_m_red_gather_d3_1.png",
+   "villager_m_red_gather_d3_2.png",
+   "villager_m_red_gather_d3_3.png",
+   "villager_m_red_gather_d3_4.png",
+   "villager_m_red_gather_d3_5.png",
+   "villager_m_red_gather_d3_6.png",
+   "villager_m_red_gather_d3_7.png",
+   "villager_m_red_gather_d3_8.png",
+   "villager_m_red_gather_d3_9.png",
+   "villager_m_red_gather_d3_10.png",
+   "villager_m_red_gather_d3_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d3_0": {
+  "file": "villager_m_red_gather_d3_0.png",
+  "fill": 0.0759,
+  "fp_cx": 79.46,
+  "fp_cy": 144.3,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_1": {
+  "file": "villager_m_red_gather_d3_1.png",
+  "fill": 0.0761,
+  "fp_cx": 79.48,
+  "fp_cy": 144.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_10": {
+  "file": "villager_m_red_gather_d3_10.png",
+  "fill": 0.0755,
+  "fp_cx": 79.76,
+  "fp_cy": 144.48,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_11": {
+  "file": "villager_m_red_gather_d3_11.png",
+  "fill": 0.0766,
+  "fp_cx": 79.6,
+  "fp_cy": 144.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_2": {
+  "file": "villager_m_red_gather_d3_2.png",
+  "fill": 0.0756,
+  "fp_cx": 79.56,
+  "fp_cy": 144.68,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_3": {
+  "file": "villager_m_red_gather_d3_3.png",
+  "fill": 0.0736,
+  "fp_cx": 79.82,
+  "fp_cy": 144.34,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_4": {
+  "file": "villager_m_red_gather_d3_4.png",
+  "fill": 0.0739,
+  "fp_cx": 80.1,
+  "fp_cy": 143.62,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_5": {
+  "file": "villager_m_red_gather_d3_5.png",
+  "fill": 0.0759,
+  "fp_cx": 80.04,
+  "fp_cy": 144.74,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_6": {
+  "file": "villager_m_red_gather_d3_6.png",
+  "fill": 0.0777,
+  "fp_cx": 79.92,
+  "fp_cy": 145.72,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_7": {
+  "file": "villager_m_red_gather_d3_7.png",
+  "fill": 0.0775,
+  "fp_cx": 79.92,
+  "fp_cy": 145.76,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_8": {
+  "file": "villager_m_red_gather_d3_8.png",
+  "fill": 0.0772,
+  "fp_cx": 79.9,
+  "fp_cy": 145.52,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d3_9": {
+  "file": "villager_m_red_gather_d3_9.png",
+  "fill": 0.0759,
+  "fp_cx": 79.88,
+  "fp_cy": 144.92,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4": {
+  "clip": "gather",
+  "dir": 4,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d4_0.png",
+   "villager_m_red_gather_d4_1.png",
+   "villager_m_red_gather_d4_2.png",
+   "villager_m_red_gather_d4_3.png",
+   "villager_m_red_gather_d4_4.png",
+   "villager_m_red_gather_d4_5.png",
+   "villager_m_red_gather_d4_6.png",
+   "villager_m_red_gather_d4_7.png",
+   "villager_m_red_gather_d4_8.png",
+   "villager_m_red_gather_d4_9.png",
+   "villager_m_red_gather_d4_10.png",
+   "villager_m_red_gather_d4_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d4_0": {
+  "file": "villager_m_red_gather_d4_0.png",
+  "fill": 0.0848,
+  "fp_cx": 81.36,
+  "fp_cy": 153.1,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_1": {
+  "file": "villager_m_red_gather_d4_1.png",
+  "fill": 0.085,
+  "fp_cx": 81.58,
+  "fp_cy": 153.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_10": {
+  "file": "villager_m_red_gather_d4_10.png",
+  "fill": 0.0864,
+  "fp_cx": 81.84,
+  "fp_cy": 153.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_11": {
+  "file": "villager_m_red_gather_d4_11.png",
+  "fill": 0.0853,
+  "fp_cx": 81.58,
+  "fp_cy": 153.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_2": {
+  "file": "villager_m_red_gather_d4_2.png",
+  "fill": 0.0841,
+  "fp_cx": 81.96,
+  "fp_cy": 153.34,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_3": {
+  "file": "villager_m_red_gather_d4_3.png",
+  "fill": 0.0856,
+  "fp_cx": 81.66,
+  "fp_cy": 153.0,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_4": {
+  "file": "villager_m_red_gather_d4_4.png",
+  "fill": 0.0859,
+  "fp_cx": 80.84,
+  "fp_cy": 152.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_5": {
+  "file": "villager_m_red_gather_d4_5.png",
+  "fill": 0.0898,
+  "fp_cx": 82.38,
+  "fp_cy": 153.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_6": {
+  "file": "villager_m_red_gather_d4_6.png",
+  "fill": 0.0908,
+  "fp_cx": 83.7,
+  "fp_cy": 153.94,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_7": {
+  "file": "villager_m_red_gather_d4_7.png",
+  "fill": 0.09,
+  "fp_cx": 83.74,
+  "fp_cy": 153.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_8": {
+  "file": "villager_m_red_gather_d4_8.png",
+  "fill": 0.0894,
+  "fp_cx": 83.4,
+  "fp_cy": 153.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d4_9": {
+  "file": "villager_m_red_gather_d4_9.png",
+  "fill": 0.0875,
+  "fp_cx": 82.52,
+  "fp_cy": 153.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5": {
+  "clip": "gather",
+  "dir": 5,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d5_0.png",
+   "villager_m_red_gather_d5_1.png",
+   "villager_m_red_gather_d5_2.png",
+   "villager_m_red_gather_d5_3.png",
+   "villager_m_red_gather_d5_4.png",
+   "villager_m_red_gather_d5_5.png",
+   "villager_m_red_gather_d5_6.png",
+   "villager_m_red_gather_d5_7.png",
+   "villager_m_red_gather_d5_8.png",
+   "villager_m_red_gather_d5_9.png",
+   "villager_m_red_gather_d5_10.png",
+   "villager_m_red_gather_d5_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d5_0": {
+  "file": "villager_m_red_gather_d5_0.png",
+  "fill": 0.0878,
+  "fp_cx": 81.14,
+  "fp_cy": 149.62,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_1": {
+  "file": "villager_m_red_gather_d5_1.png",
+  "fill": 0.0887,
+  "fp_cx": 81.42,
+  "fp_cy": 149.6,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_10": {
+  "file": "villager_m_red_gather_d5_10.png",
+  "fill": 0.0883,
+  "fp_cx": 81.52,
+  "fp_cy": 149.46,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_11": {
+  "file": "villager_m_red_gather_d5_11.png",
+  "fill": 0.0881,
+  "fp_cx": 81.32,
+  "fp_cy": 149.54,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_2": {
+  "file": "villager_m_red_gather_d5_2.png",
+  "fill": 0.088,
+  "fp_cx": 81.9,
+  "fp_cy": 149.56,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_3": {
+  "file": "villager_m_red_gather_d5_3.png",
+  "fill": 0.0892,
+  "fp_cx": 81.22,
+  "fp_cy": 149.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_4": {
+  "file": "villager_m_red_gather_d5_4.png",
+  "fill": 0.0892,
+  "fp_cx": 79.76,
+  "fp_cy": 149.3,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_5": {
+  "file": "villager_m_red_gather_d5_5.png",
+  "fill": 0.0902,
+  "fp_cx": 82.02,
+  "fp_cy": 149.32,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_6": {
+  "file": "villager_m_red_gather_d5_6.png",
+  "fill": 0.0884,
+  "fp_cx": 84.0,
+  "fp_cy": 149.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_7": {
+  "file": "villager_m_red_gather_d5_7.png",
+  "fill": 0.0892,
+  "fp_cx": 84.08,
+  "fp_cy": 149.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_8": {
+  "file": "villager_m_red_gather_d5_8.png",
+  "fill": 0.0889,
+  "fp_cx": 83.58,
+  "fp_cy": 149.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d5_9": {
+  "file": "villager_m_red_gather_d5_9.png",
+  "fill": 0.0886,
+  "fp_cx": 82.36,
+  "fp_cy": 149.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6": {
+  "clip": "gather",
+  "dir": 6,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d6_0.png",
+   "villager_m_red_gather_d6_1.png",
+   "villager_m_red_gather_d6_2.png",
+   "villager_m_red_gather_d6_3.png",
+   "villager_m_red_gather_d6_4.png",
+   "villager_m_red_gather_d6_5.png",
+   "villager_m_red_gather_d6_6.png",
+   "villager_m_red_gather_d6_7.png",
+   "villager_m_red_gather_d6_8.png",
+   "villager_m_red_gather_d6_9.png",
+   "villager_m_red_gather_d6_10.png",
+   "villager_m_red_gather_d6_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d6_0": {
+  "file": "villager_m_red_gather_d6_0.png",
+  "fill": 0.0667,
+  "fp_cx": 87.9,
+  "fp_cy": 143.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_1": {
+  "file": "villager_m_red_gather_d6_1.png",
+  "fill": 0.0658,
+  "fp_cx": 88.08,
+  "fp_cy": 143.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_10": {
+  "file": "villager_m_red_gather_d6_10.png",
+  "fill": 0.0677,
+  "fp_cx": 87.96,
+  "fp_cy": 143.72,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_11": {
+  "file": "villager_m_red_gather_d6_11.png",
+  "fill": 0.0659,
+  "fp_cx": 87.94,
+  "fp_cy": 143.86,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_2": {
+  "file": "villager_m_red_gather_d6_2.png",
+  "fill": 0.0664,
+  "fp_cx": 88.36,
+  "fp_cy": 143.66,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_3": {
+  "file": "villager_m_red_gather_d6_3.png",
+  "fill": 0.0678,
+  "fp_cx": 87.7,
+  "fp_cy": 143.82,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_4": {
+  "file": "villager_m_red_gather_d6_4.png",
+  "fill": 0.07,
+  "fp_cx": 86.48,
+  "fp_cy": 144.22,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_5": {
+  "file": "villager_m_red_gather_d6_5.png",
+  "fill": 0.0698,
+  "fp_cx": 88.12,
+  "fp_cy": 143.46,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_6": {
+  "file": "villager_m_red_gather_d6_6.png",
+  "fill": 0.0691,
+  "fp_cx": 89.58,
+  "fp_cy": 142.8,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_7": {
+  "file": "villager_m_red_gather_d6_7.png",
+  "fill": 0.0689,
+  "fp_cx": 89.64,
+  "fp_cy": 142.78,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_8": {
+  "file": "villager_m_red_gather_d6_8.png",
+  "fill": 0.0691,
+  "fp_cx": 89.3,
+  "fp_cy": 142.96,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d6_9": {
+  "file": "villager_m_red_gather_d6_9.png",
+  "fill": 0.0697,
+  "fp_cx": 88.46,
+  "fp_cy": 143.38,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7": {
+  "clip": "gather",
+  "dir": 7,
+  "duration": 1.4167,
+  "files": [
+   "villager_m_red_gather_d7_0.png",
+   "villager_m_red_gather_d7_1.png",
+   "villager_m_red_gather_d7_2.png",
+   "villager_m_red_gather_d7_3.png",
+   "villager_m_red_gather_d7_4.png",
+   "villager_m_red_gather_d7_5.png",
+   "villager_m_red_gather_d7_6.png",
+   "villager_m_red_gather_d7_7.png",
+   "villager_m_red_gather_d7_8.png",
+   "villager_m_red_gather_d7_9.png",
+   "villager_m_red_gather_d7_10.png",
+   "villager_m_red_gather_d7_11.png"
+  ],
+  "fps": 8.47,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 3,
+  "team": "red"
+ },
+ "villager_m_red_gather_d7_0": {
+  "file": "villager_m_red_gather_d7_0.png",
+  "fill": 0.0669,
+  "fp_cx": 80.54,
+  "fp_cy": 146.58,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_1": {
+  "file": "villager_m_red_gather_d7_1.png",
+  "fill": 0.067,
+  "fp_cx": 80.52,
+  "fp_cy": 146.44,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_10": {
+  "file": "villager_m_red_gather_d7_10.png",
+  "fill": 0.0711,
+  "fp_cx": 80.24,
+  "fp_cy": 146.4,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_11": {
+  "file": "villager_m_red_gather_d7_11.png",
+  "fill": 0.0692,
+  "fp_cx": 80.4,
+  "fp_cy": 146.5,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_2": {
+  "file": "villager_m_red_gather_d7_2.png",
+  "fill": 0.0658,
+  "fp_cx": 80.44,
+  "fp_cy": 146.2,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_3": {
+  "file": "villager_m_red_gather_d7_3.png",
+  "fill": 0.0652,
+  "fp_cx": 80.18,
+  "fp_cy": 146.56,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_4": {
+  "file": "villager_m_red_gather_d7_4.png",
+  "fill": 0.0673,
+  "fp_cx": 79.9,
+  "fp_cy": 147.28,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_5": {
+  "file": "villager_m_red_gather_d7_5.png",
+  "fill": 0.072,
+  "fp_cx": 79.96,
+  "fp_cy": 146.14,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_6": {
+  "file": "villager_m_red_gather_d7_6.png",
+  "fill": 0.0742,
+  "fp_cx": 80.08,
+  "fp_cy": 145.16,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_7": {
+  "file": "villager_m_red_gather_d7_7.png",
+  "fill": 0.0742,
+  "fp_cx": 80.08,
+  "fp_cy": 145.12,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_8": {
+  "file": "villager_m_red_gather_d7_8.png",
+  "fill": 0.0745,
+  "fp_cx": 80.1,
+  "fp_cy": 145.36,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
+ "villager_m_red_gather_d7_9": {
+  "file": "villager_m_red_gather_d7_9.png",
+  "fill": 0.0734,
+  "fp_cx": 80.12,
+  "fp_cy": 145.98,
+  "fp_w": 45.64,
+  "h": 160,
+  "w": 160
+ },
  "villager_m_red_hoe_d0": {
   "clip": "hoe",
   "dir": 0,
@@ -16331,6 +19501,1062 @@ window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {
   "fill": 0.0664,
   "fp_cx": 96.0,
   "fp_cy": 171.0,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0": {
+  "clip": "shoot",
+  "dir": 0,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d0_0.png",
+   "villager_m_red_shoot_d0_1.png",
+   "villager_m_red_shoot_d0_2.png",
+   "villager_m_red_shoot_d0_3.png",
+   "villager_m_red_shoot_d0_4.png",
+   "villager_m_red_shoot_d0_5.png",
+   "villager_m_red_shoot_d0_6.png",
+   "villager_m_red_shoot_d0_7.png",
+   "villager_m_red_shoot_d0_8.png",
+   "villager_m_red_shoot_d0_9.png",
+   "villager_m_red_shoot_d0_10.png",
+   "villager_m_red_shoot_d0_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d0_0": {
+  "file": "villager_m_red_shoot_d0_0.png",
+  "fill": 0.075,
+  "fp_cx": 94.14,
+  "fp_cy": 183.14,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_1": {
+  "file": "villager_m_red_shoot_d0_1.png",
+  "fill": 0.0796,
+  "fp_cx": 96.5,
+  "fp_cy": 184.36,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_10": {
+  "file": "villager_m_red_shoot_d0_10.png",
+  "fill": 0.0825,
+  "fp_cx": 91.88,
+  "fp_cy": 182.08,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_11": {
+  "file": "villager_m_red_shoot_d0_11.png",
+  "fill": 0.0778,
+  "fp_cx": 93.4,
+  "fp_cy": 182.72,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_2": {
+  "file": "villager_m_red_shoot_d0_2.png",
+  "fill": 0.0793,
+  "fp_cx": 96.64,
+  "fp_cy": 184.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_3": {
+  "file": "villager_m_red_shoot_d0_3.png",
+  "fill": 0.0801,
+  "fp_cx": 95.48,
+  "fp_cy": 184.16,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_4": {
+  "file": "villager_m_red_shoot_d0_4.png",
+  "fill": 0.08,
+  "fp_cx": 94.0,
+  "fp_cy": 183.44,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_5": {
+  "file": "villager_m_red_shoot_d0_5.png",
+  "fill": 0.0893,
+  "fp_cx": 93.28,
+  "fp_cy": 183.12,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_6": {
+  "file": "villager_m_red_shoot_d0_6.png",
+  "fill": 0.0865,
+  "fp_cx": 93.04,
+  "fp_cy": 183.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_7": {
+  "file": "villager_m_red_shoot_d0_7.png",
+  "fill": 0.0932,
+  "fp_cx": 91.92,
+  "fp_cy": 183.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_8": {
+  "file": "villager_m_red_shoot_d0_8.png",
+  "fill": 0.0845,
+  "fp_cx": 92.28,
+  "fp_cy": 182.44,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d0_9": {
+  "file": "villager_m_red_shoot_d0_9.png",
+  "fill": 0.0818,
+  "fp_cx": 91.76,
+  "fp_cy": 182.14,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1": {
+  "clip": "shoot",
+  "dir": 1,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d1_0.png",
+   "villager_m_red_shoot_d1_1.png",
+   "villager_m_red_shoot_d1_2.png",
+   "villager_m_red_shoot_d1_3.png",
+   "villager_m_red_shoot_d1_4.png",
+   "villager_m_red_shoot_d1_5.png",
+   "villager_m_red_shoot_d1_6.png",
+   "villager_m_red_shoot_d1_7.png",
+   "villager_m_red_shoot_d1_8.png",
+   "villager_m_red_shoot_d1_9.png",
+   "villager_m_red_shoot_d1_10.png",
+   "villager_m_red_shoot_d1_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d1_0": {
+  "file": "villager_m_red_shoot_d1_0.png",
+  "fill": 0.063,
+  "fp_cx": 90.26,
+  "fp_cy": 178.02,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_1": {
+  "file": "villager_m_red_shoot_d1_1.png",
+  "fill": 0.0755,
+  "fp_cx": 93.66,
+  "fp_cy": 178.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_10": {
+  "file": "villager_m_red_shoot_d1_10.png",
+  "fill": 0.0805,
+  "fp_cx": 87.18,
+  "fp_cy": 178.08,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_11": {
+  "file": "villager_m_red_shoot_d1_11.png",
+  "fill": 0.0701,
+  "fp_cx": 89.16,
+  "fp_cy": 178.0,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_2": {
+  "file": "villager_m_red_shoot_d1_2.png",
+  "fill": 0.0812,
+  "fp_cx": 94.16,
+  "fp_cy": 178.2,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_3": {
+  "file": "villager_m_red_shoot_d1_3.png",
+  "fill": 0.082,
+  "fp_cx": 92.64,
+  "fp_cy": 178.26,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_4": {
+  "file": "villager_m_red_shoot_d1_4.png",
+  "fill": 0.0815,
+  "fp_cx": 90.6,
+  "fp_cy": 178.28,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_5": {
+  "file": "villager_m_red_shoot_d1_5.png",
+  "fill": 0.0853,
+  "fp_cx": 89.64,
+  "fp_cy": 178.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_6": {
+  "file": "villager_m_red_shoot_d1_6.png",
+  "fill": 0.0851,
+  "fp_cx": 89.36,
+  "fp_cy": 178.34,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_7": {
+  "file": "villager_m_red_shoot_d1_7.png",
+  "fill": 0.091,
+  "fp_cx": 88.96,
+  "fp_cy": 178.94,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_8": {
+  "file": "villager_m_red_shoot_d1_8.png",
+  "fill": 0.0819,
+  "fp_cx": 87.98,
+  "fp_cy": 178.18,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d1_9": {
+  "file": "villager_m_red_shoot_d1_9.png",
+  "fill": 0.0824,
+  "fp_cx": 87.16,
+  "fp_cy": 178.16,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2": {
+  "clip": "shoot",
+  "dir": 2,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d2_0.png",
+   "villager_m_red_shoot_d2_1.png",
+   "villager_m_red_shoot_d2_2.png",
+   "villager_m_red_shoot_d2_3.png",
+   "villager_m_red_shoot_d2_4.png",
+   "villager_m_red_shoot_d2_5.png",
+   "villager_m_red_shoot_d2_6.png",
+   "villager_m_red_shoot_d2_7.png",
+   "villager_m_red_shoot_d2_8.png",
+   "villager_m_red_shoot_d2_9.png",
+   "villager_m_red_shoot_d2_10.png",
+   "villager_m_red_shoot_d2_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d2_0": {
+  "file": "villager_m_red_shoot_d2_0.png",
+  "fill": 0.0637,
+  "fp_cx": 95.52,
+  "fp_cy": 174.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_1": {
+  "file": "villager_m_red_shoot_d2_1.png",
+  "fill": 0.063,
+  "fp_cx": 97.98,
+  "fp_cy": 173.5,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_10": {
+  "file": "villager_m_red_shoot_d2_10.png",
+  "fill": 0.0629,
+  "fp_cx": 93.44,
+  "fp_cy": 175.8,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_11": {
+  "file": "villager_m_red_shoot_d2_11.png",
+  "fill": 0.0589,
+  "fp_cx": 94.72,
+  "fp_cy": 175.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_2": {
+  "file": "villager_m_red_shoot_d2_2.png",
+  "fill": 0.0636,
+  "fp_cx": 98.56,
+  "fp_cy": 173.42,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_3": {
+  "file": "villager_m_red_shoot_d2_3.png",
+  "fill": 0.0676,
+  "fp_cx": 97.56,
+  "fp_cy": 174.0,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_4": {
+  "file": "villager_m_red_shoot_d2_4.png",
+  "fill": 0.0636,
+  "fp_cx": 96.14,
+  "fp_cy": 174.74,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_5": {
+  "file": "villager_m_red_shoot_d2_5.png",
+  "fill": 0.0609,
+  "fp_cx": 95.52,
+  "fp_cy": 175.1,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_6": {
+  "file": "villager_m_red_shoot_d2_6.png",
+  "fill": 0.061,
+  "fp_cx": 95.34,
+  "fp_cy": 175.22,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_7": {
+  "file": "villager_m_red_shoot_d2_7.png",
+  "fill": 0.0602,
+  "fp_cx": 95.9,
+  "fp_cy": 175.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_8": {
+  "file": "villager_m_red_shoot_d2_8.png",
+  "fill": 0.0636,
+  "fp_cx": 94.16,
+  "fp_cy": 175.6,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d2_9": {
+  "file": "villager_m_red_shoot_d2_9.png",
+  "fill": 0.0658,
+  "fp_cx": 93.54,
+  "fp_cy": 175.86,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3": {
+  "clip": "shoot",
+  "dir": 3,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d3_0.png",
+   "villager_m_red_shoot_d3_1.png",
+   "villager_m_red_shoot_d3_2.png",
+   "villager_m_red_shoot_d3_3.png",
+   "villager_m_red_shoot_d3_4.png",
+   "villager_m_red_shoot_d3_5.png",
+   "villager_m_red_shoot_d3_6.png",
+   "villager_m_red_shoot_d3_7.png",
+   "villager_m_red_shoot_d3_8.png",
+   "villager_m_red_shoot_d3_9.png",
+   "villager_m_red_shoot_d3_10.png",
+   "villager_m_red_shoot_d3_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d3_0": {
+  "file": "villager_m_red_shoot_d3_0.png",
+  "fill": 0.076,
+  "fp_cx": 94.48,
+  "fp_cy": 176.24,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_1": {
+  "file": "villager_m_red_shoot_d3_1.png",
+  "fill": 0.0712,
+  "fp_cx": 94.54,
+  "fp_cy": 174.52,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_10": {
+  "file": "villager_m_red_shoot_d3_10.png",
+  "fill": 0.0685,
+  "fp_cx": 94.58,
+  "fp_cy": 177.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_11": {
+  "file": "villager_m_red_shoot_d3_11.png",
+  "fill": 0.0738,
+  "fp_cx": 94.42,
+  "fp_cy": 176.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_2": {
+  "file": "villager_m_red_shoot_d3_2.png",
+  "fill": 0.0702,
+  "fp_cx": 94.84,
+  "fp_cy": 174.28,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_3": {
+  "file": "villager_m_red_shoot_d3_3.png",
+  "fill": 0.0703,
+  "fp_cx": 94.96,
+  "fp_cy": 175.04,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_4": {
+  "file": "villager_m_red_shoot_d3_4.png",
+  "fill": 0.0706,
+  "fp_cx": 95.02,
+  "fp_cy": 176.06,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_5": {
+  "file": "villager_m_red_shoot_d3_5.png",
+  "fill": 0.0729,
+  "fp_cx": 95.08,
+  "fp_cy": 176.54,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_6": {
+  "file": "villager_m_red_shoot_d3_6.png",
+  "fill": 0.0727,
+  "fp_cx": 95.1,
+  "fp_cy": 176.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_7": {
+  "file": "villager_m_red_shoot_d3_7.png",
+  "fill": 0.075,
+  "fp_cx": 96.3,
+  "fp_cy": 176.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_8": {
+  "file": "villager_m_red_shoot_d3_8.png",
+  "fill": 0.0699,
+  "fp_cx": 94.82,
+  "fp_cy": 177.38,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d3_9": {
+  "file": "villager_m_red_shoot_d3_9.png",
+  "fill": 0.0691,
+  "fp_cx": 94.74,
+  "fp_cy": 177.78,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4": {
+  "clip": "shoot",
+  "dir": 4,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d4_0.png",
+   "villager_m_red_shoot_d4_1.png",
+   "villager_m_red_shoot_d4_2.png",
+   "villager_m_red_shoot_d4_3.png",
+   "villager_m_red_shoot_d4_4.png",
+   "villager_m_red_shoot_d4_5.png",
+   "villager_m_red_shoot_d4_6.png",
+   "villager_m_red_shoot_d4_7.png",
+   "villager_m_red_shoot_d4_8.png",
+   "villager_m_red_shoot_d4_9.png",
+   "villager_m_red_shoot_d4_10.png",
+   "villager_m_red_shoot_d4_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d4_0": {
+  "file": "villager_m_red_shoot_d4_0.png",
+  "fill": 0.0755,
+  "fp_cx": 97.86,
+  "fp_cy": 182.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_1": {
+  "file": "villager_m_red_shoot_d4_1.png",
+  "fill": 0.0775,
+  "fp_cx": 95.5,
+  "fp_cy": 181.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_10": {
+  "file": "villager_m_red_shoot_d4_10.png",
+  "fill": 0.078,
+  "fp_cx": 100.12,
+  "fp_cy": 183.92,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_11": {
+  "file": "villager_m_red_shoot_d4_11.png",
+  "fill": 0.0753,
+  "fp_cx": 98.6,
+  "fp_cy": 183.28,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_2": {
+  "file": "villager_m_red_shoot_d4_2.png",
+  "fill": 0.0791,
+  "fp_cx": 95.36,
+  "fp_cy": 181.36,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_3": {
+  "file": "villager_m_red_shoot_d4_3.png",
+  "fill": 0.0809,
+  "fp_cx": 96.52,
+  "fp_cy": 181.86,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_4": {
+  "file": "villager_m_red_shoot_d4_4.png",
+  "fill": 0.083,
+  "fp_cx": 98.0,
+  "fp_cy": 182.56,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_5": {
+  "file": "villager_m_red_shoot_d4_5.png",
+  "fill": 0.0902,
+  "fp_cx": 98.72,
+  "fp_cy": 182.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_6": {
+  "file": "villager_m_red_shoot_d4_6.png",
+  "fill": 0.089,
+  "fp_cx": 98.96,
+  "fp_cy": 182.96,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_7": {
+  "file": "villager_m_red_shoot_d4_7.png",
+  "fill": 0.0917,
+  "fp_cx": 100.08,
+  "fp_cy": 182.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_8": {
+  "file": "villager_m_red_shoot_d4_8.png",
+  "fill": 0.0814,
+  "fp_cx": 99.72,
+  "fp_cy": 183.56,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d4_9": {
+  "file": "villager_m_red_shoot_d4_9.png",
+  "fill": 0.0788,
+  "fp_cx": 100.24,
+  "fp_cy": 183.88,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5": {
+  "clip": "shoot",
+  "dir": 5,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d5_0.png",
+   "villager_m_red_shoot_d5_1.png",
+   "villager_m_red_shoot_d5_2.png",
+   "villager_m_red_shoot_d5_3.png",
+   "villager_m_red_shoot_d5_4.png",
+   "villager_m_red_shoot_d5_5.png",
+   "villager_m_red_shoot_d5_6.png",
+   "villager_m_red_shoot_d5_7.png",
+   "villager_m_red_shoot_d5_8.png",
+   "villager_m_red_shoot_d5_9.png",
+   "villager_m_red_shoot_d5_10.png",
+   "villager_m_red_shoot_d5_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d5_0": {
+  "file": "villager_m_red_shoot_d5_0.png",
+  "fill": 0.0627,
+  "fp_cx": 101.74,
+  "fp_cy": 178.62,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_1": {
+  "file": "villager_m_red_shoot_d5_1.png",
+  "fill": 0.0727,
+  "fp_cx": 98.34,
+  "fp_cy": 178.58,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_10": {
+  "file": "villager_m_red_shoot_d5_10.png",
+  "fill": 0.0762,
+  "fp_cx": 104.82,
+  "fp_cy": 178.56,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_11": {
+  "file": "villager_m_red_shoot_d5_11.png",
+  "fill": 0.0696,
+  "fp_cx": 102.84,
+  "fp_cy": 178.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_2": {
+  "file": "villager_m_red_shoot_d5_2.png",
+  "fill": 0.0785,
+  "fp_cx": 97.84,
+  "fp_cy": 178.42,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_3": {
+  "file": "villager_m_red_shoot_d5_3.png",
+  "fill": 0.0801,
+  "fp_cx": 99.36,
+  "fp_cy": 178.38,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_4": {
+  "file": "villager_m_red_shoot_d5_4.png",
+  "fill": 0.0853,
+  "fp_cx": 101.4,
+  "fp_cy": 178.34,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_5": {
+  "file": "villager_m_red_shoot_d5_5.png",
+  "fill": 0.0872,
+  "fp_cx": 102.36,
+  "fp_cy": 178.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_6": {
+  "file": "villager_m_red_shoot_d5_6.png",
+  "fill": 0.0849,
+  "fp_cx": 102.64,
+  "fp_cy": 178.3,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_7": {
+  "file": "villager_m_red_shoot_d5_7.png",
+  "fill": 0.0851,
+  "fp_cx": 103.04,
+  "fp_cy": 177.7,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_8": {
+  "file": "villager_m_red_shoot_d5_8.png",
+  "fill": 0.079,
+  "fp_cx": 104.02,
+  "fp_cy": 178.44,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d5_9": {
+  "file": "villager_m_red_shoot_d5_9.png",
+  "fill": 0.0774,
+  "fp_cx": 104.84,
+  "fp_cy": 178.48,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6": {
+  "clip": "shoot",
+  "dir": 6,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d6_0.png",
+   "villager_m_red_shoot_d6_1.png",
+   "villager_m_red_shoot_d6_2.png",
+   "villager_m_red_shoot_d6_3.png",
+   "villager_m_red_shoot_d6_4.png",
+   "villager_m_red_shoot_d6_5.png",
+   "villager_m_red_shoot_d6_6.png",
+   "villager_m_red_shoot_d6_7.png",
+   "villager_m_red_shoot_d6_8.png",
+   "villager_m_red_shoot_d6_9.png",
+   "villager_m_red_shoot_d6_10.png",
+   "villager_m_red_shoot_d6_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d6_0": {
+  "file": "villager_m_red_shoot_d6_0.png",
+  "fill": 0.0624,
+  "fp_cx": 96.48,
+  "fp_cy": 176.06,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_1": {
+  "file": "villager_m_red_shoot_d6_1.png",
+  "fill": 0.0598,
+  "fp_cx": 94.02,
+  "fp_cy": 177.24,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_10": {
+  "file": "villager_m_red_shoot_d6_10.png",
+  "fill": 0.06,
+  "fp_cx": 98.56,
+  "fp_cy": 174.92,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_11": {
+  "file": "villager_m_red_shoot_d6_11.png",
+  "fill": 0.0596,
+  "fp_cx": 97.28,
+  "fp_cy": 175.68,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_2": {
+  "file": "villager_m_red_shoot_d6_2.png",
+  "fill": 0.0596,
+  "fp_cx": 93.44,
+  "fp_cy": 177.3,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_3": {
+  "file": "villager_m_red_shoot_d6_3.png",
+  "fill": 0.0614,
+  "fp_cx": 94.44,
+  "fp_cy": 176.72,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_4": {
+  "file": "villager_m_red_shoot_d6_4.png",
+  "fill": 0.0615,
+  "fp_cx": 95.86,
+  "fp_cy": 175.98,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_5": {
+  "file": "villager_m_red_shoot_d6_5.png",
+  "fill": 0.0585,
+  "fp_cx": 96.48,
+  "fp_cy": 175.62,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_6": {
+  "file": "villager_m_red_shoot_d6_6.png",
+  "fill": 0.0577,
+  "fp_cx": 96.66,
+  "fp_cy": 175.52,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_7": {
+  "file": "villager_m_red_shoot_d6_7.png",
+  "fill": 0.0561,
+  "fp_cx": 96.1,
+  "fp_cy": 174.94,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_8": {
+  "file": "villager_m_red_shoot_d6_8.png",
+  "fill": 0.0595,
+  "fp_cx": 97.84,
+  "fp_cy": 175.12,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d6_9": {
+  "file": "villager_m_red_shoot_d6_9.png",
+  "fill": 0.0621,
+  "fp_cx": 98.46,
+  "fp_cy": 174.86,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7": {
+  "clip": "shoot",
+  "dir": 7,
+  "duration": 1.0833,
+  "files": [
+   "villager_m_red_shoot_d7_0.png",
+   "villager_m_red_shoot_d7_1.png",
+   "villager_m_red_shoot_d7_2.png",
+   "villager_m_red_shoot_d7_3.png",
+   "villager_m_red_shoot_d7_4.png",
+   "villager_m_red_shoot_d7_5.png",
+   "villager_m_red_shoot_d7_6.png",
+   "villager_m_red_shoot_d7_7.png",
+   "villager_m_red_shoot_d7_8.png",
+   "villager_m_red_shoot_d7_9.png",
+   "villager_m_red_shoot_d7_10.png",
+   "villager_m_red_shoot_d7_11.png"
+  ],
+  "fps": 11.077,
+  "frames": 12,
+  "group": "animation",
+  "impact_frame": 6,
+  "team": "red"
+ },
+ "villager_m_red_shoot_d7_0": {
+  "file": "villager_m_red_shoot_d7_0.png",
+  "fill": 0.0755,
+  "fp_cx": 97.52,
+  "fp_cy": 178.64,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_1": {
+  "file": "villager_m_red_shoot_d7_1.png",
+  "fill": 0.0743,
+  "fp_cx": 97.46,
+  "fp_cy": 180.34,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_10": {
+  "file": "villager_m_red_shoot_d7_10.png",
+  "fill": 0.0736,
+  "fp_cx": 97.42,
+  "fp_cy": 177.1,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_11": {
+  "file": "villager_m_red_shoot_d7_11.png",
+  "fill": 0.0764,
+  "fp_cx": 97.58,
+  "fp_cy": 178.08,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_2": {
+  "file": "villager_m_red_shoot_d7_2.png",
+  "fill": 0.0704,
+  "fp_cx": 97.16,
+  "fp_cy": 180.58,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_3": {
+  "file": "villager_m_red_shoot_d7_3.png",
+  "fill": 0.0674,
+  "fp_cx": 97.04,
+  "fp_cy": 179.82,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_4": {
+  "file": "villager_m_red_shoot_d7_4.png",
+  "fill": 0.0659,
+  "fp_cx": 96.98,
+  "fp_cy": 178.8,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_5": {
+  "file": "villager_m_red_shoot_d7_5.png",
+  "fill": 0.0713,
+  "fp_cx": 96.92,
+  "fp_cy": 178.32,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_6": {
+  "file": "villager_m_red_shoot_d7_6.png",
+  "fill": 0.0692,
+  "fp_cx": 96.9,
+  "fp_cy": 178.18,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_7": {
+  "file": "villager_m_red_shoot_d7_7.png",
+  "fill": 0.071,
+  "fp_cx": 95.7,
+  "fp_cy": 177.98,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_8": {
+  "file": "villager_m_red_shoot_d7_8.png",
+  "fill": 0.0709,
+  "fp_cx": 97.18,
+  "fp_cy": 177.5,
+  "fp_w": 45.64,
+  "h": 192,
+  "w": 192
+ },
+ "villager_m_red_shoot_d7_9": {
+  "file": "villager_m_red_shoot_d7_9.png",
+  "fill": 0.0714,
+  "fp_cx": 97.26,
+  "fp_cy": 177.08,
   "fp_w": 45.64,
   "h": 192,
   "w": 192

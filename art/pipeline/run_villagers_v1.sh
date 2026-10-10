@@ -1,7 +1,7 @@
 #!/bin/bash
 # Villagers v1 (male + female) on the Spark: TRELLIS.2 bodies (trellis_units_v1.sh, run first),
 # one walk per villager from their own Veo video, and work clips shared by both (chop, mine, hoe,
-# berries from Veo; build derived from chop; death = the man-at-arms v4 death retargeted), with
+# berries from Veo; build derived from chop; gather keyed, shoot = the archer's draw retimed; death = the man-at-arms v4 death retargeted), with
 # procedural tools shown only in their clip. Same camera / lighting / contrast / scale as v4.
 #   cd ~/medieval && bash art/pipeline/run_villagers_v1.sh 2>&1 | tee art/out/villager_male_v1/run_villagers_v1.log
 #   STAGES=extract bash ...; UNITS=villager_m STAGES=rig,bake ...
@@ -80,6 +80,29 @@ python3 art/pipeline/derive_clip.py --base $SH/chop_clip.json --out $SH/build_cl
     --curve "wrist_R=${BUILD_WRIST:-0:0,1:0}" --curve "arm_yaw_R=0:0,1:0" \
     --curve "upperarm_L=0:12,1:12" --curve "elbow_L=0:20,1:20" \
     --curve "torso=${BUILD_TORSO:-0:4,0.5:10,1:4}" --set retarget.foot_lock=false
+# gather (berries, boar and sheep carcasses): no video, keyed on the berries clip's stance curves
+# replaced: down on the near (right) knee, the far foot planted in front, chest pitched ~60 deg;
+# both hands at the ground, the near hand picks (phase 0.2, impact 0.25), lifts and brings it to the
+# hip pouch (0.5-0.65) while the far hand keeps working low; the kneeling thigh and the chest shift
+# a little with each reach. No tools: the hands do the work.
+python3 art/pipeline/derive_clip.py --base $SH/berries_clip.json --out $SH/gather_clip.json \
+    --hold-phase 0 --cycle 1.4 --loop --impact-phase 0.25 \
+    --curve "thigh_R=0:28,0.5:32,1:28" --curve "knee_R=0:118,0.5:122,1:118" --curve "foot_R=0:-55,1:-55" \
+    --curve "thigh_L=0:88,0.5:84,1:88" --curve "knee_L=0:98,0.5:94,1:98" --curve "foot_L=0:0,1:0" \
+    --curve "torso=0:60,0.25:64,0.5:46,0.68:48,1:60" \
+    --curve "upperarm_R=0:18,0.2:22,0.32:16,0.5:-8,0.65:-12,0.82:8,1:18" \
+    --curve "elbow_R=0:8,0.2:10,0.32:35,0.5:85,0.65:82,0.82:35,1:8" \
+    --curve "wrist_R=0:0,0.2:-25,0.32:10,0.65:15,1:0" \
+    --curve "upperarm_L=0:14,0.3:20,0.5:24,0.65:18,0.85:12,1:14" \
+    --curve "elbow_L=0:14,0.3:8,0.5:5,0.65:12,0.85:18,1:14" \
+    --curve "wrist_L=0:0,0.3:-15,0.5:-20,0.7:0,1:0" \
+    --curve "arm_yaw_R=0:-6,1:-6" --curve "arm_yaw_L=0:6,1:6" \
+    --curve "chest_yaw=0:3,0.5:-7,1:3" --curve "pelvis_yaw=0:0,0.5:-2,1:0" \
+    --set retarget.torso_ref=0 --set retarget.head_counter=0.25 --set retarget.foot_lock=true
+# shoot (hunting a live boar): the archer's Veo draw-and-loose (same skeleton) retimed to the hunt's
+# 1.1 s arrow cadence, release at phase 0.5 (frame 6 of 12); a short hunting bow in the left hand.
+python3 art/pipeline/derive_clip.py --base art/out/archer_v1/motion/attack_clip.json --out $SH/shoot_clip.json \
+    --cycle 1.1 --loop --impact-phase 0.5
 # death: the man-at-arms v4 death retargeted as-is (same skeleton), no props
 cp art/out/man_at_arms_v4/motion/death_clip.json $SH/death_clip.json
 echo "   extract: $(( $(date +%s) - T0 ))s"
@@ -104,12 +127,14 @@ for u in villager_m:male:${HEIGHT_M:-4.05} villager_f:female:${HEIGHT_F:-3.9}; d
         --clip chop=$SH/chop_clip.json --clip mine=$SH/mine_clip.json --clip hoe=$SH/hoe_clip.json \
         --clip berries=$SH/berries_clip.json --clip build=$SH/build_clip.json --clip death=$SH/death_clip.json \
         --clip carry=$OUT/motion/carry_clip.json \
+        --clip gather=$SH/gather_clip.json --clip shoot=$SH/shoot_clip.json \
         --prop "name=axe;bone=Biped_hand_R;clips=chop;at=chop:0.4;dir=hand;pitch=${AXE_PITCH:-0};edge=${AXE_EDGE:-0,1,0};size=2.0" \
         --prop "name=pickaxe;bone=Biped_hand_R;clips=mine;at=mine:0.4;dir=hand;pitch=${PICK_PITCH:-0};edge=${PICK_EDGE:-0,1,0};size=2.0" \
         --prop "name=hoe;bone=Biped_hand_R;clips=hoe;at=hoe:0.25;dir=hand;pitch=${HOE_PITCH:-30};edge=${HOE_EDGE:-0,1,0};size=3.3" \
         --prop "name=hammer;bone=Biped_hand_R;clips=build;at=build:0.5;dir=${HAMMER_DIR:-0,0,1};edge=${HAMMER_EDGE:-0,-1,0};size=0.85" \
         --prop "name=log;bone=Biped_forearm_L;clips=carry;at=carry:0;along=0.5;pos=${LOG_POS:-0,0,-0.28};dir=0,-1,0.15;edge=0,0,1;size=1.6" \
         --prop "name=basket;bone=Biped_forearm_L;clips=berries;at=berries:0;along=0.55;pos=${BASKET_POS:-0,0,0.05};dir=0,0,-1;edge=1,0,0;size=0.9" \
+        --prop "name=bow;bone=Biped_hand_L;clips=shoot;pos=${BOW_POS:-0,-0.05,-0.1};dir=${BOW_DIR:-0,-0.22,1};edge=0,-1,0;size=${BOW_SIZE:-3.0}" \
         --out $V/${unit}_rig.blend --diag $OUT/previews/rig_diag --strip-frames 12 \
         2>&1 | grep -E "^==|^   (rest|ground|frame|props|prop|strip|clip|   frame)|Traceback|Error"
     echo "   rig: $(( $(date +%s) - T0 ))s"
@@ -122,6 +147,7 @@ for u in villager_m:male:${HEIGHT_M:-4.05} villager_f:female:${HEIGHT_F:-3.9}; d
         --clip chop=12:${CELL_CHOP:-96} --clip mine=12:${CELL_MINE:-96} --clip hoe=12:${CELL_HOE:-96} \
         --clip berries=12:${CELL_BERRIES:-80} --clip build=8:${CELL_BUILD:-80} --clip death=12:${CELL_DEATH:-88} \
         --clip carry=12:${CELL_CARRY:-72} \
+        --clip gather=12:${CELL_GATHER:-80} --clip shoot=12:${CELL_SHOOT:-96} \
         --size 72 --supersample 2 --out $OUT --px-per-unit 14.34 $DRY \
         $LIGHT --contrast 0.35 2>&1 | grep -E "^==|span|clip |prop|wrote|Traceback|Error"
     echo "   bake: $(( $(date +%s) - T0 ))s"
@@ -133,11 +159,11 @@ for u in villager_m:male:${HEIGHT_M:-4.05} villager_f:female:${HEIGHT_F:-3.9}; d
         --views "front,3/4,side,back" --mesh "blue team=$V/${unit}_blue.glb" --mesh "red team=$V/${unit}_red.glb" 2>&1 | tail -1
     python3 art/pipeline/contact_sheet.py --name $unit --out $OUT/previews/contact_sheet.png \
         --turnaround $OUT/previews/body_textured.png --rows "blue team,red team" --sprites $OUT/sprites
-    for clip in chop mine hoe berries build death carry; do
+    for clip in chop mine hoe berries build death carry gather shoot; do
         python3 art/pipeline/clip_contact.py --name $unit --sprites $OUT/sprites --clip $clip --out $OUT/previews/${clip}_contact.png
     done
     for team in blue red; do
-        for clip in idle walk chop mine hoe berries build death carry; do
+        for clip in idle walk chop mine hoe berries build death carry gather shoot; do
             python3 art/pipeline/walk_gif.py --sprites $OUT/sprites --name $unit --team $team --clip $clip \
                 --dirs 1,0,7 --zoom 3 --out $OUT/previews/${clip}_$team.gif
         done

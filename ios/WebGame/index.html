@@ -1040,10 +1040,13 @@ function gatherStep(u,dt){
  }else if(o.phase==='hunt'){
   if(r.slain||dist2(u.x,u.y,r.gx,r.gy)>16){o.phase='go';u.path=null}
   else{u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.cd-=dt;
+   /* the shoot clip faces the boar and is phased off u.cd in dirSprite, so its release frame
+      shows as the arrow leaves */
+   u.workT=time;u.workAt=[r.gx,r.gy];u.workClip='shoot';u.workAlt=null;
    if(u.cd<=0){u.cd=1.1;spawnArrow(u,r,7);playAt('bow_release',u.x,u.y,0.5)}}
  }else if(o.phase==='work'){
   u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.anim+=dt*9;
-  u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';
+  u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';u.workAlt=WORK_ALT[r.kind]||null;
   const take=Math.min(1.1*dt*(u.team===1?LV.gather:1),r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
   if(r.animal&&!r.slain){r.slain=true;r.wax=r.way=0;r.goal=null;sheepSel=sheepSel.filter(q=>q!==r)}   /* butchered where it stands */
   if(u.gt>1.4){u.gt=0;const[sx,sy]=w2s(r.gx,r.gy);
@@ -1698,10 +1701,11 @@ const DIR_UNIT={swords:'man_at_arms',archer:'archer',vill:'villager'};
 /* Baked set for a unit: villagers come as a man and a woman sharing every work clip. */
 function dirSet(u){const s=DIR_UNIT[u.type];return s==='villager'?'villager_'+(u.sex||'m'):s}
 /* Which work clip a villager plays at a job: an axe at trees, a pickaxe at ore, picking at
-   berry bushes, a hoe on farms, a hammer on a building site. Game animals are butchered with
-   the axe swing. */
+   berry bushes, a hoe on farms, a hammer on a building site. Berries and game carcasses are
+   worked by hand, kneeling (gather); WORK_ALT is the older clip used where gather is not baked. */
 const WORK_SFX={chop:'axe_chop',mine:'pick_hit',build:'hammer_hit'};
-const WORK_CLIP={tree:'chop',gold:'mine',stone:'mine',berry:'berries',farm:'hoe',boar:'chop',sheep:'chop'};
+const WORK_CLIP={tree:'chop',gold:'mine',stone:'mine',berry:'gather',farm:'hoe',boar:'gather',sheep:'gather'};
+const WORK_ALT={berry:'berries',boar:'chop',sheep:'chop'};
 const TEAM_COL=['blue','red'];
 function trackHeading(u){
  if(u.lpx!==undefined){
@@ -1749,11 +1753,16 @@ function dirSprite(u){
  if(atkClip&&!u.moving&&time-u.engaged<0.9&&u.fire>=0&&time-u.fire<def.cdr*1.6){
   const a=has(atkClip);f=dirFrame(set,u.team,atkClip,d,Math.floor(a.impact+(time-u.fire)/def.cdr*a.keys.length))}
  /* Working: the job's own loop, offset per unit so a crew does not swing in lockstep. */
- if(!f&&!u.moving&&u.workClip&&time-(u.workT||-9)<0.3&&has(u.workClip)){
-  const a=has(u.workClip),ph=Math.floor((time+u.id*0.37)*a.fps),n=a.keys.length,fi=((ph%n)+n)%n;
-  f=dirFrame(set,u.team,u.workClip,d,ph);
+ const wc=u.workClip&&(has(u.workClip)?u.workClip:u.workAlt&&has(u.workAlt)?u.workAlt:null);
+ /* Hunting: the bow is drawn over the 1.1 s between shots (u.cd counts down to the next one), so
+    the clip's impact_frame -- the release -- is on screen as spawnArrow fires. */
+ if(!f&&!u.moving&&wc==='shoot'&&time-(u.workT||-9)<0.3){
+  const a=has('shoot');f=dirFrame(set,u.team,'shoot',d,Math.floor(a.impact+(1-u.cd/1.1)*a.keys.length))}
+ if(!f&&!u.moving&&wc&&time-(u.workT||-9)<0.3){
+  const a=has(wc),ph=Math.floor((time+u.id*0.37)*a.fps),n=a.keys.length,fi=((ph%n)+n)%n;
+  f=dirFrame(set,u.team,wc,d,ph);
   /* the tool lands on the clip's impact frame: that is when the chop, strike or blow sounds */
-  if(f&&a.impact&&fi===a.impact&&u._wf!==ph){const snd=WORK_SFX[u.workClip];if(snd)playAt(snd,u.x,u.y,0.55)}
+  if(f&&a.impact&&fi===a.impact&&u._wf!==ph){const snd=WORK_SFX[wc];if(snd)playAt(snd,u.x,u.y,0.55)}
   u._wf=fi===a.impact?ph:u._wf}
  if(!f){
   const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
