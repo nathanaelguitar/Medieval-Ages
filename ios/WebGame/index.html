@@ -1680,24 +1680,59 @@ function touchesWater(x,y){
  return [[1,0],[-1,0],[0,1],[0,-1]].some(d=>{
   const nx=x+d[0],ny=y+d[1];
   return nx>=0&&ny>=0&&nx<MAP&&ny<MAP&&tiles[ny*MAP+nx]===2})}
+/* Photoreal ground (art/source/ground, Codex): seamless top-down textures projected onto the
+   isometric plane, so one repeat lies flat across GROUND_R tiles instead of sitting on screen like
+   a sticker. Patterns are built once the images decode; until then (or without them) the tiles
+   keep their flat colours. */
+const GROUND={},GROUND_R=3;
+['grass_a','grass_b','dirt','sand','water'].forEach(n=>{const im=new Image();im.onload=()=>{GROUND[n]=im};im.src='img/ground_'+n+'.jpg'});
+const groundPats={};
+/* Sampling a rotated, scaled pattern every frame is ~3x the cost of a plain one, so each texture is
+   projected ONCE: the iso image of a square texture repeating every R tiles is periodic over a
+   (2*R*TW2) x (2*R*TH2) world rectangle, which is baked at GROUND_S x and then tiled as a plain,
+   axis-aligned pattern. */
+const GROUND_S=4;
+function groundPattern(n){
+ if(groundPats[n])return groundPats[n];
+ const im=GROUND[n];if(!im)return null;
+ const W=im.width,pw=2*GROUND_R*TW2,ph=2*GROUND_R*TH2;
+ const pc=document.createElement('canvas');pc.width=pw*GROUND_S;pc.height=ph*GROUND_S;
+ const g=pc.getContext('2d'),tp=g.createPattern(im,'repeat');
+ /* texture pixel (u,v) -> world tile (u,v)*R/W -> world px ((x-y)*TW2,(x+y)*TH2), times GROUND_S */
+ tp.setTransform(new DOMMatrix([GROUND_R*TW2/W*GROUND_S,GROUND_R*TH2/W*GROUND_S,-GROUND_R*TW2/W*GROUND_S,GROUND_R*TH2/W*GROUND_S,0,0]));
+ g.fillStyle=tp;g.fillRect(0,0,pc.width,pc.height);
+ const p=ctx.createPattern(pc,'repeat');p.setTransform(new DOMMatrix([1/GROUND_S,0,0,1/GROUND_S,0,0]));
+ return groundPats[n]=p}
 function drawTile(x,y,sx,sy){
  const k=y*MAP+x,t=tiles[k];
  dPath(sx,sy);
  if(t===2){
   // deeper water toward the middle of each pond, plus a moving sun-glint band
-  const d=waterD[k]/255;
-  ctx.fillStyle=d>0.62?'#2b5686':d>0.32?'#356294':'#3f6ea2';
-  ctx.fill();
+  const d=waterD[k]/255,wp=groundPattern('water');
+  if(wp){ctx.fillStyle=wp;ctx.fill();
+   ctx.globalAlpha=0.12+d*0.38;ctx.fillStyle='#0e2a3c';ctx.fill();ctx.globalAlpha=1}   /* deeper toward the middle */
+  else{ctx.fillStyle=d>0.62?'#2b5686':d>0.32?'#356294':'#3f6ea2';ctx.fill()}
   ctx.strokeStyle=`rgba(255,255,255,${0.07+0.07*Math.sin(time*1.8+x*7+y*13)})`;ctx.lineWidth=1.2;
   ctx.beginPath();ctx.moveTo(sx-14,sy+18);ctx.quadraticCurveTo(sx,sy+11,sx+14,sy+18);ctx.stroke();
   if(waterD[k]<70){ctx.strokeStyle='rgba(226,240,236,.34)';ctx.lineWidth=1.5;
    ctx.beginPath();ctx.moveTo(sx-13,sy+16);ctx.quadraticCurveTo(sx,sy+10,sx+13,sy+16);ctx.stroke()}
  }else{
-  ctx.fillStyle=tileCol[k];ctx.fill();
+  /* grass mixes the lush and the drier lawn in broad meadow patches: each tile draws one of the
+     two, and only tiles on a patch edge blend the second on top */
+  const gn=t===0?vnoise(x*0.13,y*0.13,7):0;
+  const pat=groundPattern(t===1?'dirt':t===3?'sand':gn>0.56?'grass_b':'grass_a');
+  if(pat){ctx.fillStyle=pat;ctx.fill();
+   if(t===0&&gn>0.46&&gn<=0.56){const gb=groundPattern('grass_b');
+    if(gb){ctx.globalAlpha=(gn-0.46)*10;ctx.fillStyle=gb;ctx.fill()}}
+   /* a light wash of the old per-tile colour keeps the board's soft tile rhythm and shade */
+   ctx.globalAlpha=0.16;ctx.fillStyle=tileCol[k];ctx.fill();ctx.globalAlpha=1}
+  else{ctx.fillStyle=tileCol[k];ctx.fill()}
   /* 0 A.D. surface detail multiplied over the terrain colour. dPath's path is still current, so
      this re-fills the same diamond rather than needing to rebuild it. */
   if(groundPat){ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=groundPat;ctx.fill();ctx.restore()}
-  const d=decor[k];
+  /* the vector tufts, pebbles and flowers were drawn for flat-colour tiles; on the photo ground
+     they read as stickers, so they only appear when the textures are absent */
+  const d=pat?0:decor[k];
   /* Sand that meets water gets a foam edge, breathing slowly and phase-shifted per tile so the
      whole shore does not pulse in unison. */
   if(t===3&&touchesWater(x,y)){
