@@ -48,7 +48,9 @@
         injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES]];
 
     self.webView=[[WKWebView alloc] initWithFrame:host.bounds configuration:configuration];
+#if DEBUG
     if (@available(iOS 16.4,*)) self.webView.inspectable=YES;   /* lets Safari's Web Inspector attach */
+#endif
     self.webView.autoresizingMask=UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     self.webView.opaque=NO;
     self.webView.backgroundColor=UIColor.blackColor;

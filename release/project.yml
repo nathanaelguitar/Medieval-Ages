@@ -1,0 +1,45 @@
+# Slim App Store / TestFlight build: only the game's own code and its web bundle. The SDL engine,
+# the GPL OpenEmpire port and the 0 A.D. models in the main CMake project are not part of this
+# target. Generate with `cd release && xcodegen`, then see release/README.md.
+name: MedievalAges
+options:
+  bundleIdPrefix: com.nathanaelguitar
+  deploymentTarget: {iOS: "15.0"}
+settings:
+  base:
+    DEVELOPMENT_TEAM: YPHP5T7N84
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "2"
+    CLANG_ENABLE_OBJC_ARC: YES
+    ENABLE_BITCODE: NO
+targets:
+  MedievalAges:
+    type: application
+    platform: iOS
+    sources:
+      - {path: ../ios/main.m}
+      - {path: ../ios/OEWebGame.m}
+      - {path: ../ios/OEWebGame.h}
+      - {path: ../ios/Assets.xcassets}
+      - {path: ../ios/PrivacyInfo.xcprivacy, buildPhase: resources}
+      - {path: open-empire-mobile, type: folder, buildPhase: resources}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nathanaelguitar.medievalages
+        PRODUCT_NAME: MedievalAges
+        INFOPLIST_FILE: Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        HEADER_SEARCH_PATHS: ../ios
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Distribution"
+        PROVISIONING_PROFILE_SPECIFIER: "Medieval Ages App Store 2026-10-10"
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "Apple Development"
+          CODE_SIGN_STYLE: Automatic
+          PROVISIONING_PROFILE_SPECIFIER: ""
+          GCC_PREPROCESSOR_DEFINITIONS: ["DEBUG=1", "$(inherited)"]
+    scheme: {}

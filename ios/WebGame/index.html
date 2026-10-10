@@ -177,6 +177,9 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
 #wallBar button{padding:9px 18px;border-radius:20px;font:700 15px Palatino,Georgia,serif;letter-spacing:.03em;
  border:1px solid rgba(227,194,122,.65);background:rgba(20,16,10,.82);color:#e3c27a}
 #wallBar #wallOk{background:rgba(52,96,40,.92);color:#eaf6dc;border-color:#9fe08a}
+#credits{position:absolute;left:14px;right:14px;bottom:calc(6px + env(safe-area-inset-bottom));font:10px/1.35 -apple-system,system-ui,sans-serif;color:rgba(230,224,206,.62);text-align:left;text-shadow:0 1px 2px #000;pointer-events:auto}
+#credits a{color:rgba(227,194,122,.85);text-decoration:underline}
+#credits b{color:rgba(227,194,122,.9);font-weight:600}
 #startOv{align-items:flex-start;justify-content:center;text-align:left;
  padding-left:max(36px,calc(env(safe-area-inset-left) + 22px));
  background:linear-gradient(90deg,rgba(7,9,5,.92) 0%,rgba(7,9,5,.72) 30%,rgba(7,9,5,.15) 62%,rgba(7,9,5,0) 80%),
@@ -253,6 +256,7 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
  <button id="introSkip" hidden>Skip<svg viewBox="0 0 12 12" width="10" height="10" style="margin-left:7px;vertical-align:-1px"><path d="M2.5 2.2 6.3 6l-3.8 3.8M6.2 2.2 10 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
 <div id="wallBar" class="ui" hidden><button id="wallOk">&#10003; Build</button><button id="wallRedo">&#8634; Redraw</button></div>
 <div id="startOv" class="ov ui">
+ <div id="credits">Boar and sheep models: <b>0 A.D.</b> by Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a> &middot; <a href="https://play0ad.com">play0ad.com</a> &nbsp;|&nbsp; Narration and voices: Chatterbox (Resemble AI, MIT), Kokoro (Apache-2.0) &nbsp;|&nbsp; Music and art generated with AI tools</div>
  <div class="hero">
   <h1 class="title">MEDIEVAL<span>AGES</span></h1>
   <p class="tag">Build a village. Raise an army. Hold the realm.</p>
