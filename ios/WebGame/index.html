@@ -504,7 +504,8 @@ function playS(k,vol=1,semis=1.8){
 function playAt(k,wx,wy,vol=1){
  const[sx,sy]=w2s(wx,wy),px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
  if(px<-80||px>cw+80||py<-80||py>ch+80)return false;
- return playS(k,vol*Math.min(1,0.55+zoom*0.35))}
+ /* bows keep the pitch they were picked at: shifted, the breathy whoosh turns into a different sound */
+ return playS(k,vol*Math.min(1,0.55+zoom*0.35),k.startsWith('bow_')?0.3:1.8)}
 /* Unit voices: villagers answer in a man's or a woman's voice, soldiers share a gruff one with
    shouted war cries. One voice at a time, with a short gap, so tapping through an army does not
    turn into a crowd. */
@@ -838,7 +839,7 @@ function updArrow(a,dt){
  a.trav=(a.trav||0)+Math.min(st,d);a.rem=d;
  /* An arrow that lands kicks up the same sparks and dust a melee blow does. Without it a volley
     reads as arrows evaporating in mid-air, since the flight is the only thing drawn. */
- if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){const an=a.target.animal;damage(a.target,a.dmg,a.team,a.src);hitFx(a.tx,a.ty);playAt(an?'arrow_flesh':'arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
+ if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){const an=a.target.animal;damage(a.target,a.dmg,a.team,a.src);hitFx(a.tx,a.ty);if(!an)playAt('arrow_hit',a.tx,a.ty,0.7)}   /* a hit animal answers with its own squeal */a.dead=true}
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
 /* How far a unit fighting on its own initiative may stray from its post. */
