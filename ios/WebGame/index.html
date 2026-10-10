@@ -1427,7 +1427,7 @@ function drawSpr(k,sx,sy,targetW){
    farms and walls included. The 0 A.D. bld_* sprites remain in the manifest as a fallback. */
 const BLDSPR={tc:'med_tc',barracks:'med_barracks',woodyard:'med_woodyard',mine:'med_mine',market:'med_market',
  tower:'med_tower',mill:'med_mill',farm:'med_farm',palisade:'med_palisade',stonewall:'med_stonewall',gate:'med_gate'};
-const HOUSES=['med_house_a','med_house_b','med_house_c'];
+const HOUSES=['med_house_a','med_house_b'];   /* single-storey cottages; the two-storey house_c read as leaning and was dropped */
 /* Wall segments are baked running along world x; the _b mirrors run along y. A segment follows
    its neighbours so a line of them reads as one wall. */
 const WALLS={palisade:1,stonewall:1,gate:1};
