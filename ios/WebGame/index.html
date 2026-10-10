@@ -325,7 +325,7 @@ const DEFS={
  palisade:{name:'Wood Palisade',hp:220,size:1,hh:9,t:5,cost:{w:20}},
  stonewall:{name:'Stone Wall',hp:480,size:1,hh:11,t:8,cost:{s:25}},
  gate:{name:'Gate',hp:420,size:1,hh:30,t:9,cost:{w:20,s:20}},
- tower:{name:'Guard Tower',hp:700,size:2,hh:58,t:18,cost:{w:80,s:100},range:30,atk:13,cdr:1.4},
+ tower:{name:'Guard Tower',hp:700,size:2,hh:58,t:18,garrison:5,cost:{w:80,s:100},range:30,atk:13,cdr:1.4},
  market:{name:'Market',hp:450,size:2,hh:30,t:14,cost:{w:100}},
  tc:{name:'Town Center',hp:1400,size:3,hh:52,pop:5,garrison:8}};
 const KCT={tree:'w',berry:'f',gold:'g',stone:'s',farm:'f',boar:'f',sheep:'f'};
@@ -589,18 +589,21 @@ function mkBuilding(team,type,tx,ty,done){const d=DEFS[type];
  const b={kind:'bld',id:uid++,team,type,tx,ty,size:d.size,hh:d.hh,hp:done?d.hp:d.hp*0.3,maxhp:d.hp,done:!!done,progress:done?1:0,queue:[],garrison:[],gcap:d.garrison||0,rally:null,rallyRes:null,flash:0,alertT:0,popT:0,smk:0,cd:rnd(1,2),cx:tx+d.size/2,cy:ty+d.size/2,dead:false};
  if(type==='farm'){b.gx=tx+d.size/2;b.gy=ty+d.size/2;b.amt=300}
  buildings.push(b);if(type==='gate')gateBlock(b,true);else gridBlock(b,true);recalcPop();return b}
+/* Villagers and archers can shelter in a Town Center (8) or a Guard Tower (5). Everyone inside
+   adds an arrow to the building's volley, so a garrison is a defence, not just a hiding place. */
+const canGarrison=u=>u.type==='vill'||u.type==='archer';
 function garrisonVillagers(villagers,tc){
- if(!tc||tc.dead||!tc.done)return;
+ if(!tc||tc.dead||!tc.done||!tc.gcap)return;
  const room=Math.max(0,tc.gcap-tc.garrison.length);
- if(!room){toast('Town Center garrison is full');sfx('no');return}
- const put=villagers.filter(u=>u.team===tc.team&&!u.dead&&!u.garrisoned).slice(0,room);
+ if(!room){toast(DEFS[tc.type].name+' garrison is full');sfx('no');return}
+ const put=villagers.filter(u=>u.team===tc.team&&!u.dead&&!u.garrisoned&&canGarrison(u)).slice(0,room);
  put.forEach(u=>{
   rememberTask(u);
   if(u.carry>0){const k=u.order.ctype||(u.lastRes&&KCT[u.lastRes.kind]);if(k)res[u.team][k]+=Math.floor(u.carry);u.carry=0}
   u.garrisoned=tc;u.order={type:'garrison',building:tc};u.path=null;u.moving=false;u.x=tc.cx;u.y=tc.cy;tc.garrison.push(u)
  });
  selection=selection.filter(u=>!put.includes(u));
- toast(put.length+' villager'+(put.length===1?'':'s')+' garrisoned · Town Center protected them');sfx('ok')
+ toast(put.length+' garrisoned · '+tc.garrison.length+'/'+tc.gcap+' inside, +'+tc.garrison.length+' arrows');sfx('ok')
 }
 function releaseGarrison(b){
  const list=b.garrison.splice(0);
@@ -614,8 +617,8 @@ function releaseGarrison(b){
  return list
 }
 function ungarrison(b){
- if(!b||!b.garrison.length){toast('No villagers are garrisoned');sfx('no');return}
- selection=releaseGarrison(b);toast(selection.length+' villagers unloaded');sfx('ok');refreshPanel(true)
+ if(!b||!b.garrison.length){toast('Nobody is garrisoned');sfx('no');return}
+ selection=releaseGarrison(b);toast(selection.length+' unloaded');sfx('ok');refreshPanel(true)
 }
 function recalcPop(){for(let t=0;t<2;t++){let c=0;buildings.forEach(b=>{if(!b.dead&&b.done&&b.team===t)c+=(DEFS[b.type].pop||0)});popCap[t]=Math.min(c,60)}}
 function rememberTask(u){
@@ -1278,6 +1281,8 @@ function tap(px,py){
  const now=performance.now();
  if(placing&&WALL_LINE[placing.type]){const t=wTile([wx,wy]);placing.line=[t,t];placing.pend=true;return}
  if(placing){tryPlace(wx,wy);return}
+ {const h=standardHits.find(h=>Math.abs(px-h.x)<h.w&&Math.abs(py-h.y)<h.h);
+  if(h&&!selUnits(0).some(u=>u.type==='vill')){selection=h.g.filter(u=>!u.dead);sheepSel=[];refreshPanel(true);sfx('sel');return}}
  const e=unitAtScreen(px,py)||entityAt(wx,wy);
  /* Livestock: with no villagers selected, tapping one of your sheep selects it and the flock
     around it; with sheep selected, another of yours adds to the flock, a building of yours or open
@@ -1322,8 +1327,8 @@ function tap(px,py){
    refreshPanel(true);return}
   if(e.kind==='bld'&&e.team===0){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
-   const v=selUnits(0).filter(u=>u.type==='vill');
-   if(e.type==='tc'&&e.done&&v.length){garrisonVillagers(v,e);ping(e.cx,e.cy,'#7fd4ff');voice('ack',v[0])}
+   const v=selUnits(0).filter(u=>u.type==='vill'),gv=selUnits(0).filter(canGarrison);
+   if((e.type==='tc'||e.type==='tower')&&e.done&&gv.length){garrisonVillagers(gv,e);ping(e.cx,e.cy,'#7fd4ff');voice('ack',gv[0])}
    else if(!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
    else if(e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
    else{selection=[e];sfx('sel')}
@@ -1521,7 +1526,7 @@ function refreshPanel(force){
  if(!enemy){
   if(counts.vill)acts.push({l:'House',s:'House',c:'30w',t:'house'},{l:'Farm',s:'Farm',c:'60w',t:'farm'},{l:'Barracks',s:'Barracks',c:'125w',t:'barracks'},{l:'Wood Yard',s:'Wood',c:'50w',t:'woodyard'},{l:'Mill',s:'Mill',c:'60w',t:'mill'},{l:'Mining Camp',s:'Mine',c:'75w',t:'mine'},{l:'Market',s:'Market',c:'100w',t:'market'},{l:'Palisade',s:'Palisade',c:'20w',t:'palisade'},{l:'Stone Wall',s:'Stone',c:'25s',t:'stonewall'},{l:'Gate',s:'Gate',c:'20w 20s',t:'gate'},{l:'Tower',s:'Tower',c:'80w 100s',t:'tower'});
   if(counts.tc)acts.push({l:'Villager',s:'Villager',c:'50f',t:'vill',q:1});
-  if(selection.length===1&&first.kind==='bld'&&first.type==='tc'&&first.garrison.length)acts.push({l:'Unload '+first.garrison.length,s:'Unload',c:'',t:'ungarrison'});
+  if(selection.length===1&&first.kind==='bld'&&first.garrison&&first.garrison.length)acts.push({l:'Unload '+first.garrison.length,s:'Unload',c:'',t:'ungarrison'});
   if(selection.length===1&&first.kind==='bld'&&first.type==='market'&&first.done){
    for(const k of['w','f','s'])acts.push({l:'Sell 100 '+RESLABEL[k]+' for '+mktSell(k)+' gold',s:'Sell',c:mktSell(k)+'g',t:'trade',sell:true,k,ic:ICO[k]});
    for(const k of['w','f','s'])acts.push({l:'Buy 100 '+RESLABEL[k]+' for '+mktBuy(k)+' gold',s:'Buy',c:mktBuy(k)+'g',t:'trade',sell:false,k,ic:ICO[k]})}
@@ -2039,6 +2044,43 @@ function drawRes(r){
   const n=Math.max(1,Math.ceil(r.amt/40));ctx.fillStyle='#c9364b';
   for(let i=0;i<n;i++){const a=i*2.4;ctx.beginPath();ctx.arc(sx+Math.cos(a)*4.5,sy-4+Math.sin(a)*3,1.6,0,7);ctx.fill()}}}
 const TEAMR=['#3d8bff','#ff3b30'];
+/* Standards, Total War style: soldiers of one side standing together form a company, and one of
+   them (the lowest id, so the honour does not hop around) carries its banner on a tall pole -- a
+   gold crossbar, a notched cloth in the side's colour and the side's arms: your lion rampant (the
+   lion on the men-at-arms' shields), the enemy's three lions of England.
+   It reads from across the map where the tabards do not. Tapping your own banner selects the
+   whole company. Drawn in world space but held at a readable on-screen size when zoomed out. */
+let standardHits=[];
+const ARMS=['img/herald_lion.png','img/herald_lions3.png'].map(src=>{const im=new Image();im.src=src;return im});
+function companies(){
+ const out=[],mil=units.filter(u=>!u.dead&&!u.garrisoned&&u.type!=='vill').sort((a,b)=>a.id-b.id),used=new Set();
+ for(const a of mil){if(used.has(a))continue;const g=[a];used.add(a);
+  for(const b of mil)if(!used.has(b)&&b.team===a.team&&g.some(m=>dist2(m.x,m.y,b.x,b.y)<6.25)){g.push(b);used.add(b)}
+  out.push(g)}
+ return out}
+function drawStandards(){
+ standardHits=[];
+ const k=Math.max(1,0.95/zoom);
+ for(const g of companies()){
+  const u=g[0],[sx,sy]=w2s(u.x,u.y),top=sy-46*k-18,bx=sx+5,c=TEAMC[u.team],sway=Math.sin(time*2.2+u.id)*1.2*k;
+  ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='#2e2114';ctx.lineWidth=1.7*k;ctx.beginPath();ctx.moveTo(bx,sy-14);ctx.lineTo(bx,top-3*k);ctx.stroke();
+  /* cloth: notched top, pointed foot, gold edge */
+  const w=10*k,y0=top+1.5*k,y1=top+21*k,y2=top+28*k;
+  ctx.beginPath();ctx.moveTo(bx-w,y0);ctx.lineTo(bx-w+sway*0.4,y1);ctx.lineTo(bx+sway,y2);ctx.lineTo(bx+w+sway*0.4,y1);ctx.lineTo(bx+w,y0);
+  for(let i=2;i>=0;i--){const x=bx-w+w*2*(i+0.5)/3;ctx.lineTo(x+2.2*k,y0);ctx.lineTo(x+2.2*k,y0+3*k);ctx.lineTo(x-2.2*k,y0+3*k);ctx.lineTo(x-2.2*k,y0)}
+  ctx.closePath();
+  const gr=ctx.createLinearGradient(bx-w,0,bx+w,0);gr.addColorStop(0,c.d);gr.addColorStop(0.45,c.m);gr.addColorStop(1,c.d);
+  ctx.fillStyle=gr;ctx.fill();ctx.strokeStyle='#e2b64a';ctx.lineWidth=1.1*k;ctx.stroke();
+  /* the side's arms */
+  const im=ARMS[u.team];
+  if(im.complete&&im.naturalWidth){const eh=15*k,ew=eh*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,bx+sway*0.25-ew/2,top+4.5*k,ew,eh)}
+  /* crossbar with finials and a jewel */
+  ctx.strokeStyle='#d9a93a';ctx.lineWidth=1.6*k;ctx.beginPath();ctx.moveTo(bx-11*k,top);ctx.lineTo(bx+11*k,top);ctx.stroke();
+  ctx.fillStyle='#e8bf55';[-11,11].forEach(d=>{ctx.beginPath();ctx.arc(bx+d*k,top,1.4*k,0,7);ctx.fill()});
+  ctx.fillStyle='#c0262a';ctx.beginPath();ctx.arc(bx,top-1.6*k,1.5*k,0,7);ctx.fill();
+  if(g.length>1){ctx.font=`bold ${Math.round(7*k)}px -apple-system,system-ui,sans-serif`;ctx.textAlign='center';ctx.fillStyle='#f4efe2';ctx.fillText(g.length,bx+sway,y2+7.5*k)}
+  if(u.team===0)standardHits.push({g,x:(bx-camX)*zoom+cw/2,y:((top+y2)/2-camY)*zoom+ch/2,w:12*k*zoom,h:16*k*zoom})}}
 /* Health bars: your own units when selected or hurt; an enemy only while your units are fighting
    it (targeted, or hit by you in the last few seconds), so the enemy camp is not a sea of bars. */
 function showHP(u){
@@ -2054,10 +2096,10 @@ function drawUnit(u){
  const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
  sg.addColorStop(0,'rgba(0,0,0,.36)');sg.addColorStop(.55,'rgba(0,0,0,.15)');sg.addColorStop(1,'rgba(0,0,0,0)');
  ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(sx,sy+1.5,9.5,4.2,0,0,7);ctx.fill();
- /* Team ring on the ground. At phone scale the tabard colours alone are too small to tell sides
-    apart in a melee, so every unit stands on a bright ring of its side's colour. */
- ctx.fillStyle=TEAMR[u.team]+'33';ctx.strokeStyle=TEAMR[u.team];ctx.lineWidth=1.6;
- ctx.beginPath();ctx.ellipse(sx,sy+1.5,8.5,3.9,0,0,7);ctx.fill();ctx.stroke();
+ /* Villagers stand on a ring of their side's colour; soldiers are told apart by the standard their
+    group carries (drawStandards), which reads from much further off at phone scale. */
+ if(u.type==='vill'){ctx.fillStyle=TEAMR[u.team]+'33';ctx.strokeStyle=TEAMR[u.team];ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.ellipse(sx,sy+1.5,8.5,3.9,0,0,7);ctx.fill();ctx.stroke()}
  /* 0 A.D. character sprite. The game tracks only a mirrored facing (u.face), so the single baked
     view is flipped exactly as the vector art was -- there is no direction vector to select among
     the eight facings bake_zeroad_art.py can produce. Directional units (dirSprite) carry their
@@ -2516,6 +2558,7 @@ function render(){
   ctx.globalAlpha=1-t;ctx.fillStyle=p.col;
   ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}
  ctx.globalAlpha=1;
+ drawStandards();
  // floating texts
  ctx.font='bold 13px -apple-system,system-ui,sans-serif';ctx.textAlign='center';
  for(const t of texts){const[sx,sy]=w2s(t.x,t.y);const a=1-t.t/1.2;
@@ -2630,9 +2673,12 @@ function update(dt){
    if(b.cd<=0){let best=null,bd=b.type==='tower'?DEFS.tower.range:36;
     for(const u of units){if(u.dead||u.garrisoned||u.team===b.team)continue;const d=dist2(u.x,u.y,b.cx,b.cy);if(d<bd){bd=d;best=u}}
     if(best){
-     const gbonus=b.type==='tc'?b.garrison.length:0;
-     b.cd=b.type==='tower'?DEFS.tower.cdr:Math.max(0.65,2-gbonus*0.17);
-     spawnArrow(b,best,b.type==='tower'?DEFS.tower.atk:8+gbonus*2)
+     /* one arrow of its own plus one per unit garrisoned, spread over the nearest foes */
+     const n=1+b.garrison.length,dmg=b.type==='tower'?DEFS.tower.atk:8,r2=b.type==='tower'?DEFS.tower.range:36;
+     const foes=units.filter(u=>!u.dead&&!u.garrisoned&&u.team!==b.team&&dist2(u.x,u.y,b.cx,b.cy)<r2).sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy)).slice(0,Math.min(3,n));
+     b.cd=b.type==='tower'?DEFS.tower.cdr:2;
+     for(let i=0;i<n;i++)spawnArrow(b,foes[i%foes.length],dmg);
+     playAt('bow_release',b.cx,b.cy,0.5)
     }else b.cd=b.type==='tower'?0.5:0.5}}
   if(b.hp<b.maxhp*0.45){b.smk-=dt;
    if(b.smk<=0){b.smk=0.18;const[sx,sy]=w2s(b.cx,b.cy);
@@ -2877,6 +2923,8 @@ function tutStep(dt){
  if(T.cx!==undefined&&!selection.length)T.pan+=Math.hypot(camX-T.cx,camY-T.cy);T.cx=camX;T.cy=camY;
  if(!paused&&units.some(u=>u.team===0&&u.order.type==='drive'&&u.moving))T.drive+=dt;
  const tc=homeTC();if(tc&&tc.garrison.length)T.garr=true;
+ /* the window to start a step's line opens only once its clip has decoded (the bank is large) */
+ const ne=BANK['narrator_s'+String(T.i).padStart(2,'0')];if(!T.said&&!(ne&&ne.bufs.length))T.sayT=time;
  if(!paused&&!T.said&&time-T.sayT<6&&narrPlay(T.i))T.said=true;
  if(s.ok&&s.ok()){sfx('done');tutGo(T.i+1);return}
  if(s.back&&s.back()){tutGo(T.i-1);return}
@@ -2917,8 +2965,6 @@ requestAnimationFrame(frame);
    view refuses to autoplay with sound (a desktop browser), it plays muted rather than stalling. */
 (()=>{const ov=document.getElementById('introOv'),v=document.getElementById('introVid'),
   skip=document.getElementById('introSkip');
- /* the window to start a step's line opens only once its clip has decoded (the bank is large) */
- const ne=BANK['narrator_s'+String(T.i).padStart(2,'0')];if(!T.said&&!(ne&&ne.bufs.length))T.sayT=time;
  if(window.OE_NATIVE_INTRO){ov.remove();return}   /* the iOS app plays it with AVPlayer */
  let seen=false;try{seen=localStorage.getItem('pe_intro_seen')==='1'}catch(e){}
  const L=m=>{try{window.webkit.messageHandlers.oelog.postMessage('intro: '+m)}catch(e){}};
