@@ -2899,7 +2899,7 @@ const TUT=[
  {t:'Your goal: destroy the enemy Town Center, far to the east. The enemy wakes now!',tg:()=>({el:$('mmWrap')}),next:1}];
 function tutSnap(){const tc=homeTC();
  T.base={house:nB('house'),farm:nB('farm'),rax:nB('barracks'),drop:nB('woodyard')+nB('mill')+nB('mine'),pop:popOf(0),rally:tc&&tc.rallyRes};
- T.t0=T.sayT=time;T.said=false;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
+ T.t0=T.sayT=time;T.said=false;T.doneT=null;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
 function tutGo(i){
  const prev=TUT[T.i];if(prev&&prev.out&&i!==T.i)prev.out();
  narrStop();T.i=i;const s=TUT[i];if(!s){tutEnd();return}
@@ -2913,9 +2913,11 @@ const scrOf=(wx,wy,lift)=>{const[sx,sy]=w2s(wx,wy);return[(sx-camX)*zoom+cw/2,(s
 function tutDraw(){
  const s=TUT[T.i];if(!s)return;
  const txt=typeof s.t==='function'?s.t():s.t;
- if(txt!==T.txt){T.txt=txt;$('tutS').textContent=txt;$('tutN').textContent='LESSON '+(T.i+1)+' / '+TUT.length}
- const nx=$('tutNext'),late=!s.next&&time-T.t0>25;
- nx.style.display=s.next||late?'':'none';nx.classList.toggle('late',late);nx.textContent=T.i===TUT.length-1?'Begin':'Next';
+ const lbl='LESSON '+(T.i+1)+' / '+TUT.length+(T.doneT?'  \u2713 DONE':'');
+ if(txt!==T.txt||lbl!==T.lbl){T.txt=txt;T.lbl=lbl;$('tutS').textContent=txt;$('tutN').textContent=lbl}
+ /* Next is always offered; it lights up once the step is done (or is just information) */
+ const nx=$('tutNext'),late=!s.next&&!T.doneT;
+ nx.style.display='';nx.classList.toggle('late',late);nx.textContent=T.i===TUT.length-1?'Begin':'Next';
  const g=s.tg?s.tg():null,ring=$('tutRing');let r=null;
  if(g&&g.el){const b=g.el.getBoundingClientRect();if(b.width)r=[b.left-5,b.top-5,b.width+10,b.height+10,false]}
  else if(g){let pts=[],pad=24*zoom+6;
@@ -2944,7 +2946,13 @@ function tutStep(dt){
  /* the window to start a step's line opens only once its clip has decoded (the bank is large) */
  const ne=BANK['narrator_s'+String(T.i).padStart(2,'0')];if(!T.said&&!(ne&&ne.bufs.length))T.sayT=time;
  if(!paused&&!T.said&&time-T.sayT<6&&narrPlay(T.i))T.said=true;
- if(s.ok&&s.ok()){sfx('done');tutGo(T.i+1);return}
+ /* Pacing: doing the thing marks the step done (a chime and a tick) but does not yank the lesson
+    on -- the player gets a few seconds to play with the feature and the narrator finishes the
+    line. Then it moves on by itself; Next is always there to hurry it. Information-only steps
+    advance once the line has been spoken and read. */
+ if(!T.doneT&&s.ok&&s.ok()){T.doneT=time;sfx('done')}
+ const talking=!!narrSrc||(!T.said&&tutVoice&&time-T.sayT<6&&time-T.t0<20);
+ if(!talking&&(T.doneT?time-T.doneT>=4&&time-T.t0>=7:s.next&&time-T.t0>=9)){tutGo(T.i+1);return}
  if(s.back&&s.back()){tutGo(T.i-1);return}
  tutDraw()}
 requestAnimationFrame(tutTick);
