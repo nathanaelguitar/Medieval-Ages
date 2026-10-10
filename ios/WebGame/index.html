@@ -2672,7 +2672,7 @@ function applyJoy(dt){
     const b=u.type==='vill'?nearbyBuild(u):null;
     if(b){assignBuild(u,b);continue}
     if(Math.abs(vx)>0.2)u.face=vx>0?1:-1;
-    u.moving=true;u.drove=true;u.anim+=dt*7}
+    u.moving=true;u.drove=true;u.anim+=dt*7*sp/DEFS[u.type].spd}   /* a part-tilted stick walks slower, so the legs do too */
  }else if(m<=0.14)for(const u of selection)if(u.kind==='unit'&&u.order.type==='drive'){u.order={type:'idle'};u.path=null;u.detour=null}}
 /* Follow camera. The units you are commanding can roam the middle of the screen freely; the view
    only starts moving once one would otherwise cross the comfort margin, and then it glides rather
