@@ -1317,6 +1317,10 @@ function tap(px,py){
    if(f.length){f.forEach(u=>{rememberTask(u);u.order={type:'attack',target:e};u.path=null;u.nT=0});
     ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk');
     const sol=f.find(u=>u.type!=='vill');voice(sol?'attack':'ack',sol||f[0])}
+   else if(selection.length&&selection.every(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done)){
+    /* towers and Town Centers take a target too: they shoot it whenever it is in reach */
+    selection.forEach(b=>b.focus=e);ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk');
+    toast((selection.length>1?'Towers':DEFS[selection[0].type].name)+' targeting '+(e.kind==='bld'?DEFS[e.type].name:'the enemy'));return}
    else{selection=[e];sfx('sel')}
    refreshPanel(true);return}
   if(KCT[e.kind]){
@@ -1464,6 +1468,13 @@ $('sword').addEventListener('pointerdown',e=>{
  const villagers=selection.filter(s=>s.kind==='unit'&&s.team===0&&s.type==='vill'&&!s.dead);
  if(villagers.length){commandVillagers();refreshPanel(true);return}
  let own=selMil();
+ /* a selected tower or Town Center: the sword aims it at the nearest enemy it can reach */
+ const shoot=selection.filter(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done);
+ if(!own.length&&shoot.length){let n=0;
+  shoot.forEach(b=>{const r2=b.type==='tower'?DEFS.tower.range:36;let best=null,bd=r2;
+   for(const t of [...units,...buildings]){if(t.dead||t.team===0||t.garrisoned||t.kind==='res')continue;const c=closestPoint(t,b.cx,b.cy),d=dist2(c[0],c[1],b.cx,b.cy);if(d<bd){bd=d;best=t}}
+   if(best){b.focus=best;n++;ping(best.x!==undefined?best.x:best.cx,best.y!==undefined?best.y:best.cy,'#ff8a7a')}});
+  if(n){sfx('atk')}else toast('No enemy in range');return}
  if(!own.length){
   const mil=units.filter(u=>u.team===0&&u.type!=='vill'&&!u.dead);
   if(mil.length){selection=mil;sfx('sel');refreshPanel(true)}
@@ -2669,17 +2680,23 @@ function update(dt){
     if(popOf(b.team)<popCap[b.team]){b.queue.shift();spawnFrom(b,q.type)}
     else{q.t=q.total;
      if(b.team===0)notice('Population limit: build a House')}}}
-  if(b.type==='tc'||b.type==='tower'){b.cd-=dt;
-   if(b.cd<=0){let best=null,bd=b.type==='tower'?DEFS.tower.range:36;
-    for(const u of units){if(u.dead||u.garrisoned||u.team===b.team)continue;const d=dist2(u.x,u.y,b.cx,b.cy);if(d<bd){bd=d;best=u}}
-    if(best){
-     /* one arrow of its own plus one per unit garrisoned, spread over the nearest foes */
-     const n=1+b.garrison.length,dmg=b.type==='tower'?DEFS.tower.atk:8,r2=b.type==='tower'?DEFS.tower.range:36;
-     const foes=units.filter(u=>!u.dead&&!u.garrisoned&&u.team!==b.team&&dist2(u.x,u.y,b.cx,b.cy)<r2).sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy)).slice(0,Math.min(3,n));
-     b.cd=b.type==='tower'?DEFS.tower.cdr:2;
-     for(let i=0;i<n;i++)spawnArrow(b,foes[i%foes.length],dmg);
-     playAt('bow_release',b.cx,b.cy,0.5)
-    }else b.cd=b.type==='tower'?0.5:0.5}}
+  if((b.type==='tc'||b.type==='tower')&&b.done){b.cd-=dt;
+   if(b.cd<=0){
+    /* Targets, in order: the one the player ordered (tap the tower, then an enemy, or the sword),
+       the nearest enemy units, and failing those the nearest enemy building in reach -- so a
+       forward tower chips away at the enemy's Town Center on its own. One arrow of its own plus
+       one per unit garrisoned. */
+    const r2=b.type==='tower'?DEFS.tower.range:36,dmg=b.type==='tower'?DEFS.tower.atk:8,n=1+b.garrison.length;
+    const inR=t=>{const c=closestPoint(t,b.cx,b.cy);return dist2(c[0],c[1],b.cx,b.cy)<r2};
+    if(b.focus&&(b.focus.dead||b.focus.hp<=0||b.focus.garrisoned))b.focus=null;
+    let tg=[];
+    if(b.focus&&inR(b.focus))tg=[b.focus];
+    else{tg=units.filter(u=>!u.dead&&!u.garrisoned&&u.team!==b.team&&inR(u)).sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy)).slice(0,Math.min(3,n));
+     if(!tg.length){const nb=buildings.filter(o=>!o.dead&&o.team!==b.team&&inR(o)).sort((p,q)=>dist2(p.cx,p.cy,b.cx,b.cy)-dist2(q.cx,q.cy,b.cx,b.cy))[0];if(nb)tg=[nb]}}
+    if(tg.length){b.cd=b.type==='tower'?DEFS.tower.cdr:2;
+     for(let k=0;k<n;k++)spawnArrow(b,tg[k%tg.length],dmg);
+     playAt('bow_release',b.cx,b.cy,0.5)}
+    else b.cd=0.5}}
   if(b.hp<b.maxhp*0.45){b.smk-=dt;
    if(b.smk<=0){b.smk=0.18;const[sx,sy]=w2s(b.cx,b.cy);
     parts.push({x:sx+rnd(-14,14),y:sy-b.hh*rnd(0.5,0.9),vx:rnd(-6,6),vy:-rnd(14,26),life:0,max:1.1,r:rnd(2.5,4.5),col:'rgba(70,70,70,.6)'})}}}

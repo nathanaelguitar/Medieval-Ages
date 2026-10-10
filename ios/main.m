@@ -40,6 +40,9 @@
     v.autoresizingMask=UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     v.backgroundColor=UIColor.blackColor;
     self.introPlayer=[AVPlayer playerWithURL:url];
+    /* AVPlayer manages the idle timer itself while video plays and hands it back "on" when the film
+       ends, which undid the game's keep-awake; the app owns the idle timer instead. */
+    self.introPlayer.preventsDisplaySleepDuringVideoPlayback=NO;
     self.introLayer=[AVPlayerLayer playerLayerWithPlayer:self.introPlayer];
     self.introLayer.videoGravity=AVLayerVideoGravityResizeAspect;
     self.introLayer.frame=v.bounds;
@@ -79,6 +82,7 @@
     if (watched) [NSUserDefaults.standardUserDefaults setBool:YES forKey:@"pe_intro_seen"];
     [NSNotificationCenter.defaultCenter removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:nil];
     [self.introPlayer pause];
+    UIApplication.sharedApplication.idleTimerDisabled=YES;
     UIView *v=self.introView;
     self.introView=nil;
     [UIView animateWithDuration:0.8 animations:^{ v.alpha=0; } completion:^(BOOL done) {
@@ -94,6 +98,7 @@
 
 @interface OESceneDelegate : UIResponder <UIWindowSceneDelegate>
 @property(nonatomic,strong) UIWindow *window;
+@property(nonatomic,strong) NSTimer *awakeTimer;
 @end
 
 @implementation OESceneDelegate
@@ -111,10 +116,15 @@
     /* A match is played hands-off for long stretches (watching villagers work), so the screen
        must not auto-lock under it -- Low Power Mode cuts auto-lock to 30 s. */
     UIApplication.sharedApplication.idleTimerDisabled=YES;
+    /* Belt and braces: re-assert it every 20 s while active, in case a system media session resets it. */
+    [self.awakeTimer invalidate];
+    self.awakeTimer=[NSTimer scheduledTimerWithTimeInterval:20 repeats:YES block:^(NSTimer *t) {
+        (void)t; UIApplication.sharedApplication.idleTimerDisabled=YES; }];
 }
 - (void)sceneWillResignActive:(UIScene *)scene {
     (void)scene;
     [((OEGameViewController *)self.window.rootViewController).webGame setActive:NO];
+    [self.awakeTimer invalidate]; self.awakeTimer=nil;
     UIApplication.sharedApplication.idleTimerDisabled=NO;
 }
 @end
