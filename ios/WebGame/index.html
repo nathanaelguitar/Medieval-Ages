@@ -17,7 +17,7 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 /* Pause reads as a tap-anywhere overlay rather than a dialog: the board is frozen, so the only
    thing to do is come back, and one tap on the dimmed map does it. z-index sits under #hud so the
    pause pill itself stays tappable (it toggles the same state). */
-#pauseOv{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,10,5,.42);backdrop-filter:blur(1.5px);z-index:9;cursor:pointer}
+#pauseOv{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,10,5,.42);backdrop-filter:blur(1.5px);z-index:11;cursor:pointer}
 /* Settings menu: opening it pauses the board. Resign sits behind a confirm step so a stray tap
    cannot end a match. */
 #pauseCard{min-width:220px;padding:14px 16px 12px;border-radius:14px;background:rgba(14,18,11,.94);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#efe8d6;text-align:center;cursor:default}
@@ -25,6 +25,16 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
 .pmBtn{display:block;width:100%;margin:7px 0 0;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#efe8d6;font-weight:700;font-size:15px;line-height:1;font-family:inherit;cursor:pointer;touch-action:manipulation}
 .pmBtn:active{transform:scale(.97)}
 .pmDanger{background:linear-gradient(#b5302a,#86201b);border-color:rgba(255,190,180,.45);color:#fff}
+.pmSlider{display:flex;align-items:center;gap:10px;margin:10px 2px 2px;font-size:13px;font-weight:700;color:#d9d1bd}
+.pmSlider span{width:46px;text-align:left}
+.pmSlider input{flex:1;accent-color:#d9b36a;height:28px;touch-action:pan-x}
+/* Phones in landscape have ~390px of height: tighten the card so every row fits. */
+@media (max-height:520px){
+ #pauseCard{padding:9px 14px 9px;min-width:250px}
+ .pmTitle{margin-bottom:4px;font-size:13px}
+ .pmBtn{padding:8px 12px;margin-top:5px;font-size:14px}
+ .pmSlider{margin:5px 2px 0}
+}
 .pmAsk{margin:0 0 4px;font-size:13px;line-height:1.35;color:#d9d1bd}
 #hud{position:absolute;inset:0;pointer-events:none;color:#fff;z-index:10}
 .ui{pointer-events:auto;touch-action:none}
@@ -141,6 +151,8 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;inset:0;backgrou
   <div class="pmTitle">Paused</div>
   <div id="pmMain">
    <button class="pmBtn" id="pmResume">Resume</button>
+   <label class="pmSlider"><span>Sound</span><input type="range" id="pmVolSfx" min="0" max="100" step="1"></label>
+   <label class="pmSlider"><span>Music</span><input type="range" id="pmVolMusic" min="0" max="100" step="1"></label>
    <button class="pmBtn" id="pmMusic">Music: On</button>
    <button class="pmBtn pmDanger" id="pmResign">Resign</button>
   </div>
@@ -277,7 +289,7 @@ const idleOf=t=>units.reduce((n,u)=>n+(u.team===t&&!u.dead&&!u.garrisoned&&u.typ
 
 /* ============ audio ============ */
 let AC=null,masterG=null;
-function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();masterG=AC.createGain();masterG.gain.value=0.35;masterG.connect(AC.destination)}catch(_) {}}
+function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();masterG=AC.createGain();masterG.gain.value=0.35*volSfx/70;masterG.connect(AC.destination)}catch(_) {}}
 /* Background music: the march plays now and then under the game, quietly, then rests for a
    minute or two so the board's own sounds carry. It has its own gain (not masterG) so it can sit
    well under the effects, and because it runs in the same AudioContext, pausing the game (which
@@ -285,6 +297,18 @@ function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkit
    first tap) because fetch() is blocked under file:// in the app's web view, and decoding it into
    Web Audio is the only way to set its volume on iOS -- an <audio> element's volume is read-only. */
 const MUSIC_VOL=0.16;
+/* Player volume sliders (0-100, remembered). 70 is the mix as designed; Sound scales effects,
+   voices and UI beeps together, Music scales the march. */
+let volSfx=70,volMusic=70;
+try{const a=localStorage.getItem('pe_vol_sfx'),b=localStorage.getItem('pe_vol_music');if(a!==null)volSfx=+a;if(b!==null)volMusic=+b}catch(_){}
+const musicLevel=()=>MUSIC_VOL*volMusic/70;
+let musicEnd=0;
+function applyVolumes(){
+ if(masterG)masterG.gain.value=0.35*volSfx/70;
+ if(sfxG)sfxG.gain.value=0.85*volSfx/70;
+ if(musicG&&musicSrc&&AC){const t=AC.currentTime;musicG.gain.cancelScheduledValues(t);
+  musicG.gain.setValueAtTime(musicLevel(),t);
+  if(musicEnd-6>t){musicG.gain.setValueAtTime(musicLevel(),musicEnd-6);musicG.gain.linearRampToValueAtTime(0,musicEnd)}}}
 let musicG=null,musicBuf=null,musicSrc=null,musicT=null,musicOn=true;
 try{musicOn=localStorage.getItem('pe_music')!=='off'}catch(_){}
 function b64ToBuf(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer}
@@ -300,8 +324,8 @@ function playMusic(){
  if(paused||document.hidden){musicLater(10);return}
  const src=AC.createBufferSource();src.buffer=musicBuf;src.connect(musicG);
  const t=AC.currentTime;musicG.gain.cancelScheduledValues(t);musicG.gain.setValueAtTime(0,t);
- musicG.gain.linearRampToValueAtTime(MUSIC_VOL,t+4);                      /* fade in */
- musicG.gain.setValueAtTime(MUSIC_VOL,t+musicBuf.duration-6);
+ musicG.gain.linearRampToValueAtTime(musicLevel(),t+4);                   /* fade in */
+ musicG.gain.setValueAtTime(musicLevel(),t+musicBuf.duration-6);musicEnd=t+musicBuf.duration;
  musicG.gain.linearRampToValueAtTime(0,t+musicBuf.duration);              /* fade out */
  src.onended=()=>{if(musicSrc===src){musicSrc=null;musicLater(rnd(60,120))}};
  musicSrc=src;src.start(t)}
@@ -319,7 +343,7 @@ function setMusic(on){
 const BANK={};let sfxG=null;
 function loadBank(name){
  if(!AC)return;
- if(!sfxG){sfxG=AC.createGain();sfxG.gain.value=0.85;sfxG.connect(AC.destination)}
+ if(!sfxG){sfxG=AC.createGain();sfxG.gain.value=0.85*volSfx/70;sfxG.connect(AC.destination)}
  const sc=document.createElement('script');sc.src='audio/'+name+'_bank.js';
  sc.onload=()=>{const b=(window.PE_AUDIO||{})[name];if(!b)return;
   for(const[k,v]of Object.entries(b)){const e={vol:v.vol||1,bufs:[],rr:0};BANK[k]=e;
@@ -2303,6 +2327,15 @@ function scheduleTut(){
  $('pauseCard').addEventListener('click',e=>e.stopPropagation());
  $('pmResume').addEventListener('click',()=>setPaused(false));
  $('pmMusic').addEventListener('click',()=>setMusic(!musicOn));
+ const vs=$('pmVolSfx'),vm=$('pmVolMusic');vs.value=volSfx;vm.value=volMusic;
+ /* The menu pauses the game, which suspends audio; while a slider moves, let it play so the new
+    level can be heard, and suspend again shortly after if the game is still paused. */
+ let previewT=null;
+ const preview=()=>{if(!AC)return;if(AC.state==='suspended')AC.resume();clearTimeout(previewT);
+  previewT=setTimeout(()=>{if(paused&&AC.suspend)AC.suspend()},1500)};
+ vs.addEventListener('input',()=>{volSfx=+vs.value;try{localStorage.setItem('pe_vol_sfx',volSfx)}catch(_){}applyVolumes();preview()});
+ vs.addEventListener('change',()=>sfx('sel'));                       /* a blip to hear the new level */
+ vm.addEventListener('input',()=>{volMusic=+vm.value;try{localStorage.setItem('pe_vol_music',volMusic)}catch(_){}applyVolumes();preview()});
  $('pmMusic').textContent='Music: '+(musicOn?'On':'Off');
  $('pmResign').addEventListener('click',()=>{$('pmMain').style.display='none';$('pmConfirm').style.display=''});
  $('pmResignNo').addEventListener('click',()=>{$('pmMain').style.display='';$('pmConfirm').style.display='none'});
