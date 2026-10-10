@@ -150,7 +150,7 @@ NARR_LINES = [
     "The sword button gathers your army. Press it again to charge the nearest enemy, or tap an enemy to strike it.",
     "Your soldiers hold their ground. They fight anything that comes near, but will not chase far unless you order it.",
     "The gear pauses the game. There you can set the sound and music, or replay this lesson.",
-    "Your goal is to destroy the enemy Town Center, far to the east. The enemy wakes now. Good luck, my lord.",
+    "Your goal is to destroy the enemy Town Center, far to the east. The enemy wakes now. Godspeed, my liege.",
 ]
 NARR_SETS = {f"s{i:02d}": [(t, t, t)] for i, t in enumerate(NARR_LINES)}
 GRID_NARR = [(0.45, 0.5, 0.7), (0.55, 0.45, 0.8)]

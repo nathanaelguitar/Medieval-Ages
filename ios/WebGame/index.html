@@ -2907,7 +2907,7 @@ const TUT=[
  {t:'The sword gathers your army; press it again to charge. Or tap an enemy.',tg:()=>({el:$('sword')}),next:1},
  {t:'Soldiers hold their ground: they fight what comes near, but never chase far.',tg:()=>army().length?{grp:army()}:null,next:1},
  {t:'The gear pauses the game: sound, music, and this lesson again.',tg:()=>({el:$('ppause')}),next:1},
- {t:'Your goal: destroy the enemy Town Center, far to the east. The enemy wakes now!',tg:()=>({el:$('mmWrap')}),next:1}];
+ {t:'Destroy the enemy Town Center, far to the east. The enemy wakes now. Godspeed, my liege!',tg:()=>({el:$('mmWrap')}),next:1}];
 function tutSnap(){const tc=homeTC();
  T.base={house:nB('house'),farm:nB('farm'),rax:nB('barracks'),drop:nB('woodyard')+nB('mill')+nB('mine'),pop:popOf(0),rally:tc&&tc.rallyRes};
  T.t0=T.sayT=time;T.said=false;T.doneT=null;T.drive=0;T.pan=0;T.mm=false;T.sword=false;T.idle=false;T.garr=false;T.txt=null}
