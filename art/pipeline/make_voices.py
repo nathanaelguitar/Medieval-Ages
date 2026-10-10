@@ -150,7 +150,10 @@ NARR_LINES = [
     "The sword button gathers your army. Press it again to charge the nearest enemy, or tap an enemy to strike it.",
     "Your soldiers hold their ground. They fight anything that comes near, but will not chase far unless you order it.",
     "The gear pauses the game. There you can set the sound and music, or replay this lesson.",
-    "Your goal is to destroy the enemy Town Center, far to the east. The enemy wakes now. Godspeed, my liege.",
+    # s24 ships a hand-assembled take (art/pipeline/narr_godspeed.py -> art/source/narration/): this
+    # half plus a slow, grave "Godspeed... my liege." from the plain seed at exaggeration 0.8. A
+    # `post` run overwrites game/narrator_s24_1.wav, so re-copy that file after one.
+    "Your goal is to destroy the enemy's Town Center, far to the east. The enemy wakes now. Godspeed, my liege.",
 ]
 NARR_SETS = {f"s{i:02d}": [(t, t, t)] for i, t in enumerate(NARR_LINES)}
 GRID_NARR = [(0.45, 0.5, 0.7), (0.55, 0.45, 0.8)]
