@@ -468,7 +468,8 @@ function musicTick(){
  if(want&&!musicLoading&&performance.now()>=musicRestUntil)playTrack(want)}
 setInterval(musicTick,500);
 /* title music: after the intro film (the iOS app plays it natively and says when it is done) */
-function startTitleMusic(){if(titleMusic)return;titleMusic=true;initAudio();if(AC&&AC.resume)AC.resume();initMusic()}
+function startTitleMusic(){if(titleMusic)return;titleMusic=true;musicRestUntil=performance.now()+3500;   /* a beat of silence after the film */
+ initAudio();if(AC&&AC.resume)AC.resume();initMusic()}
 addEventListener('oe-intro-done',startTitleMusic);
 addEventListener('pointerdown',()=>{if(!started&&!titleMusic&&!document.getElementById('introOv'))startTitleMusic();else if(titleMusic&&AC&&AC.state==='suspended')AC.resume()},true);
 function setMusic(on){
