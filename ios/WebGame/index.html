@@ -1780,6 +1780,24 @@ function drawSpr(k,sx,sy,targetW){
 const BLDSPR={tc:'med_tc',barracks:'med_barracks',woodyard:'med_woodyard',mine:'med_mine',market:'med_market',
  tower:'med_tower',mill:'med_mill',farm:'med_farm',palisade:'med_palisade',stonewall:'med_stonewall',gate:'med_gate'};
 const HOUSES=['med_house_a','med_house_b'];   /* single-storey cottages; the two-storey house_c read as leaning and was dropped */
+/* The Mill's sails are their own face-on sprite (med_mill_sails, hub at its centre), turned over the
+   sail-less body at the windshaft. MILL_HUB is that windshaft in med_mill's (@2x) pixels and
+   MILL_SAIL the sail disc's diameter in the same pixels, so both scale with the body at any zoom. */
+const MILL_HUB=[161,88],MILL_SAIL=290,SAIL_W=Math.PI*2/7;   /* one turn every 7 s at rest */
+function drawSails(b,hx,hy,kk){
+ const im=spr('med_mill_sails');if(!im||!MILL_SAIL)return;
+ /* quicker while villagers are gathering food near this Mill; eased so it never jumps */
+ const busy=units.some(u=>!u.dead&&u.team===b.team&&u.order&&u.order.type==='gather'&&u.order.ctype==='f'&&u.order.res&&dist2(u.order.res.gx,u.order.res.gy,b.cx,b.cy)<64);
+ const dt=Math.min(.1,Math.max(0,time-(b.sailT??time)));b.sailT=time;
+ b.sailV=(b.sailV??SAIL_W)+((busy?SAIL_W*1.7:SAIL_W)-(b.sailV??SAIL_W))*Math.min(1,dt*.8);
+ b.sailA=((b.sailA??b.id*1.3)+b.sailV*dt)%(Math.PI*2);
+ /* Turn the cross in its own plane, then project that plane onto the tower's lower-left face. In
+    this parallel projection the plane's horizontal runs along the ground edge (TW/2,TH/2) per tile
+    and its vertical stays vertical (x0.816 against it), so rotation followed by this one fixed
+    squash-and-shear is exact. Negative angle: anticlockwise seen from the front, like a real mill. */
+ const d=MILL_SAIL*kk;
+ ctx.save();ctx.translate(hx,hy);ctx.transform(.816,.408,0,1,0,0);ctx.rotate(-b.sailA);
+ ctx.drawImage(im,-d/2,-d/2,d,d);ctx.restore()}
 /* Wall segments are baked running along world x; the _b mirrors run along y. A segment follows
    its neighbours so a line of them reads as one wall. */
 const WALLS={palisade:1,stonewall:1,gate:1};
@@ -2171,6 +2189,7 @@ function occBox(o){
   const B=w2s(o.tx+o.size,o.ty),C=w2s(o.tx+o.size,o.ty+o.size),D=w2s(o.tx,o.ty+o.size),A=w2s(o.tx,o.ty);return[D[0],B[0],A[1]-o.hh*1.8,C[1]]}
  const[sx,sy]=w2s(o.gx,o.gy);return[sx-22,sx+22,sy-72,sy+2]}
 function silhouette(h,o){
+ PERF.sil++;
  if(silC.width!==cv.width||silC.height!==cv.height){silC.width=mskC.width=cv.width;silC.height=mskC.height=cv.height}
  const M=mainCtx.getTransform(),p0=M.transformPoint({x:h.x0,y:h.y0}),p1=M.transformPoint({x:h.x1,y:h.y1});
  const rx=Math.max(0,Math.floor(p0.x)-2),ry=Math.max(0,Math.floor(p0.y)-2),rw=Math.min(cv.width,Math.ceil(p1.x)+2)-rx,rh=Math.min(cv.height,Math.ceil(p1.y)+2)-ry;
@@ -2335,6 +2354,7 @@ function drawBuilding(b,ghost){
   ctx.restore();
   if(b.flash>0){const f=flashSprite(bs);
    if(f){ctx.save();ctx.globalAlpha=Math.min(0.55,b.flash*4);ctx.drawImage(f,dx,dy,dw,dh);ctx.restore()}}
+  if(b.type==='mill'&&b.done&&!ghost)drawSails(b,dx+MILL_HUB[0]*kk,dy+MILL_HUB[1]*kk,kk);   /* none while it is going up */
   /* Banner on the sprite path too, planted on the sprite's own top edge rather than the tile
      footprint, so it sits on the roof instead of floating over the middle of the model. */
   if(!ghost&&!WALLS[b.type]&&b.type!=='farm')drawBanner(b,ccx,dy+3);
@@ -2610,12 +2630,13 @@ function render(){
  corpses=corpses.filter(c=>time-c.born<CORPSE_LIFE);
  for(const c of corpses){const sx=(c.x-c.y)*TW2,sy=(c.x+c.y)*TH2;
   if(sx<L||sx>R||sy<T||sy>B)continue;dl.push([c.x+c.y-0.05,3,c])}
- dl.sort((a,b)=>a[0]-b[0]);
+ dl.sort((a,b)=>a[0]-b[0]);const silB=PERF.sil;
  /* units a building or tree will hide, with the occluders in front of them */
  const hid=[];for(const d of dl)if(d[1]===2&&!d[2].garrisoned){const[sx,sy]=w2s(d[2].x,d[2].y);hid.push({u:d[2],z:d[0],x0:sx-10,x1:sx+10,y0:sy-42,y1:sy+2})}
  for(const d of dl){if(d[1]===0)drawRes(d[2]);else if(d[1]===1)drawBuilding(d[2]);else if(d[1]===3)drawCorpse(d[2]);else drawUnit(d[2]);
   if(hid.length&&(d[1]===1||(d[1]===0&&d[2].kind==='tree'))){const bb=occBox(d[2]);
    if(bb)for(const h of hid)if(h.z<d[0]&&h.x1>bb[0]&&h.x0<bb[1]&&h.y1>bb[2]&&h.y0<bb[3]){try{silhouette(h,d[2])}catch(_){ctx=mainCtx}}}}
+ PERF.silMax=Math.max(PERF.silMax,PERF.sil-silB);
  // arrows: drawn at their arc height and pointed along the flight, with a faint trail
  for(const a of arrows){if(a.dead)continue;
   const p=a.trav!==undefined?clamp(a.trav/(a.trav+(a.rem||0)+1e-6),0,1):1;
@@ -2825,8 +2846,18 @@ function frame(ts){
     keep their own pace so a death reads as a beat rather than a stall. */
  let world=dt;
  if(hitStopT>0){world=dt*0.25;hitStopT=Math.max(0,hitStopT-dt)}
+ const t0=performance.now();
  if(started&&!over&&!paused){time+=world;update(world)}
- render()}
+ const t1=performance.now();render();PERF.f(ts,t1-t0,performance.now()-t1)}
+/* Performance probe: every 2 s, frame rate, the slowest frame, and update/render cost go to the
+   native log (devicectl --console streams it to the Mac). Costs a few additions per frame. */
+const PERF={n:0,up:0,rd:0,worst:0,last:0,t0:0,sil:0,silMax:0,
+ f(ts,up,rd){const ft=this.last?ts-this.last:0;this.last=ts;this.n++;this.up+=up;this.rd+=rd;if(ft>this.worst)this.worst=ft;
+  if(!this.t0)this.t0=ts;
+  if(ts-this.t0>=2000){const s=(ts-this.t0)/1000;
+   const m=`perf fps ${(this.n/s).toFixed(1)} worst ${this.worst.toFixed(0)}ms update ${(this.up/this.n).toFixed(2)}ms render ${(this.rd/this.n).toFixed(2)}ms silhouettes ${(this.sil/this.n).toFixed(1)}/f max ${this.silMax} units ${units.length} res ${resources.length} zoom ${zoom.toFixed(2)}`;
+   try{window.webkit.messageHandlers.oelog.postMessage(m)}catch(_){}
+   this.n=this.up=this.rd=this.worst=this.sil=this.silMax=0;this.t0=ts}}};
 /* Pause sits with the resource pills because that row is already the player's status strip, and
    `time` drives every idle cycle, so freezing it stops the whole board rather than just movement. */
 function setPaused(on){
