@@ -995,7 +995,7 @@ function updAnimals(dt){
   r.mv=false;if(r.flash>0)r.flash-=dt;
   /* the herd and the woods are not silent: an occasional bleat or grunt from animals on screen */
   if(!r.slain){if(r.vT===undefined)r.vT=time+rnd(4,25);
-   else if(time>r.vT){r.vT=time+rnd(16,34);playAt(r.kind==='sheep'?'sheep_bleat':'boar_grunt',r.gx,r.gy,0.32)}}
+   else if(time>r.vT){r.vT=time+rnd(16,34);if(time>(window.ambT||0)&&playAt(r.kind==='sheep'?'sheep_bleat':'boar_grunt',r.gx,r.gy,0.32))window.ambT=time+7}}   /* a flock shares one voice: at most one call every 7 s */
   if(r.slain){r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}
   if(r.kind==='boar'&&r.foe){
    const f=r.foe;
