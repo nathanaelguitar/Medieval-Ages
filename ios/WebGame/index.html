@@ -340,6 +340,7 @@ const ICON={
  tower:'<svg viewBox="0 0 20 20"><path d="M5 17V6h10v11M4 6h12l-2-3H6z" fill="#aeb6bd" stroke="#e8e2d2" stroke-width="1.2"/><path d="M7 9h6M7 12h6M7 15h6" stroke="#68717a" stroke-width="1"/><path d="M10 3v-2" stroke="#d9b36a" stroke-width="1.5"/></svg>',
  market:'<svg viewBox="0 0 20 20"><path d="M10 2.6v13.6M6.5 17.6h7M3.2 5.4h13.6" stroke="#e9c352" stroke-width="1.5" stroke-linecap="round" fill="none"/><circle cx="10" cy="2.6" r="1.2" fill="#e9c352"/><path d="M3.2 5.4 1.2 10.6M3.2 5.4l2 5.2M16.8 5.4l-2 5.2M16.8 5.4l2 5.2" stroke="#c9a54a" stroke-width=".9" fill="none"/><path d="M.8 10.6h4.8a2.4 2 0 0 1-4.8 0zM14.4 10.6h4.8a2.4 2 0 0 1-4.8 0z" fill="#e9c352" stroke="#a8842c" stroke-width=".7"/></svg>',
  tc:'<svg viewBox="0 0 20 20"><path d="M3 17V8h3v3h2.4V8h3.2v3H14V8h3v9z" fill="#e8e2d2"/></svg>',
+ garrison:'<svg viewBox="0 0 20 20"><path d="M9 17V6h8v11" fill="none" stroke="#e8e2d2" stroke-width="1.8" stroke-linejoin="round"/><path d="M2 11h8m0 0-2.6-2.6M10 11l-2.6 2.6" fill="none" stroke="#c89b52" stroke-width="1.8" stroke-linecap="round"/></svg>',
  ungarrison:'<svg viewBox="0 0 20 20"><path d="M3 17V6h8v11" fill="none" stroke="#e8e2d2" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 10h8m0 0-2.6-2.6M17 10l-2.6 2.6" fill="none" stroke="#c89b52" stroke-width="1.8" stroke-linecap="round"/></svg>',
  trade:'<svg viewBox="0 0 20 20"><path d="M4 7h10m0 0-2.6-2.6M14 7l-2.6 2.6" fill="none" stroke="#e8e2d2" stroke-width="1.8" stroke-linecap="round"/><path d="M16 13H6m0 0 2.6-2.6M6 13l2.6 2.6" fill="none" stroke="#c89b52" stroke-width="1.8" stroke-linecap="round"/></svg>'};
 const FORM=[[0,0]];for(let r=1;r<=4;r++){const n=r*6;for(let i=0;i<n;i++){const a=i/n*Math.PI*2;FORM.push([Math.cos(a)*r*0.9,Math.sin(a)*r*0.9])}}
@@ -349,7 +350,7 @@ const DIRS=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.41],[1,-1,1.41],[-1,1,1.41]
 let units=[],buildings=[],resources=[],resMap=new Map(),arrows=[],parts=[],texts=[];
 let res=[{w:350,f:600,g:250,s:100},{w:350,f:350,g:220,s:220}];
 let popCap=[5,5];
-let selection=[],placing=null,box=null,pinch=null;
+let selection=[],placing=null,box=null,pinch=null,garrisonPick=false;
 let camX=0,camY=0,zoom=0.85,time=0,started=false,over=false,uid=1,lastT=0,afT=0,shake=0,paused=false,hitStopT=0;
 /* Seconds during which the player's own panning outranks the follow camera. Without this the two
    fight: you drag the view somewhere and it immediately drags itself back to your villagers. */
@@ -833,7 +834,7 @@ function updArrow(a,dt){
  a.trav=(a.trav||0)+Math.min(st,d);a.rem=d;
  /* An arrow that lands kicks up the same sparks and dust a melee blow does. Without it a volley
     reads as arrows evaporating in mid-air, since the flight is the only thing drawn. */
- if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){damage(a.target,a.dmg,a.team,a.src);hitFx(a.tx,a.ty);playAt('arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
+ if(d<=st+0.15){if(a.target&&!a.target.dead&&a.target.hp>0){const an=a.target.animal;damage(a.target,a.dmg,a.team,a.src);hitFx(a.tx,a.ty);playAt(an?'arrow_flesh':'arrow_hit',a.tx,a.ty,0.7)}a.dead=true}
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
 /* How far a unit fighting on its own initiative may stray from its post. */
@@ -928,7 +929,12 @@ function findDrop(u){
  return best}
 const GATHERCOL={tree:'#7c5a33',stone:'#aeb6bd',gold:'#e9c352',berry:'#d0544a',boar:'#a8402f',sheep:'#e8e0cf'};
 const gatherCol=r=>GATHERCOL[r.kind]||'#d8c68a';
-function findResByKind(kind,x,y,r){let best=null,bd=r*r;for(const q of resources){if(q.dead||q.amt<=0||q.kind!==kind)continue;const d=dist2(x,y,q.gx,q.gy);if(d<bd){bd=d;best=q}}return best}
+/* A tree, ore or bush deep inside a forest or quarry has no open tile beside it, so no path reaches
+   it; such nodes are never picked (animals wander and are always fair game). `skip` lists nodes a
+   villager already failed to reach. */
+function openBeside(q){for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)if((i||j)&&passable(q.tx+i,q.ty+j))return true;return false}
+function findResByKind(kind,x,y,r,skip){let best=null,bd=r*r;for(const q of resources){if(q.dead||q.amt<=0||q.kind!==kind)continue;
+  if(skip&&skip.includes(q))continue;if(!q.animal&&!openBeside(q))continue;const d=dist2(x,y,q.gx,q.gy);if(d<bd){bd=d;best=q}}return best}
 function deplete(r){r.amt=0;
  if(r.kind==='bld'){r.dead=true;gridBlock(r,false)}
  /* Game animals never claimed a grid tile or a resMap slot, so they must not release one
@@ -957,7 +963,7 @@ function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
     return to what they were doing. */
  const serves=DROP_SERVES[b.type];
  let near=null;
- if(serves){for(const k of serves){const r=findResByKind(k,b.cx,b.cy,9);
+ if(serves){for(const k of serves){const r=findResByKind(k,b.cx,b.cy,16);
   if(r&&(!near||dist2(r.gx,r.gy,b.cx,b.cy)<dist2(near.gx,near.gy,b.cx,b.cy)))near=r}}
  units.forEach(u=>{if(u.lastTask&&u.lastTask.type==='build'&&u.lastTask.b===b)u.lastTask=null;
   if(u.order.type==='build'&&u.order.b===b){
@@ -976,7 +982,8 @@ let sheepSel=[];
 function hurtGame(r,amt,src){
  if(r.slain)return;
  r.hp-=amt;r.flash=0.15;burst(r.gx,r.gy,'#8a1d14',4,30);
- if(r.hp<=0){r.hp=0;r.slain=true;r.foe=null;r.wax=r.way=0;r.mv=false;burst(r.gx,r.gy,'#8a1d14',10,40);addStain(r.gx,r.gy,5,1.2);return}
+ if(r.hp>0&&time>(r.cryT||0)){r.cryT=time+1.2;playAt(r.kind==='boar'?'boar_squeal':'sheep_bleat',r.gx,r.gy,0.75)}
+ if(r.hp<=0){playAt(r.kind==='boar'?'boar_death':'sheep_bleat',r.gx,r.gy,0.85);r.hp=0;r.slain=true;r.foe=null;r.wax=r.way=0;r.mv=false;burst(r.gx,r.gy,'#8a1d14',10,40);addStain(r.gx,r.gy,5,1.2);return}
  if(src&&src.kind==='unit'&&!src.dead&&(!r.foe||r.foe.dead))r.foe=src}
 function animalStep(r,dx,dy,sp,dt){
  const d=Math.hypot(dx,dy)||1,nx=r.gx+dx/d*sp*dt,ny=r.gy+dy/d*sp*dt;
@@ -986,13 +993,16 @@ function updAnimals(dt){
  for(const r of resources){
   if(!r.animal||r.dead)continue;
   r.mv=false;if(r.flash>0)r.flash-=dt;
+  /* the herd and the woods are not silent: an occasional bleat or grunt from animals on screen */
+  if(!r.slain){if(r.vT===undefined)r.vT=time+rnd(4,25);
+   else if(time>r.vT){r.vT=time+rnd(16,34);playAt(r.kind==='sheep'?'sheep_bleat':'boar_grunt',r.gx,r.gy,0.32)}}
   if(r.slain){r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}
   if(r.kind==='boar'&&r.foe){
    const f=r.foe;
    if(f.dead||f.garrisoned||dist2(f.x,f.y,r.gx,r.gy)>144)r.foe=null;
    else{const d2=dist2(f.x,f.y,r.gx,r.gy);r.bite-=dt;
     if(d2>0.6){r.mv=animalStep(r,f.x-r.gx,f.y-r.gy,2.1,dt)}
-    else if(r.bite<=0){r.bite=1.4;r.face=(f.x-r.gx-(f.y-r.gy))>=0?1:-1;animalHeading(r,f.x-r.gx,f.y-r.gy);damage(f,2,-1,null);playAt('sword_hit',r.gx,r.gy,0.35)}
+    else if(r.bite<=0){r.bite=1.4;r.face=(f.x-r.gx-(f.y-r.gy))>=0?1:-1;animalHeading(r,f.x-r.gx,f.y-r.gy);damage(f,2,-1,null);playAt('boar_grunt',r.gx,r.gy,0.7)}
     r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}}
   if(r.kind==='sheep'){
    /* claim: a unit of either side within two tiles takes a stray; an owned sheep changes hands
@@ -1001,7 +1011,7 @@ function updAnimals(dt){
    for(const u of units){if(u.dead||u.garrisoned)continue;const d=dist2(u.x,u.y,r.gx,r.gy);
     if(r.owner===u.team&&d<9)mine=true;if(d<nd){nd=d;near=u}}
    if(near&&r.owner!==near.team&&!mine){r.owner=near.team;r.goal=null;sheepSel=sheepSel.filter(q=>q!==r);
-    if(near.team===0)ping(r.gx,r.gy,'#cfd6e4')}
+    if(near.team===0){ping(r.gx,r.gy,'#cfd6e4');playAt('sheep_bleat',r.gx,r.gy,0.6)}}
    if(r.goal){const dx=r.goal[0]-r.gx,dy=r.goal[1]-r.gy;
     if(dx*dx+dy*dy<0.3||!animalStep(r,dx,dy,1.3,dt))r.goal=null;else r.mv=true;
     r.hx=r.gx;r.hy=r.gy;r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}
@@ -1036,7 +1046,15 @@ function gatherStep(u,dt){
   /* a live boar is shot from a few tiles off; everything else (and the boar's carcass) is worked up close */
   const hunt=r.kind==='boar'&&!r.slain;
   if(dist2(u.x,u.y,r.gx,r.gy)<(hunt?9:2.1)){u.path=null;o.phase=hunt?'hunt':'work';u.cd=0.3}
-  else{if(hunt&&u.path&&time>u.nT)u.path=null;navTo(u,r.gx,r.gy);followPath(u,dt)}
+  else{if(hunt&&u.path&&time>u.nT)u.path=null;navTo(u,r.gx,r.gy);followPath(u,dt);
+   /* No route at all (the pathfinder gave up) leaves the villager standing with its tool out and
+      never "stuck", since it is not trying to move. After a second of that, try the next nearest
+      node of the same kind; with none in reach, go properly idle so the Idle button finds it. */
+   if(!u.path&&!u.moving){o.noPath=(o.noPath||0)+dt;
+    if(o.noPath>1){o.noPath=0;o.skip=(o.skip||[]).concat(r);
+     const nr=o.kind==='farm'?null:findResByKind(o.kind,u.x,u.y,14,o.skip);
+     if(nr){o.res=nr;u.path=null;u.nT=0}else{u.order={type:'idle'};u.path=null}}}
+   else o.noPath=0}
  }else if(o.phase==='hunt'){
   if(r.slain||dist2(u.x,u.y,r.gx,r.gy)>16){o.phase='go';u.path=null}
   else{u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.cd-=dt;
@@ -1048,7 +1066,7 @@ function gatherStep(u,dt){
   u.path=null;u.face=(r.gx-u.x)>=0?1:-1;u.anim+=dt*9;
   u.workT=time;u.workAt=[r.gx,r.gy];u.workClip=WORK_CLIP[r.kind==='bld'?'farm':r.kind]||'chop';u.workAlt=WORK_ALT[r.kind]||null;
   const take=Math.min(1.1*dt*(u.team===1?LV.gather:1),r.amt);r.amt-=take;u.carry+=take;u.gt+=dt;
-  if(r.animal&&!r.slain){r.slain=true;r.wax=r.way=0;r.goal=null;sheepSel=sheepSel.filter(q=>q!==r)}   /* butchered where it stands */
+  if(r.animal&&!r.slain){if(r.kind==='sheep')playAt('sheep_bleat',r.gx,r.gy,0.7);r.slain=true;r.wax=r.way=0;r.goal=null;sheepSel=sheepSel.filter(q=>q!==r)}   /* butchered where it stands */
   if(u.gt>1.4){u.gt=0;const[sx,sy]=w2s(r.gx,r.gy);
    parts.push({x:sx+rnd(-5,5),y:sy-14,vx:rnd(-10,10),vy:-rnd(8,20),g:60,life:0,max:0.4,r:1.5,col:gatherCol(r)})}
   if(r.amt<=0)deplete(r);
@@ -1060,7 +1078,7 @@ function gatherStep(u,dt){
    u.path=null;
    const amt=Math.floor(u.carry);u.carry=0;
    if(amt>0){res[u.team][o.ctype]+=amt;
-    if(u.team===0){texts.push({x:d.cx,y:d.cy-1,str:'+'+amt,ic:CTI[o.ctype],t:0});sfx('coin')}}
+    if(u.team===0){texts.push({x:d.cx,y:d.cy-1,str:'+'+amt,ic:CTI[o.ctype],t:0})}}
    if(r&&!r.dead&&r.amt>0){o.phase='go';u.path=null}
    else{const nr=o.kind==='farm'?null:findResByKind(o.kind,u.x,u.y,12);
     if(nr){o.res=nr;o.phase='go';u.path=null}else u.order={type:'idle'}}
@@ -1302,6 +1320,11 @@ function entityAt(wx,wy){
 function tap(px,py){
  const[wx,wy]=scr2w(px,py);
  const now=performance.now();
+ /* armed by the Garrison button: the next tap picks the shelter, anything else calls it off */
+ if(garrisonPick){garrisonPick=false;const g=unitAtScreen(px,py)||entityAt(wx,wy);
+  if(g&&g.kind==='bld'&&g.team===0&&(g.type==='tc'||g.type==='tower')&&g.done){const gv=selUnits(0).filter(canGarrison);garrisonVillagers(gv,g);ping(g.cx,g.cy,'#7fd4ff');if(gv[0])voice('ack',gv[0])}
+  else{toast('Garrison cancelled');sfx('no')}
+  refreshPanel(true);return}
  if(placing&&WALL_LINE[placing.type]){const t=wTile([wx,wy]);placing.line=[t,t];placing.pend=true;return}
  if(placing){tryPlace(wx,wy);return}
  {const h=standardHits.find(h=>Math.abs(px-h.x)<h.w&&Math.abs(py-h.y)<h.h);
@@ -1355,8 +1378,7 @@ function tap(px,py){
   if(e.kind==='bld'&&e.team===0){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill'),gv=selUnits(0).filter(canGarrison);
-   if((e.type==='tc'||e.type==='tower')&&e.done&&gv.length){garrisonVillagers(gv,e);ping(e.cx,e.cy,'#7fd4ff');voice('ack',gv[0])}
-   else if(!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
+   if(!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
    else if(e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
    else{selection=[e];sfx('sel')}
    refreshPanel(true);return}
@@ -1560,6 +1582,9 @@ function refreshPanel(force){
  if(selection.length===1)html+=`<div class="php"><div id="phpf" style="width:${Math.max(0,first.hp/first.maxhp*100)}%"></div></div>`;
  const acts=[];
  if(!enemy){
+  /* Garrison is a deliberate two-step order (button, then the Town Center or a tower): tapping a
+     building with villagers selected used to shelter them, and a misclick emptied the fields. */
+  if(selUnits(0).some(canGarrison))acts.push({l:'Garrison',s:'Garrison',c:'',t:'garrison'});
   if(counts.vill)acts.push({l:'House',s:'House',c:'30w',t:'house'},{l:'Farm',s:'Farm',c:'60w',t:'farm'},{l:'Barracks',s:'Barracks',c:'125w',t:'barracks'},{l:'Wood Yard',s:'Wood',c:'50w',t:'woodyard'},{l:'Mill',s:'Mill',c:'60w',t:'mill'},{l:'Mining Camp',s:'Mine',c:'75w',t:'mine'},{l:'Market',s:'Market',c:'100w',t:'market'},{l:'Palisade',s:'Palisade',c:'20w',t:'palisade'},{l:'Stone Wall',s:'Stone',c:'25s',t:'stonewall'},{l:'Gate',s:'Gate',c:'20w 20s',t:'gate'},{l:'Tower',s:'Tower',c:'80w 100s',t:'tower'});
   if(counts.tc)acts.push({l:'Villager',s:'Villager',c:'50f',t:'vill',q:1});
   if(selection.length===1&&first.kind==='bld'&&first.garrison&&first.garrison.length)acts.push({l:'Unload '+first.garrison.length,s:'Unload',c:'',t:'ungarrison'});
@@ -1579,6 +1604,7 @@ function refreshPanel(force){
   btn.onclick=()=>{
    if(DEFS[a.t]&&DEFS[a.t].size&&a.t!=='tc')startPlace(a.t);
    else if(a.t==='ungarrison')ungarrison(selection[0]);
+   else if(a.t==='garrison'){garrisonPick=!garrisonPick;if(garrisonPick){placing=null;toast('Tap your Town Center or a tower')}}
    else if(a.t==='trade')tradeMarket(selection[0],a);
    else{const b=selection[0];if(b&&b.kind==='bld')tryQueue(b,a.t)}
    refreshPanel(true)}});
@@ -2682,9 +2708,9 @@ function update(dt){
  afT-=dt;
  if(afT<=0){afT=0.4;
   $('panel').querySelectorAll('.abtn').forEach((btn,i)=>{const a=pActs[i];if(!a)return;
-   const affordable=a.t==='ungarrison'||(a.t==='trade'?(a.sell?res[0][a.k]>=100:res[0].g>=mktBuy(a.k)):canAfford(0,DEFS[a.t].cost));
+   const affordable=a.t==='ungarrison'||a.t==='garrison'||(a.t==='trade'?(a.sell?res[0][a.k]>=100:res[0].g>=mktBuy(a.k)):canAfford(0,DEFS[a.t].cost));
    btn.classList.toggle('no',!affordable);
-   btn.classList.toggle('on',!!placing&&placing.type===a.t)})}
+   btn.classList.toggle('on',(!!placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick))})}
  if(pHP&&selection.length===1)pHP.style.width=(Math.max(0,selection[0].hp/selection[0].maxhp*100))+'%';
  if(pQF&&selection.length===1&&selection[0].kind==='bld'){const b=selection[0];
   if(b.queue.length){const q=b.queue[0];pQF.style.width=(q.t/q.total*100)+'%';
@@ -2852,8 +2878,8 @@ const TUT=[
   ok:()=>{const tc=homeTC();return tc&&tc.queue.length>0||popOf(0)>T.base.pop}},
  {...viaTC('Now tap a tree or berries: new villagers walk straight to work.',()=>({r:nearR('berry')||nearR('tree')})),
   ok:()=>{const tc=homeTC();return tc&&tc.rallyRes&&tc.rallyRes!==T.base.rally}},
- {t:'Raiders? Select villagers and tap the Town Center to shelter them. Each one inside adds an arrow.',
-  tg:()=>({b:homeTC()}),next:1,ok:()=>T.garr},
+ {t:()=>garrisonPick?'Now tap the Town Center.':'Raiders? Select villagers, tap Garrison, then the Town Center. Each one inside adds an arrow.',
+  tg:()=>garrisonPick?{b:homeTC()}:selV().length?{el:abtn('="Garrison"')}:{grp:myVills()},next:1,ok:()=>T.garr},
  /* unloading gets its own step (v: its own narration clip, added after the first 25) */
  {v:'s25',t:()=>{const tc=homeTC();return tc&&!tc.garrison.length?'Everyone is out again.':selIs('tc')?'Tap Unload to bring them out. They walk to its flag.':'To bring them out, tap the Town Center, then Unload.'},
   tg:()=>{const tc=homeTC();return tc&&tc.garrison.length&&selIs('tc')?{el:abtn('^="Unload"')}:{b:homeTC()}},next:1,

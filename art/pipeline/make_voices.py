@@ -143,7 +143,7 @@ NARR_LINES = [
     "With villagers selected, the hammer sends them back to their last task, or to help finish a building.",
     "More hands, more harvest. Tap your Town Center, then tap Villager to train one.",
     "With the Town Center selected, tap a tree or a berry bush. New villagers will walk straight to work there.",
-    "If raiders come, select your villagers and tap the Town Center. They shelter inside, and it shoots harder.",
+    "If raiders come, select your villagers, tap Garrison, then tap the Town Center. They shelter inside, and it shoots harder.",
     "The Idle button finds every villager with nothing to do.",
     "Now for an army. Select a villager and build a Barracks. It costs one hundred and twenty five wood.",
     "When the Barracks is built, tap it to train men at arms and archers.",

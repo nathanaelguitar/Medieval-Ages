@@ -96,8 +96,34 @@ SOUNDS = {
          "Stone wall crumbles and wooden beams snap, short collapse crash, foley",
          "Medieval house falls apart: splintering wood and falling masonry, one short crash, dry"],
         (0.9, 2.2), 3.0, (200, 3000), -15, 2),
+    # hunting: animals, not steel (added 2026-10-10)
+    "arrow_flesh": (
+        ["Arrow hitting an animal's hide, a soft dull thud, single short impact, close mic, dry, no reverb, no metal",
+         "Arrow strikes a wild boar's body, muffled fleshy thump, one hit, foley, dry",
+         "Soft thump of an arrow sinking into an animal, single short impact, no clang, dry"],
+        (0.12, 0.4), 1.2, (200, 2500), -19, 4),
+    "boar_grunt": (
+        ["Angry wild boar grunting and snorting as it charges, one short burst, close mic, dry, no reverb",
+         "Wild pig aggressive snort and grunt, single short sound, animal foley, dry",
+         "Boar huffing grunt while attacking, short guttural snort, dry recording"],
+        (0.3, 0.9), 1.6, (150, 2500), -18, 4),
+    "boar_squeal": (
+        ["Wild boar squealing in pain after being hit, one short high squeal, close mic, dry, no reverb",
+         "Wounded pig shriek, single short painful squeal, animal foley, dry",
+         "Boar yelps and squeals when struck by an arrow, short, dry recording"],
+        (0.3, 0.9), 1.6, (500, 4500), -18, 4),
+    "boar_death": (
+        ["Wild boar's dying squeal fading into a last low groan, single sound, close mic, dry, no reverb",
+         "Wounded wild pig gives a final long squeal and collapses with a grunt, animal foley, dry",
+         "Boar death cry, a drawn-out squeal ending in a weak snort, dry recording"],
+        (0.7, 1.8), 2.4, (300, 4000), -17, 3),
+    "sheep_bleat": (
+        ["A single sheep bleating baa, one short call, close mic, dry, no reverb, farm animal",
+         "Sheep bleat, one natural baa from a woolly ewe, dry recording",
+         "Lamb bleating once, short gentle baa, animal foley, dry"],
+        (0.4, 1.2), 1.8, (400, 3500), -19, 4),
 }
-FADE_OUT_MS = {"building_collapse": 80}
+FADE_OUT_MS = {"building_collapse": 80, "boar_death": 60}
 TAGS = {"small-sfx-base": "", "small-sfx": "ss_", "medium-base": "mb_", "medium": "md_", "tangoflux": "tf_"}
 LICENSES = {
     "stabilityai/stable-audio-3-*": "Stability AI Community License: commercial use permitted under US$1M annual "
