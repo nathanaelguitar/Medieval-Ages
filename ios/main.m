@@ -42,10 +42,14 @@
 - (void)sceneDidBecomeActive:(UIScene *)scene {
     (void)scene;
     [((OEGameViewController *)self.window.rootViewController).webGame setActive:YES];
+    /* A match is played hands-off for long stretches (watching villagers work), so the screen
+       must not auto-lock under it -- Low Power Mode cuts auto-lock to 30 s. */
+    UIApplication.sharedApplication.idleTimerDisabled=YES;
 }
 - (void)sceneWillResignActive:(UIScene *)scene {
     (void)scene;
     [((OEGameViewController *)self.window.rootViewController).webGame setActive:NO];
+    UIApplication.sharedApplication.idleTimerDisabled=NO;
 }
 @end
 

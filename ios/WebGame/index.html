@@ -536,7 +536,9 @@ function blockBorders(){for(let i=0;i<MAP;i++){grid[i]=0;grid[(MAP-1)*MAP+i]=0;g
 function mkUnit(team,type,x,y){const d=DEFS[type];const u={kind:'unit',id:uid++,team,type,x,y,hp:d.hp,maxhp:d.hp,cd:rnd(0.3),order:{type:'idle'},lastTask:null,path:null,pi:0,dx:0,dy:0,carry:0,gt:0,gres:null,lastRes:null,face:1,anim:rnd(9),stuck:0,retries:0,lx:x,ly:y,flash:0,nT:0,fleeT:0,moving:false,engaged:-9,fire:-9};
  if(type==='vill')u.sex=Math.random()<0.5?'f':'m';
  units.push(u);return u}
-function gridBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++)grid[j*MAP+i]=on?0:1}
+/* Farms are open ground: they claim their tiles (grid value 2) so nothing is built on them, but
+   units walk across them. A blocking farm laid over a villager used to trap him inside it. */
+function gridBlock(b,on){const v=on?(b.type==='farm'?2:0):1;for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++)grid[j*MAP+i]=v}
 /* A gate owns its tiles in gateAt rather than the shared grid, so only the owner passes. */
 function gateBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+b.size;i++){
  const k=j*MAP+i;if(on)gateAt.set(k,b.team);else gateAt.delete(k)}}
@@ -620,12 +622,12 @@ function tradeMarket(m,a){
 }
 function canPlace(tx,ty,size){for(let j=0;j<size;j++)for(let i=0;i<size;i++){const x=tx+i,y=ty+j;
  if(x<1||y<1||x>MAP-2||y>MAP-2)return false;const k=y*MAP+x;
- if(tiles[k]===2||!grid[k]||resMap.has(k)||gateAt.has(k))return false}return true}
+ if(tiles[k]===2||grid[k]!==1||resMap.has(k)||gateAt.has(k))return false}return true}
 
 /* ============ pathfinding & movement ============ */
 /* Gates claim no grid slot: they live in gateAt (tile -> owning team) so the owner's units
    walk through and everyone else is stopped. Pass `team` to admit the owner. */
-const passable=(x,y,team)=>x>=0&&y>=0&&x<MAP&&y<MAP&&(grid[y*MAP+x]===1||(team!==undefined&&gateAt.get(y*MAP+x)===team));
+const passable=(x,y,team)=>x>=0&&y>=0&&x<MAP&&y<MAP&&(grid[y*MAP+x]===1||grid[y*MAP+x]===2||(team!==undefined&&gateAt.get(y*MAP+x)===team));
 const passableAt=(x,y,team)=>x>0.25&&y>0.25&&x<MAP-0.25&&y<MAP-0.25&&passable(Math.floor(x),Math.floor(y),team);
 function losW(ax,ay,bx,by,team){const d=Math.hypot(bx-ax,by-ay);const n=Math.max(1,Math.ceil(d/0.35));
  for(let i=1;i<n;i++){const x=ax+(bx-ax)*i/n,y=ay+(by-ay)*i/n;if(!passable(Math.floor(x),Math.floor(y),team))return false}return true}
@@ -1100,14 +1102,26 @@ function tryPlace(wx,wy){
  pay(0,d.cost);
  const b=mkBuilding(0,placing.type,tx,ty,false);
  const vills=selUnits(0).filter(u=>u.type==='vill');
- /* A farm takes one villager, its future farmer: the nearest selected one not already on its
-    way to build another farm, so laying out several farms with a group spreads them one per
-    field instead of piling everyone onto the last. Other buildings take the whole group. */
+ /* A farm takes one villager, its future farmer. With a group selected, one tap lays out a farm
+    for every villager not already headed to build one: the tapped field plus neighbouring fields
+    around it, as many as the wood pays for. Villagers left without a farm stand idle. Other
+    buildings take the whole group. */
  if(b.type==='farm'){
   const free=vills.filter(u=>!(u.order.type==='build'&&u.order.b&&u.order.b.type==='farm'&&!u.order.b.done));
-  const pool=free.length?free:[];
-  const v=pool.sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy))[0];
-  if(v)assignBuild(v,b)}
+  const farms=[b];
+  if(free.length>1){
+   const sz=d.size,spots=[];
+   for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++)if(i||j)spots.push([tx+i*sz,ty+j*sz,i*i+j*j]);
+   spots.sort((p,q)=>p[2]-q[2]);
+   for(const[x,y]of spots){if(farms.length>=free.length)break;
+    if(!canAfford(0,d.cost))break;
+    if(!canPlace(x,y,sz))continue;
+    pay(0,d.cost);farms.push(mkBuilding(0,'farm',x,y,false))}}
+  const left=free.slice();
+  for(const f of farms){if(!left.length)break;
+   left.sort((p,q)=>dist2(p.x,p.y,f.cx,f.cy)-dist2(q.x,q.y,f.cx,f.cy));assignBuild(left.shift(),f)}
+  if(free.length>1&&left.length){left.forEach(u=>{u.order={type:'idle'};u.path=null});
+   toast('Wood for '+farms.length+' farm'+(farms.length===1?'':'s')+' · '+left.length+' idle')}}
  else vills.forEach(v=>assignBuild(v,b));
  ping(b.cx,b.cy,'#9fe08a');sfx('ok');placing=null;refreshPanel(true)}
 function resAt(wx,wy){let best=null,bd=0.9;for(const r of resources){if(r.dead)continue;const d=dist2(wx,wy,r.gx,r.gy);if(d<bd){bd=d;best=r}}return best}
