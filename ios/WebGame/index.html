@@ -648,7 +648,7 @@ function afterBuild(u){const r=u.lastRes;
 function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
  /* a puff of settling dust reads as "that just finished" without any UI */
  burst(b.cx,b.cy,'#cbb27f',12,42);ping(b.cx,b.cy,'rgba(220,200,150,.8)');
- if(b.team===0){sfx('done');toast(DEFS[b.type].name+' complete')}
+ if(b.team===0){sfx('done');notice(DEFS[b.type].name+' complete')}
  units.forEach(u=>{if(u.lastTask&&u.lastTask.type==='build'&&u.lastTask.b===b)u.lastTask=null;if(u.order.type==='build'&&u.order.b===b)afterBuild(u)})}
 /* Animals graze in place, drift within a short leash of where they spawned, and bolt
    away from whoever is currently harvesting them. */
@@ -814,7 +814,7 @@ function aiThink(){
    if(idle.length>=ai.wave)ai.wave=Math.min(ai.wave+2,12);
    ai.next=time+150;
    mil.forEach(u=>{u.order={type:'amove',x:ptc.cx+rnd(-2,2),y:ptc.cy+rnd(-2,2),tgt:null};u.path=null;u.nT=0;setPath(u,u.order.x,u.order.y)});
-   toast('⚔ The enemy army is marching!');sfx('horn')}}}
+   notice('⚔ The enemy army is marching!');sfx('horn')   /* the horn still sounds every wave */}}}
 
 /* ============ orders & placement ============ */
 function orderMove(list,wx,wy){list.forEach((u,i)=>{rememberTask(u);const o=FORM[i%FORM.length];u.order={type:'move'};u.path=null;u.nT=0;setPath(u,wx+o[0]+rnd(-0.15,0.15),wy+o[1]+rnd(-0.15,0.15))})}
@@ -1107,11 +1107,17 @@ function refreshPanel(force){
 
 /* ============ HUD & toasts ============ */
 let hudC={w:-1,f:-1,g:-1,s:-1,p:'',i:-1};
+/* Banners. A notice the game raises on its own (population cap, a building finishing, the enemy
+   marching) shows once per game: the player has read it, and repeating it every few seconds only
+   nags. Replies to a tap still show each time, but never twice at once. */
+const shownOnce=new Set();
+function notice(msg){if(shownOnce.has(msg))return;shownOnce.add(msg);toast(msg)}
 function toast(msg){const box=$('toasts');
+ if([...box.children].some(d=>d.textContent===msg&&!d.dataset.gone))return;
  while(box.children.length>2)box.firstChild.remove();
  const d=document.createElement('div');d.className='toast';d.textContent=msg;box.appendChild(d);
  requestAnimationFrame(()=>d.classList.add('in'));
- setTimeout(()=>{d.classList.remove('in');setTimeout(()=>d.remove(),300)},2600)}
+ setTimeout(()=>{d.dataset.gone=1;d.classList.remove('in');setTimeout(()=>d.remove(),300)},2600)}
 function updHUD(){
  const w=Math.floor(res[0].w),f=Math.floor(res[0].f),g=Math.floor(res[0].g),s=Math.floor(res[0].s);
  const p=popOf(0)+'/'+popCap[0],i=idleOf(0);
@@ -2107,7 +2113,7 @@ function update(dt){
    if(q.t>=q.total){
     if(popOf(b.team)<popCap[b.team]){b.queue.shift();spawnFrom(b,q.type)}
     else{q.t=q.total;
-     if(b.team===0&&time>b.popT){b.popT=time+4;toast('Population limit: build a House')}}}}
+     if(b.team===0)notice('Population limit: build a House')}}}
   if(b.type==='tc'||b.type==='tower'){b.cd-=dt;
    if(b.cd<=0){let best=null,bd=b.type==='tower'?DEFS.tower.range:36;
     for(const u of units){if(u.dead||u.garrisoned||u.team===b.team)continue;const d=dist2(u.x,u.y,b.cx,b.cy);if(d<bd){bd=d;best=u}}
