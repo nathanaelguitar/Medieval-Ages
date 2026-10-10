@@ -177,9 +177,6 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
 #wallBar button{padding:9px 18px;border-radius:20px;font:700 15px Palatino,Georgia,serif;letter-spacing:.03em;
  border:1px solid rgba(227,194,122,.65);background:rgba(20,16,10,.82);color:#e3c27a}
 #wallBar #wallOk{background:rgba(52,96,40,.92);color:#eaf6dc;border-color:#9fe08a}
-#credits{position:absolute;left:14px;right:14px;bottom:calc(6px + env(safe-area-inset-bottom));font:10px/1.35 -apple-system,system-ui,sans-serif;color:rgba(230,224,206,.62);text-align:left;text-shadow:0 1px 2px #000;pointer-events:auto}
-#credits a{color:rgba(227,194,122,.85);text-decoration:underline}
-#credits b{color:rgba(227,194,122,.9);font-weight:600}
 #startOv{align-items:flex-start;justify-content:center;text-align:left;
  padding-left:max(36px,calc(env(safe-area-inset-left) + 22px));
  background:linear-gradient(90deg,rgba(7,9,5,.92) 0%,rgba(7,9,5,.72) 30%,rgba(7,9,5,.15) 62%,rgba(7,9,5,0) 80%),
@@ -256,7 +253,6 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
  <button id="introSkip" hidden>Skip<svg viewBox="0 0 12 12" width="10" height="10" style="margin-left:7px;vertical-align:-1px"><path d="M2.5 2.2 6.3 6l-3.8 3.8M6.2 2.2 10 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
 <div id="wallBar" class="ui" hidden><button id="wallOk">&#10003; Build</button><button id="wallRedo">&#8634; Redraw</button></div>
 <div id="startOv" class="ov ui">
- <div id="credits">Boar and sheep models: <b>0 A.D.</b> by Wildfire Games, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a> &middot; <a href="https://play0ad.com">play0ad.com</a> &nbsp;|&nbsp; Narration and voices: Chatterbox (Resemble AI, MIT), Kokoro (Apache-2.0) &nbsp;|&nbsp; Music and art generated with AI tools</div>
  <div class="hero">
   <h1 class="title">MEDIEVAL<span>AGES</span></h1>
   <p class="tag">Build a village. Raise an army. Hold the realm.</p>
@@ -271,13 +267,14 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
  <button class="bigbtn" id="againBtn">Play Again</button>
 </div>
 
-<script src="sprites/manifest.js"></script>
 <script src="sprites/manifest_man_at_arms.js"></script>
 <script src="sprites/manifest_archer.js"></script>
 <script src="sprites/manifest_villager_m.js"></script>
 <script src="sprites/manifest_villager_f.js"></script>
 <script src="sprites/manifest_buildings.js"></script>
 <script src="sprites/manifest_resources.js"></script>
+<script src="sprites/manifest_animal_boar.js"></script>
+<script src="sprites/manifest_animal_sheep.js"></script>
 <script>
 "use strict";
 /* ============ constants & helpers ============ */
@@ -288,9 +285,6 @@ const dist2=(ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy};
 const MAP=56,TW=64,TH=32,TW2=32,TH2=16;
 const w2s=(x,y)=>[(x-y)*TW2,(x+y)*TH2];
 const TEAMC=[{m:'#4d84dd',d:'#2c5aa6',s:'#9dbcf0'},{m:'#d85048',d:'#a02f2c',s:'#f0a09a'}];
-/* How long a shot's recoil and release flourish stay on screen. Short enough to read as a single
-   blow, long enough to survive a frame drop on a phone. */
-const KICK_SECONDS=0.3;
 const BLD={tc:{w1:'#dcbd82',w2:'#c2a468',roof:'#a06a35',trim:'#7c4f24'},
  barracks:{w1:'#a89a88',w2:'#8e8071',roof:'#6f4e2e',trim:'#54391f'},
  house:{w1:'#d3ae74',w2:'#b8935c',roof:'#916034',trim:'#6d431f'},
@@ -987,7 +981,7 @@ function hurtGame(r,amt,src){
 function animalStep(r,dx,dy,sp,dt){
  const d=Math.hypot(dx,dy)||1,nx=r.gx+dx/d*sp*dt,ny=r.gy+dy/d*sp*dt;
  if(passableAt(nx,ny)){r.gx=nx;r.gy=ny}else if(passableAt(nx,r.gy))r.gx=nx;else if(passableAt(r.gx,ny))r.gy=ny;else return false;
- r.face=(dx-dy)>=0?1:-1;return true}
+ r.face=(dx-dy)>=0?1:-1;animalHeading(r,dx,dy);return true}
 function updAnimals(dt){
  for(const r of resources){
   if(!r.animal||r.dead)continue;
@@ -998,7 +992,7 @@ function updAnimals(dt){
    if(f.dead||f.garrisoned||dist2(f.x,f.y,r.gx,r.gy)>144)r.foe=null;
    else{const d2=dist2(f.x,f.y,r.gx,r.gy);r.bite-=dt;
     if(d2>0.6){r.mv=animalStep(r,f.x-r.gx,f.y-r.gy,2.1,dt)}
-    else if(r.bite<=0){r.bite=1.4;r.face=(f.x-r.gx-(f.y-r.gy))>=0?1:-1;damage(f,2,-1,null);playAt('sword_hit',r.gx,r.gy,0.35)}
+    else if(r.bite<=0){r.bite=1.4;r.face=(f.x-r.gx-(f.y-r.gy))>=0?1:-1;animalHeading(r,f.x-r.gx,f.y-r.gy);damage(f,2,-1,null);playAt('sword_hit',r.gx,r.gy,0.35)}
     r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy);continue}}
   if(r.kind==='sheep'){
    /* claim: a unit of either side within two tiles takes a stray; an owned sheep changes hands
@@ -1022,7 +1016,7 @@ function updAnimals(dt){
    const nk=Math.floor(ny)*MAP+Math.floor(nx);
    /* stay on open ground: never drift into water, trees, ore or a building footprint */
    if(nx>2&&ny>2&&nx<MAP-2&&ny<MAP-2&&tiles[nk]<2&&grid[nk]===1
-      &&dist2(nx,ny,r.hx,r.hy)<36){r.gx=nx;r.gy=ny;r.face=(r.wax-r.way)>=0?1:-1}
+      &&dist2(nx,ny,r.hx,r.hy)<36){r.gx=nx;r.gy=ny;r.face=(r.wax-r.way)>=0?1:-1;animalHeading(r,r.wax,r.way)}
    else{r.wax=-r.wax;r.way=-r.way}}
   r.tx=Math.floor(r.gx);r.ty=Math.floor(r.gy)}
 }
@@ -1624,11 +1618,11 @@ function selectIdle(){
  selection=idle;sfx('sel');toast(idle.length+(idle.length===1?' villager idle':' villagers idle'));
  refreshPanel(true)}
 
-/* ============ 0 A.D. artwork ============ */
-/* The sprite set is baked offline by scripts/bake_zeroad_art.py from the meshes and textures in
-   ios/ZeroADArt (CC BY-SA 3.0, (C) Wildfire Games -- see sprites/ATTRIBUTION.txt for the
-   attribution and share-alike terms). Every draw site below falls back to its procedural vector
-   art whenever a sprite is missing or has not decoded yet, so the game renders correctly from the
+/* ============ artwork ============ */
+/* Units, animals, buildings, trees and ore are pre-rendered sprites made with the project's own
+   pipeline (art/pipeline/: Codex reference images, TRELLIS.2 bodies rigged and baked in Blender, or
+   cut out of photoreal renders). Every draw site below falls back to its procedural vector art
+   whenever a sprite is missing or has not decoded yet, so the game renders correctly from the
    first frame and stays playable if the sprite set is absent entirely. `?art=proc` forces the old
    look, which makes the two directly comparable in one session.
 
@@ -1637,21 +1631,13 @@ function selectIdle(){
    tile diamond keeps all sprites on the same grid, and anchoring by the footprint centre means a
    structure with wide ground decor still plants correctly on its tiles. */
 const ART=!/[?&]art=proc\b/.test(location.search);
-/* The 0 A.D. surface overlay on land tiles is opt-in (`?ground=1`). Its grain is fine detail at a
-   fixed pattern size, so on displays whose backing scale is not a clean 2x it beats against the
-   device pixel grid and moires into a wide lattice of light bands with mismatched corners -- which
-   reads as boxes drawn across the map rather than as texture. Flat terrain is the default; the
-   overlay is one flag away for anyone whose display samples it cleanly. */
-const GROUND_OVERLAY=/[?&]ground=1\b/.test(location.search);
-/* Sprite and animation data comes from sprites/manifest.js, which scripts/bake_zeroad_art.py
-   writes alongside the PNGs. It is loaded as a <script> above rather than fetched, because
-   fetch() is blocked against file:// inside the app's WKWebView. If it is missing the game
-   simply falls back to the procedural art, so this stays a single source of truth rather
-   than carrying a second, stale copy of the tables inline. */
+/* Sprite and animation data comes from the sprites/manifest_*.js files, which the art pipeline
+   writes alongside the PNGs. They are loaded as <script>s above rather than fetched, because
+   fetch() is blocked against file:// inside the app's WKWebView. If they are missing the game
+   simply falls back to the procedural art. */
 const SPRM={};
 const SPRA={};
 const SPR={};
-let groundPat=null;
 /* Animation groups, loaded from SPRA. Each is a list of frames baked across one clip. */
 const ANIM={};
 function loadArt(){
@@ -1676,15 +1662,6 @@ function loadArt(){
    if(!SPR[k]){const im=new Image();im.src='sprites/'+v.file;SPR[k]=im}
   }
  }
- /* The ground is a seamless 0 A.D. surface flattened to a light band, multiplied over the
-    existing terrain colours so the game keeps its grass/dirt/water semantics and gains 0 A.D.'s
-    surface detail rather than being repainted. A failed load must not take the game down. Loaded
-    only under ?ground=1 -- see GROUND_OVERLAY for why it is not the default. */
- if(GROUND_OVERLAY){
-  const g=new Image();
-  g.onload=()=>{try{groundPat=ctx.createPattern(g,'repeat')}catch(e){groundPat=null}};
-  g.src='sprites/ground.png';
- }
 }
 /* Only draw a sprite once the browser has actually decoded it. */
 function spr(k){const i=SPR[k];return(ART&&i&&i.complete&&i.naturalWidth)?i:null}
@@ -1695,16 +1672,9 @@ function drawSpr(k,sx,sy,targetW){
  const m=SPRM[k],kk=targetW/m[1];
  ctx.drawImage(im,sx-m[2]*kk,sy-m[3]*kk,im.width*kk,im.height*kk);
  return true}
-/* Which structure draws as which 0 A.D. building. Farms and walls keep their procedural art:
-   this asset set has no wall-segment mesh, and its gate is a prop authored to sit inside a
-   fortress wall rather than a standalone gateway (it bakes into two disconnected fragments). */
-/* Farms, walls and the Mill keep their procedural art: this asset set has no wall-segment mesh, its
-   gate is a prop authored to sit inside a fortress wall rather than a standalone gateway, and it has
-   no mill at all. Mapping the Mill to bld_store -- as the other drop-offs do -- made four different
-   buildings look identical. */
 /* Medieval set (art/pipeline/buildings_from_images.py), cut out of photoreal renders and warped so
    each footprint lands on the tile diamond. Every structure now has its own sprite, the Mill,
-   farms and walls included. The 0 A.D. bld_* sprites remain in the manifest as a fallback. */
+   farms and walls included; without its sprite a structure draws as vector art. */
 const BLDSPR={tc:'med_tc',barracks:'med_barracks',woodyard:'med_woodyard',mine:'med_mine',market:'med_market',
  tower:'med_tower',mill:'med_mill',farm:'med_farm',palisade:'med_palisade',stonewall:'med_stonewall',gate:'med_gate'};
 const HOUSES=['med_house_a','med_house_b'];   /* single-storey cottages; the two-storey house_c read as leaning and was dropped */
@@ -1721,35 +1691,6 @@ function buildingSprite(b){
  const k=BLDSPR[b.type];if(!k)return null;
  if(WALLS[b.type]&&wallAxis(b)==='y')return SPRM[k+'_b']?k+'_b':k;
  return SPRM[k]?k:null}
-/* 0 A.D. marks ownership with a player-colour tint on the material. Baking that would double the
-   sprite count for a cosmetic difference, so it is applied once here and cached per frame. Multiply
-   tints the sprite but also paints the transparent surround, so the original alpha is restored. */
-const TINT={0:'#cfe0ff',1:'#ffd0c8'};
-const SPRT=new Map();
-function tinted(img,team){
- if(!img)return null;
- const key=img.src+'#'+team;
- let c=SPRT.get(key);
- if(!c){
-  c=document.createElement('canvas');c.width=img.width;c.height=img.height;
-  const g=c.getContext('2d');
-  g.drawImage(img,0,0);
-  g.globalCompositeOperation='multiply';g.fillStyle=TINT[team]||'#ffffff';
-  g.fillRect(0,0,c.width,c.height);
-  g.globalCompositeOperation='destination-in';g.drawImage(img,0,0);
-  SPRT.set(key,c)}
- return c}
-/* Which clips each unit type plays. The archer has no mesh of its own in this asset set, so it
-   draws as a spearman -- but it still gets that spearman's clips rather than the static sprite,
-   which used to leave the ranged units standing perfectly still through a whole fight. */
-const UNIT_ANIM={vill:{walk:'unit_vill_walk',idle:'unit_vill_idle'},
- swords:{walk:'unit_spear_walk',idle:'unit_spear_idle',
-         readyWalk:'unit_spear_ready_walk',readyIdle:'unit_spear_ready_idle'},
- archer:{walk:'unit_spear_walk',idle:'unit_spear_idle',
-         readyWalk:'unit_spear_ready_walk',readyIdle:'unit_spear_ready_idle'}};
-/* Animated characters, baked from 0 A.D.'s own clips by scripts/blender_bake_animation.py.
-   Walking units play the walk cycle, anyone in a fight plays the weapon-raised stance, and everyone
-   else idles. */
 /* Directional units are baked from eight camera yaws, so they turn instead of mirroring one
    view. The heading is the unit's screen-space direction of travel (or towards its target while
    fighting); DIR_UNIT names the baked set per unit type and the colour per team. */
@@ -1787,8 +1728,9 @@ function dirIndex(a){const i=Math.round(a/(Math.PI/4));return(((1-i)%8)+8)%8}
 /* One baked frame of a directional unit: the image plus its manifest key, whose footprint centre
    anchors it on the ground (attack and death cells are larger than idle/walk, so the cell bottom
    is not the feet). One-shot clips (death) clamp on their last frame. */
-function dirFrame(set,team,clip,d,ph){
- const a=ANIM[`${set}_${TEAM_COL[team]||'blue'}_${clip}_d${d}`];
+function dirFrame(set,team,clip,d,ph){return clipFrame(`${set}_${TEAM_COL[team]||'blue'}_${clip}_d${d}`,ph)}
+function clipFrame(k,ph){
+ const a=ANIM[k];
  if(!a)return null;
  if(!a.frames)a.frames=a.keys.map(key=>{if(!SPR[key]){const im=new Image();im.src='sprites/'+(SPRM[key]?SPRM[key][0]:key+'.png');SPR[key]=im}return SPR[key]});
  if(!a.frames.length||!a.frames.every(f=>f.complete&&f.naturalWidth))return null;
@@ -1815,7 +1757,7 @@ function dirSprite(u){
   u._wf=fi===a.impact?ph:u._wf}
  if(!f){
   const clip=u.moving?(u.carry>=2&&has('carry')?'carry':'walk'):'idle',a=has(clip);
-  /* u.anim runs at 7/s while moving, tuned for the 8-frame 0 A.D. cycles; rescale it so a baked
+  /* u.anim runs at 7/s while moving, tuned for the old 8-frame cycles; rescale it so a baked
      walk plays at its own manifest fps and the stride matches the clip it was extracted from. */
   if(a)f=dirFrame(set,u.team,clip,d,u.moving?Math.floor(u.anim*a.fps/7):Math.floor((time+u.id*0.37)*a.fps))}
  u._dir=!!f;return f}
@@ -1841,42 +1783,21 @@ function drawCorpse(c){
  const[sx,sy]=w2s(c.x,c.y);
  ctx.globalAlpha=age>CORPSE_LIFE-4?Math.max(0,(CORPSE_LIFE-age)/4):1;
  drawDirFrame(f,sx,sy);ctx.globalAlpha=1}
-function unitSprite(u){
- const base=u.type==='vill'?'unit_vill':'unit_spear';
- let img=null;
- const clips=UNIT_ANIM[u.type];
- /* In a fight, and for a moment after the last shot, the weapon comes up -- but only for the types
-    that actually have a ready stance. The villager does not (the bundle ships the hoplite's, not
-    the citizen's), so it keeps idling rather than dropping to its static stand-in mid-fight. The
-    window is longer than every attack cooldown on purpose, so a unit mid-exchange never flickers
-    back to idle between swings. */
- const engaged=time-u.engaged<0.9;
- let clip=null;
- if(clips){
-  const stance=u.moving?clips.readyWalk:clips.readyIdle;
-  clip=(engaged&&stance)?stance:(u.moving?clips.walk:clips.idle)}
- const a=clip?ANIM[clip]:null;
- if(a&&a.frames.length&&a.frames.every(f=>f.complete&&f.naturalWidth)){
-  const n=a.frames.length;
-  /* Walking is driven by u.anim, which advances with movement, so the stride matches the pace.
-     Everything else runs off the clock, offset per unit to avoid lockstep. */
-  const ph=u.moving&&!engaged?Math.floor(u.anim):Math.floor((time+u.id*0.37)*a.fps);
-  img=a.frames[((ph%n)+n)%n]}
- if(!img)img=spr(base);
- return img?(tinted(img,u.team)||img):null}
-const ANIMAL_FACES_LEFT={sheep:true};
+/* Game animals are baked like the units (art/pipeline/rig_quadruped.py: TRELLIS.2 body, procedural
+   walk / grazing idle / carcass, eight camera yaws, the units' camera and scale), keyed
+   animal_<kind>_<clip>_d<dir>. The heading is set where the animal moves (animalHeading); one that
+   has not moved yet faces the way r.face says. A charging boar plays its walk faster so the stride
+   keeps up with the ground it covers. */
+function animalHeading(r,dx,dy){if(dx*dx+dy*dy>1e-9)r.hd=Math.atan2((dx+dy)*TH2,(dx-dy)*TW2)}
 function drawAnimalSprite(r,sx,sy){
- const moving=r.mv||r.flee>0||!!r.wax||!!r.way;
- const key=`animal_${r.kind}_${moving?'walk':'idle'}`;
- const a=ANIM[key]||ANIM[`animal_${r.kind}_idle`];
- const frame=a&&a.keys&&a.keys.length
-  ?a.keys[Math.floor((time+r.hx*1.7+r.hy)*a.fps)%a.keys.length]:`animal_${r.kind}`;
- /* r.face is screen-space (+1 = heading right). The boar bake faces right, the sheep bake faces
-    left, so the sheep flips the other way round. */
- const flip=(r.face<0)!==!!ANIMAL_FACES_LEFT[r.kind];
- ctx.save();ctx.translate(sx,sy);ctx.scale(flip?-1:1,1);
- const drawn=drawSpr(frame,0,0,19)||drawSpr(`animal_${r.kind}`,0,0,19);
- ctx.restore();return drawn}
+ if(r.hd===undefined)r.hd=r.face<0?Math.PI:0;
+ const moving=!r.slain&&(r.mv||r.flee>0||!!r.wax||!!r.way);
+ const k=`animal_${r.kind}_${r.slain?'dead':moving?'walk':'idle'}_d${dirIndex(r.hd)}`,a=ANIM[k];
+ if(!a)return false;
+ const rate=moving&&r.kind==='boar'&&r.foe?2.4:1;
+ const f=clipFrame(k,Math.floor((time+r.hx*1.7+r.hy)*a.fps*rate));
+ if(!f)return false;
+ drawDirFrame(f,sx,sy);return true}
 /* A white-on-silhouette copy for hit feedback. source-atop fills only where the sprite is opaque,
    which is exactly the shape of the flash, and it is cached per sprite. */
 const SPRF={};
@@ -1955,9 +1876,6 @@ function drawTile(x,y,sx,sy){
    /* a light wash of the old per-tile colour keeps the board's soft tile rhythm and shade */
    ctx.globalAlpha=0.16;ctx.fillStyle=tileCol[k];ctx.fill();ctx.globalAlpha=1}
   else{ctx.fillStyle=tileCol[k];ctx.fill()}
-  /* 0 A.D. surface detail multiplied over the terrain colour. dPath's path is still current, so
-     this re-fills the same diamond rather than needing to rebuild it. */
-  if(groundPat){ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=groundPat;ctx.fill();ctx.restore()}
   /* the vector tufts, pebbles and flowers were drawn for flat-colour tiles; on the photo ground
      they read as stickers, so they only appear when the textures are absent */
   const d=pat?0:decor[k];
@@ -1988,14 +1906,11 @@ function drawRes(r){
   /* Canopies sway. The phase comes from the tile, so a stand of trees ripples through itself
      instead of swinging as one block, and the trunk stays put while the crown leans. */
   const sway=Math.sin(time*0.9+r.tx*1.7+r.ty*2.3)*1.4;
-  /* 0 A.D. oak and aleppo pine, chosen by the same tile hash the vector art used. A tree has no
-     grid footprint of its own, so this scales its canopy spread to roughly one tile. */
   /* Photoreal oak, oak, Scots pine and birch matching the medieval buildings, chosen and sized by
      tile hash so a wood reads as mixed growth. Their sprites map one tile to TW at full size
-     (about three villagers tall); the 0 A.D. trees remain as a fallback. */
+     (about three villagers tall); the vector tree below is the fallback. */
   const h4=(r.tx*7+r.ty*13)%4,sz=0.58+((r.tx*31+r.ty*17)%7)*0.03;   /* kept low so woods don't hide units */
   if(drawSpr(['res_oak_a','res_oak_b','res_pine','res_birch'][h4],sx+sway*0.6,sy,TW*sz))return;
-  if(drawSpr(['tree_oak_1','tree_oak_2','tree_pine_1'][v],sx+sway*0.6,sy,28))return;
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(sx,sy+1,9,4,0,0,7);ctx.fill();
   ctx.fillStyle='#6b4a2b';ctx.fillRect(sx-1.8,sy-12,3.6,12);
   ctx.fillStyle=['#2c5a29','#336530','#3a7034'][v];
@@ -2022,7 +1937,8 @@ function drawRes(r){
   const sg=ctx.createRadialGradient(sx,sy+1,0.5,sx,sy+1,9.5);
   sg.addColorStop(0,'rgba(0,0,0,.32)');sg.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(sx,sy+1.5,9.5,4.2,0,0,7);ctx.fill();
-  if(!down&&drawAnimalSprite(r,sx,sy))return;
+  /* the baked sprite (a carcass lying on its side once slain); the vector art below is the fallback */
+  if(drawAnimalSprite(r,sx,sy))return;
   ctx.save();ctx.translate(sx,sy);ctx.scale(f,1);ctx.lineJoin='round';ctx.lineCap='round';
   if(down){
    if(boar){ctx.fillStyle='#4a3524';ctx.beginPath();ctx.ellipse(0,-3,8,3.6,0,0,7);ctx.fill();
@@ -2159,34 +2075,11 @@ function drawUnit(u){
     group carries (drawStandards), which reads from much further off at phone scale. */
  if(u.type==='vill'){ctx.fillStyle=TEAMR[u.team]+'33';ctx.strokeStyle=TEAMR[u.team];ctx.lineWidth=1.4;
   ctx.beginPath();ctx.ellipse(sx,sy+1.5,8.5,3.9,0,0,7);ctx.fill();ctx.stroke()}
- /* 0 A.D. character sprite. The game tracks only a mirrored facing (u.face), so the single baked
-    view is flipped exactly as the vector art was -- there is no direction vector to select among
-    the eight facings bake_zeroad_art.py can produce. Directional units (dirSprite) carry their
-    own facing and team colours, so they are drawn unflipped and untinted. */
+ /* Directional units (dirSprite) carry their own facing, team colours and swing. Until a clip's
+    frames have decoded the procedural figure below stands in. */
  const ds=dirSprite(u);
- const us=ds?ds.img:unitSprite(u);
- /* The firing kick: a short recoil away from the target plus a release flourish. There is no
-    attack clip and no bow mesh to play -- the bundle ships neither -- so the shot is sold by
-    motion and a flash instead of by a pose. KICK_SECONDS is the visible window; the flourish only
-    shows on the release itself so it reads as a shot rather than a permanent glow. */
- const kick=u.fire>=0&&time-u.fire<KICK_SECONDS?(1-(time-u.fire)/KICK_SECONDS):0;
- if(us){
-  if(ds)drawDirFrame(ds,sx,sy);   /* baked facing, team colours and swing: no flip, tint or kick */
-  else{
-   ctx.save();ctx.translate(sx-u.face*kick*2.6,sy-bob-kick*0.7);ctx.scale(u.face<0?-1:1,1);
-   const k=26/us.height;
-   ctx.drawImage(us,-us.width*k/2,-us.height*k,us.width*k,us.height*k);
-   ctx.restore()}
-  if(kick>0.25&&!ds){
-   const hot=kick>0.75;
-   ctx.save();ctx.globalAlpha=(kick-0.25)/0.75;
-   ctx.strokeStyle=DEFS[u.type].ranged?'#ffe9a8':'#fff2d2';ctx.lineWidth=hot?2.4:1.7;ctx.lineCap='round';
-   const ax=sx+u.face*7,ay=sy-15;
-   ctx.beginPath();ctx.arc(ax,ay,DEFS[u.type].ranged?6:4,-0.9+u.face*0.3,0.9+u.face*0.3);ctx.stroke();
-   if(DEFS[u.type].ranged){          /* a nocked arrow leaving the hand */
-    ctx.strokeStyle='#e8e2d4';ctx.lineWidth=1.4;
-    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax+u.face*13,ay-3);ctx.stroke()}
-   ctx.restore()}
+ if(ds){
+  drawDirFrame(ds,sx,sy);
   if(u.carry>=2){const cc=u.order.ctype==='w'?'#8a5a33':u.order.ctype==='g'?'#e9c352':u.order.ctype==='s'?'#aeb6bd':'#d0544a';
    ctx.fillStyle=cc;ctx.beginPath();ctx.arc(sx-4,sy-18,2.5,0,7);ctx.fill();
    ctx.strokeStyle='#1b140d';ctx.lineWidth=.85;ctx.stroke()}
@@ -2280,7 +2173,7 @@ function drawUnit(u){
   ctx.beginPath();ctx.arc(sx,sy-9,6,0,7);ctx.fill();ctx.globalAlpha=1}
  if(showHP(u))drawBar(sx,sy-(u._dir?33:24),16,u.hp/u.maxhp)}
 /* The owner's banner, flown from a pole above a finished structure. Shared by both draw paths
-   because the sprite path returns early: with the 0 A.D. artwork on, nothing on the map used to
+   because the sprite path returns early: with sprite buildings on, nothing on the map used to
    say whose a building was, and in a mirror match the two bases look identical. */
 function drawBanner(b,x,roofY){
  if(!b.done)return;
@@ -2294,7 +2187,7 @@ function drawBuilding(b,ghost){
  const A=w2s(b.tx,b.ty),B=w2s(b.tx+s,b.ty),C=w2s(b.tx+s,b.ty+s),D=w2s(b.tx,b.ty+s);
  const p=b.done?1:Math.max(0.15,b.progress),h=b.hh*p;
  const pal=BLD[b.type];
- /* 0 A.D. structure sprite. Skipped for the placement ghost, where the exact tile footprint is
+ /* Structure sprite. Skipped for the placement ghost, where the exact tile footprint is
     the information the player needs. Scaling the model's projected ground footprint onto this
     building's tile diamond keeps every structure on the grid and preserves scale between types. */
  const bs=ghost?null:buildingSprite(b);

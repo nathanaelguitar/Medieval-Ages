@@ -46,23 +46,30 @@ class ZeroADArtTests(unittest.TestCase):
         self.assertTrue({"helmet", "weapon_R", "sheath_01_R", "leg_R", "leg_L"}
                         <= attachpoints)
 
-    def test_baked_sprite_manifest_is_complete_and_webkit_loadable(self):
+    def test_sprite_manifests_are_complete_and_webkit_loadable(self):
+        """The shipping sprite set (ios/WebGame/sprites/manifest_*.js, written by the art pipeline)
+        names only files that exist, and every animal has idle, walk and dead clips in 8 facings.
+        The 0 A.D. manifest.js/.json and their sprites are gone from the game."""
         sprite_dir = ROOT / "ios/WebGame/sprites"
-        manifest = json.loads((sprite_dir / "manifest.json").read_text())
-        script = (sprite_dir / "manifest.js").read_text()
-        prefix = "window.POCKET_EMPIRES_SPRITES = "
-        self.assertTrue(script.startswith(prefix))
-        self.assertEqual(json.loads(script[len(prefix):].rstrip().removesuffix(";")), manifest)
-        for group in ("animal_boar_idle", "animal_boar_walk",
-                      "animal_sheep_idle", "animal_sheep_walk"):
-            self.assertEqual(manifest[group]["group"], "animation")
-            self.assertGreater(len(manifest[group]["files"]), 1)
+        self.assertFalse((sprite_dir / "manifest.js").exists())
+        self.assertFalse((sprite_dir / "manifest.json").exists())
+        prefix = "window.POCKET_EMPIRES_SPRITES = Object.assign(window.POCKET_EMPIRES_SPRITES || {}, "
+        manifest = {}
+        for path in sorted(sprite_dir.glob("manifest_*.js")):
+            body = path.read_text().split("\n", 1)[1]
+            self.assertTrue(body.startswith(prefix), path.name)
+            manifest.update(json.loads(body[len(prefix):].rstrip().removesuffix(");")))
+        for kind in ("boar", "sheep"):
+            for clip in ("idle", "walk", "dead"):
+                for d in range(8):
+                    group = manifest[f"animal_{kind}_{clip}_d{d}"]
+                    self.assertEqual(group["group"], "animation")
+                    self.assertGreaterEqual(len(group["files"]), 1 if clip == "dead" else 2)
         for name, entry in manifest.items():
             files = [entry["file"]] if "file" in entry else entry.get("files", [])
             for filename in files:
                 with self.subTest(sprite=name, file=filename):
                     self.assertTrue((sprite_dir / filename).is_file())
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
