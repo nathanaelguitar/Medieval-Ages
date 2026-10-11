@@ -1,11 +1,11 @@
-Handle: @nathanael_rts
-Name:   Nathanael RTS
+Handle: @nathanael_medieval
+Name:   Nathanael Medieval
 
 Description:
-Real-time strategy, played and built.
+The Middle Ages: played, studied and built.
 
-Age of Empires matches, build orders and strategy breakdowns, plus a devlog series where I build Medieval Ages, my own mobile RTS, from the ground up: the art, the AI, the soundtrack and everything that breaks along the way.
+Medieval history, from castles and battles to kings and everyday life. Age of Empires matches, build orders and strategy breakdowns. And a devlog series where I build Medieval Ages, my own mobile RTS, from the ground up: the art, the AI, the soundtrack and everything that breaks along the way.
 
-New videos weekly. Subscribe if you like villagers, walls and well-timed charges.
+New videos weekly. Subscribe if you like castles, villagers and well-timed charges.
 
-Keywords: age of empires, aoe2, aoe4, rts, real time strategy, strategy games, build order, medieval, game dev, indie game, devlog, mobile game, ios game
+Keywords: medieval history, middle ages, knights, castles, age of empires, aoe2, aoe4, rts, real time strategy, strategy games, build order, game dev, indie game, devlog, mobile game
