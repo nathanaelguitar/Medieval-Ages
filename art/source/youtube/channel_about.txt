@@ -1,0 +1,11 @@
+Handle: @nathanael_rts
+Name:   Nathanael RTS
+
+Description:
+Real-time strategy, played and built.
+
+Age of Empires matches, build orders and strategy breakdowns, plus a devlog series where I build Medieval Ages, my own RTS for iPhone, from the ground up: the art, the AI, the soundtrack and everything that breaks along the way.
+
+New videos weekly. Subscribe if you like villagers, walls and well-timed charges.
+
+Keywords: age of empires, aoe2, aoe4, rts, real time strategy, strategy games, build order, medieval, game dev, indie game, devlog, ios game
