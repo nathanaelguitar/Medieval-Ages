@@ -628,7 +628,11 @@ function gateBlock(b,on){for(let j=b.ty;j<b.ty+b.size;j++)for(let i=b.tx;i<b.tx+
 function mkBuilding(team,type,tx,ty,done){const d=DEFS[type];
  const b={kind:'bld',id:uid++,team,type,tx,ty,size:d.size,hh:d.hh,hp:done?d.hp:d.hp*0.3,maxhp:d.hp,done:!!done,progress:done?1:0,queue:[],garrison:[],gcap:d.garrison||0,rally:null,rallyRes:null,flash:0,alertT:0,popT:0,smk:0,cd:rnd(1,2),cx:tx+d.size/2,cy:ty+d.size/2,dead:false};
  if(type==='farm'){b.gx=tx+d.size/2;b.gy=ty+d.size/2;b.amt=300}
- buildings.push(b);if(type==='gate')gateBlock(b,true);else gridBlock(b,true);recalcPop();return b}
+ buildings.push(b);if(type==='gate')gateBlock(b,true);else gridBlock(b,true);
+ /* placing doesn't check for units, so anyone standing on the new footprint (often its own builder)
+    is stepped to the nearest open tile instead of being walled in */
+ if(type!=='farm'&&type!=='gate')for(const u of units){if(u.dead||u.garrisoned)continue;
+  if(u.x>=tx&&u.x<tx+b.size&&u.y>=ty&&u.y<ty+b.size){const t=freeTileAround(b);if(t){u.x=t[0]+0.5;u.y=t[1]+0.5;u.path=null}}};recalcPop();return b}
 /* Villagers and archers can shelter in a Town Center (8) or a Guard Tower (5). Everyone inside
    adds an arrow to the building's volley, so a garrison is a defence, not just a hiding place. */
 const canGarrison=u=>u.type==='vill'||u.type==='archer';
@@ -1179,6 +1183,12 @@ function updUnit(u,dt){
  /* applyJoy runs earlier in the same tick and has already moved stick-driven units, so keep its
     verdict instead of clearing it -- otherwise they glide across the map in their idle pose. */
  u.moving=!!u.drove;u.drove=false;u.cd-=dt;if(u.flash>0)u.flash-=dt;
+ /* safety net: a unit that has ended up inside a solid tile (a footprint, ore, a tree) steps out */
+ if(!u.garrisoned&&!passable(Math.floor(u.x),Math.floor(u.y),u.team)){u.stuckIn=(u.stuckIn||0)+dt;
+  if(u.stuckIn>0.3){u.stuckIn=0;const fx=Math.floor(u.x),fy=Math.floor(u.y);let best=null,bd=1e9;
+   for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++)if(passable(fx+i,fy+j,u.team)){const d=i*i+j*j;if(d<bd){bd=d;best=[fx+i,fy+j]}}
+   if(best){u.x=best[0]+0.5;u.y=best[1]+0.5;u.path=null;u.nT=0}}}
+ else u.stuckIn=0;
  const o=u.order;
  switch(o.type){
   case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e,auto:true,ax:u.x,ay:u.y}}break;   /* the AI's idle troops watch a wider radius */
