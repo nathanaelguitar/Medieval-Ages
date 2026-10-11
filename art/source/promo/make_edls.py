@@ -51,7 +51,7 @@ def build(name, music_start, shots, title_beats, title_xf=0.5, fade_out=2.2):
 #    then real gameplay on one-word beats, then the end card.
 build("hook", 61.045, [
     gen("v_charge_b", 2.7, 2, z0=1.04, z1=1.1, ay=0.45, grade="warm"),
-    gen("v_slam", 2.62, 3, z0=1.04, z1=1.0, sfx=[("sword_hit_2.wav", 0.35, -3), ("sword_hit_4.wav", 1.2, -8)]),
+    gen("v_slam_b", 2.0, 3, z0=1.04, z1=1.0, sfx=[("sword_hit_2.wav", 0.35, -3), ("sword_hit_4.wav", 1.2, -8)]),
     game("village", 0.6, 4, cap=[("tag_gameplay.png", 0, 4), ("cap_w_build.png", 0.15, 3.85)]),
     game("mill", 1.0, 3, z0=1.12, z1=1.18, ay=0.35),
     game("gather", 1.0, 3, z0=1.22, z1=1.3, ax=0.45, ay=0.15, cap=[("cap_w_gather.png", 0.1, 2.9)], sfx=[("axe_chop_1.wav", 0.5, -10), ("pick_hit_2.wav", 1.5, -12), ("axe_chop_3.wav", 2.4, -10)]),
@@ -76,7 +76,7 @@ build("cinematic", 30.081, [
     game("battle", 2.5, 4, cap=[("tag_gameplay.png", 0, 4)], sfx=[("sword_hit_1.wav", 0.6, -10), ("sword_hit_3.wav", 1.9, -10), ("sword_hit_5.wav", 3.1, -10)]),
     gen("v_charge_b", 1.4, 4, z0=1.0, z1=1.08, ay=0.45, grade="warm"),
     gen("v_slam_b", 2.0, 5, z0=1.0, z1=1.06, sfx=[("sword_hit_2.wav", 0.5, -4), ("sword_hit_4.wav", 2.0, -9)]),
-], title_beats=8, title_xf=0.4, fade_out=3.5)
+], title_beats=7, title_xf=0.4, fade_out=3.0)
 
 # 3. HOW IT PLAYS, ~15 s. Music from 133.128 (the second surge, 136-146), captions per beat of the loop.
 build("howitplays", 133.128, [

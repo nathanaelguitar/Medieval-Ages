@@ -6,7 +6,7 @@
   "start": 30.081,
   "db": 0,
   "fade_in": 0.05,
-  "fade_out": 3.5
+  "fade_out": 3.0
  },
  "shots": [
   {
@@ -98,7 +98,7 @@
     "bg": "text/title_bg.jpg",
     "text": "text/title_text.png",
     "soon": "text/title_soon.png",
-    "dur": 4.6724
+    "dur": 4.1383
    },
    "xf": 0.4,
    "xfk": "fadeblack"
