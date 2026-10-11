@@ -59,7 +59,7 @@ title = text_layer([
 ])
 dl = ImageDraw.Draw(title); dl.line([(CX - 150, 1300), (CX + 150, 1300)], fill=GOLD_D + (200,), width=2)
 title.save(os.path.join(OUT, "title_text.png"))
-text_layer([("FREE ON iPHONE  ·  SOON", 38, REG, GOLD, 1458, 5)]).save(os.path.join(OUT, "title_soon.png"))
+text_layer([("FREE ON MOBILE  ·  SOON", 38, REG, GOLD, 1458, 5)]).save(os.path.join(OUT, "title_soon.png"))
 
 # end card background: the crowned king flanked by a man-at-arms and an archer, fading into dark
 bg = Image.new("RGB", (W, H), (9, 9, 7))
