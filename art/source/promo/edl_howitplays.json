@@ -1,0 +1,119 @@
+{
+ "amb_db": -11,
+ "crf": 18,
+ "music": {
+  "path": "../music/march_of_the_noble.m4a",
+  "start": 133.128,
+  "db": 0,
+  "fade_in": 0.05,
+  "fade_out": 2.0
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/game/village.mp4",
+   "in": 0.5,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.1362
+  },
+  {
+   "src": "../../out/promo/game/mill.mp4",
+   "in": 0.8,
+   "grade": "game",
+   "amb": -90,
+   "z0": 1.12,
+   "z1": 1.16,
+   "ay": 0.35,
+   "dur": 1.0681
+  },
+  {
+   "src": "../../out/promo/game/march.mp4",
+   "in": 0.5,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.6702
+  },
+  {
+   "src": "../../out/promo/game/command.mp4",
+   "in": 1.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 3.2043
+  },
+  {
+   "src": "../../out/promo/game/battle.mp4",
+   "in": 2.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.1362
+  },
+  {
+   "src": "../../out/promo/game/tower.mp4",
+   "in": 0.5,
+   "grade": "game",
+   "amb": -90,
+   "z0": 1.0,
+   "z1": 1.06,
+   "ay": 0.3,
+   "dur": 1.6021
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/title_text.png",
+    "soon": "text/title_soon.png",
+    "dur": 3.1702
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/cap_village.png",
+   "at": 0.053,
+   "dur": 2.029,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_army.png",
+   "at": 3.258,
+   "dur": 2.563,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_thumb.png",
+   "at": 5.928,
+   "dur": 3.097,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_realm.png",
+   "at": 9.132,
+   "dur": 3.185,
+   "fade": 0.12
+  }
+ ],
+ "sfx": [
+  {
+   "path": "../../out/sfx/game/sword_hit_1.wav",
+   "at": 9.346,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_3.wav",
+   "at": 9.933,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/bow_release_1.wav",
+   "at": 10.467,
+   "db": -12
+  },
+  {
+   "path": "../../out/sfx/game/arrow_hit_3.wav",
+   "at": 11.642,
+   "db": -11
+  }
+ ]
+}

@@ -1,0 +1,206 @@
+{
+ "amb_db": -11,
+ "crf": 18,
+ "music": {
+  "path": "../music/march_of_the_noble.m4a",
+  "start": 61.045,
+  "db": 0,
+  "fade_in": 0.05,
+  "fade_out": 2.2
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/fasth3/v_charge_b.mp4",
+   "in": 2.7,
+   "grade": "warm",
+   "z0": 1.04,
+   "z1": 1.1,
+   "ay": 0.45,
+   "dur": 1.0681
+  },
+  {
+   "src": "../../out/promo/fasth3/v_slam.mp4",
+   "in": 2.62,
+   "grade": "golden",
+   "z0": 1.04,
+   "z1": 1.0,
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/game/village.mp4",
+   "in": 0.6,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.1362
+  },
+  {
+   "src": "../../out/promo/game/mill.mp4",
+   "in": 1.0,
+   "grade": "game",
+   "amb": -90,
+   "z0": 1.12,
+   "z1": 1.18,
+   "ay": 0.35,
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/game/gather.mp4",
+   "in": 1.0,
+   "grade": "game",
+   "amb": -90,
+   "z0": 1.22,
+   "z1": 1.3,
+   "ax": 0.45,
+   "ay": 0.15,
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/game/march.mp4",
+   "in": 1.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.1362
+  },
+  {
+   "src": "../../out/promo/game/battle.mp4",
+   "in": 2.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 3.2043
+  },
+  {
+   "src": "../../out/promo/game/tower.mp4",
+   "in": 0.5,
+   "grade": "game",
+   "amb": -90,
+   "z0": 1.0,
+   "z1": 1.06,
+   "ay": 0.3,
+   "dur": 1.6021
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/title_text.png",
+    "soon": "text/title_soon.png",
+    "dur": 4.2383
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/tag_gameplay.png",
+   "at": 2.67,
+   "dur": 2.136,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_w_build.png",
+   "at": 2.75,
+   "dur": 2.056,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_w_gather.png",
+   "at": 6.462,
+   "dur": 1.549,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_w_march.png",
+   "at": 8.064,
+   "dur": 2.083,
+   "fade": 0.12
+  },
+  {
+   "png": "text/cap_w_conquer.png",
+   "at": 10.2,
+   "dur": 2.136,
+   "fade": 0.12
+  }
+ ],
+ "sfx": [
+  {
+   "path": "../../out/sfx/game/sword_hit_2.wav",
+   "at": 1.255,
+   "db": -3
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_4.wav",
+   "at": 1.709,
+   "db": -8
+  },
+  {
+   "path": "../../out/sfx/game/axe_chop_1.wav",
+   "at": 6.676,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/pick_hit_2.wav",
+   "at": 7.21,
+   "db": -12
+  },
+  {
+   "path": "../../out/sfx/game/axe_chop_3.wav",
+   "at": 7.69,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/bow_release_1.wav",
+   "at": 10.254,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_1.wav",
+   "at": 10.627,
+   "db": -9
+  },
+  {
+   "path": "../../out/sfx/game/arrow_hit_2.wav",
+   "at": 11.001,
+   "db": -12
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_3.wav",
+   "at": 11.322,
+   "db": -9
+  },
+  {
+   "path": "../../out/sfx/game/sword_swing_2.wav",
+   "at": 11.749,
+   "db": -11
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_5.wav",
+   "at": 12.069,
+   "db": -9
+  },
+  {
+   "path": "../../out/sfx/game/death_grunt_1.wav",
+   "at": 12.497,
+   "db": -14
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_2.wav",
+   "at": 12.87,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/bow_release_1.wav",
+   "at": 13.511,
+   "db": -9
+  },
+  {
+   "path": "../../out/sfx/game/arrow_hit_3.wav",
+   "at": 13.939,
+   "db": -11
+  },
+  {
+   "path": "../../out/sfx/game/arrow_flesh_1.wav",
+   "at": 14.419,
+   "db": -12
+  }
+ ]
+}
