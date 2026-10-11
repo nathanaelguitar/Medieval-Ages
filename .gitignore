@@ -11,3 +11,8 @@ __pycache__/
 
 # source art lives under art/source/buildings; build*/ above is for build trees only
 !art/source/buildings/
+
+# generated and heavy: pipeline outputs, rigs and renders, local-only reference clips (never commit)
+art/out/
+art/models/
+art/source/zeroad_clips/
