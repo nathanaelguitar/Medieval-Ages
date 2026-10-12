@@ -1256,6 +1256,7 @@ function updUnit(u,dt){
    if(best){u.x=best[0]+0.5;u.y=best[1]+0.5;u.path=null;u.nT=0}}}
  else u.stuckIn=0;
  if(u.oq&&u.order.type==='idle')nextOrd(u);   /* Shift-queued orders (desktop) */
+ else if(u.oq&&!u.oq.length&&u.order.type==='gather')u.oq=null;   /* gathering never ends: the queue is spent */
  const o=u.order;
  switch(o.type){
   case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e,auto:true,ax:u.x,ay:u.y}}break;   /* the AI's idle troops watch a wider radius */
@@ -1419,7 +1420,8 @@ function tryPlace(wx,wy){
  /* A farm takes one villager, its future farmer. With a group selected, one tap lays out a farm
     for every villager not already headed to build one: the tapped field plus neighbouring fields
     around it, as many as the wood pays for. Villagers left without a farm stand idle. Other
-    buildings take the whole group. */
+    buildings take the whole group. With Shift held (desktop) a farm is one field per click instead,
+    queued for the crew like any other Shift-placed building (below). */
  if(b.type==='farm'&&!shiftHeld){
   const free=vills.filter(u=>!(u.order.type==='build'&&u.order.b&&u.order.b.type==='farm'&&!u.order.b.done));
   const farms=[b];
