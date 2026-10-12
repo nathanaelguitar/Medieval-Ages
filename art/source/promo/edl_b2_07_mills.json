@@ -1,0 +1,102 @@
+{
+ "amb_db": -14,
+ "crf": 18,
+ "music": {
+  "path": "../music/village_at_dusk_a.m4a",
+  "start": 28.867,
+  "db": 2.7,
+  "fade_in": 0.05,
+  "fade_out": 2.8,
+  "tail": 0.3
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/fasth3_b2/b_mill.mp4",
+   "in": 0.3,
+   "grade": "golden",
+   "z0": 1.0,
+   "z1": 1.06,
+   "dur": 3.9606
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_millstone.mp4",
+   "in": 0.5,
+   "grade": "golden",
+   "z0": 1.0,
+   "z1": 1.08,
+   "dur": 3.9606
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_farm_b.mp4",
+   "in": 0.5,
+   "grade": "golden",
+   "dur": 2.6404
+  },
+  {
+   "src": "../../out/promo/game_b2/millwide.mp4",
+   "in": 0.3,
+   "grade": "game",
+   "amb": -90,
+   "dur": 3.9606
+  },
+  {
+   "src": "../../out/promo/game/mill.mp4",
+   "in": 1.0,
+   "grade": "game",
+   "amb": -90,
+   "z0": 1.12,
+   "z1": 1.18,
+   "ay": 0.35,
+   "dur": 2.6404
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/b2/title_text_b2.png",
+    "soon": "text/b2/title_soon_b2.png",
+    "dur": 4.4606
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/b2/cap_mill_q.png",
+   "at": 0.0,
+   "dur": 1.98,
+   "fade": 0
+  },
+  {
+   "png": "text/b2/cap_sails.png",
+   "at": 2.046,
+   "dur": 1.848,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_stones.png",
+   "at": 4.027,
+   "dur": 3.829,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_fields.png",
+   "at": 7.987,
+   "dur": 2.508,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_mill_game.png",
+   "at": 10.628,
+   "dur": 3.829,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/tag_gameplay.png",
+   "at": 10.562,
+   "dur": 3.96,
+   "fade": 0.12
+  }
+ ],
+ "sfx": []
+}

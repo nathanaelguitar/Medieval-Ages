@@ -1,0 +1,133 @@
+{
+ "amb_db": -14,
+ "crf": 18,
+ "music": {
+  "path": "../intro/edit/music_march_decoded.m4a",
+  "start": 13.828,
+  "db": 3.8,
+  "fade_in": 0.05,
+  "fade_out": 2.4,
+  "tail": 0.3
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/fasth3_b2/b_night_watch_b.mp4",
+   "in": 0.4,
+   "grade": "default",
+   "z0": 1.0,
+   "z1": 1.07,
+   "dur": 4.2724
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_siege_tower.mp4",
+   "in": 0.5,
+   "grade": "default",
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/fasth3/v_charge_b.mp4",
+   "in": 2.7,
+   "grade": "warm",
+   "z0": 1.04,
+   "z1": 1.1,
+   "ay": 0.45,
+   "dur": 1.0681
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_rain_clash.mp4",
+   "in": 1.0,
+   "grade": "default",
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/fasth3/v_slam_b.mp4",
+   "in": 2.0,
+   "grade": "golden",
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_winter_march_b.mp4",
+   "in": 2.5,
+   "grade": "default",
+   "z0": 1.7,
+   "z1": 1.8,
+   "ax": 0.4,
+   "ay": 0.0,
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_volley_hill.mp4",
+   "in": 0.9,
+   "grade": "golden",
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/game/battle.mp4",
+   "in": 2.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.1362
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_victory.mp4",
+   "in": 3.2,
+   "grade": "golden",
+   "z0": 1.2,
+   "z1": 1.26,
+   "ay": 0.25,
+   "dur": 2.1362
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/b2/title_text_b2.png",
+    "soon": "text/b2/title_soon_b2.png",
+    "dur": 4.7724
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/b2/cap_coming.png",
+   "at": 0.0,
+   "dur": 4.166,
+   "fade": 0
+  },
+  {
+   "png": "text/b2/tag_real.png",
+   "at": 13.351,
+   "dur": 2.136,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_realm.png",
+   "at": 15.541,
+   "dur": 1.582,
+   "fade": 0.12
+  }
+ ],
+ "sfx": [
+  {
+   "path": "../../out/sfx/game/sword_hit_2.wav",
+   "at": 7.263,
+   "db": -6
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_4.wav",
+   "at": 8.758,
+   "db": -5
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_1.wav",
+   "at": 13.618,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_3.wav",
+   "at": 14.259,
+   "db": -10
+  }
+ ]
+}

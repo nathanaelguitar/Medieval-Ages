@@ -87,8 +87,9 @@ P["02_pov"] = lambda: build("02_pov", "NOBLE", 36.489, [
     game2("banners", 0.6, 5, cap=[("cap_banners.png", 0.1, 4.8), ("tag_gameplay.png", 0, 5)]),
     game2("garrison", 3.6, 6, sfx=[("bow_release_1.wav", 2.5, -12)]),
     game("battle", 2.0, 5, sfx=SWORDS),
-    gen2("b_victory", 1.0, 4, cap=[("cap_realm.png", 0.1, 3.8)]),
+    gen2("b_victory", 3.2, 4, z0=1.2, z1=1.26, ay=0.25, cap=[("cap_realm.png", 0.1, 3.8)]),
 ], title_beats=8)
+# (b_victory: red shields in the back rank until 2.9 s and one at the bottom right throughout: cut from 3.2 s, pushed in 1.2x high)
 # 03  SATISFYING BUILD. "Building a medieval village in 15 seconds"  One continuous 6x time-lapse.
 P["03_village15"] = lambda: build("03_village15", "DUSKA", 105.567, [
     game2("timelapse", 0.0, 18, cap=[("cap_v15.png", 0, 6), ("tag_timelapse.png", 0, 18)],
@@ -97,15 +98,15 @@ P["03_village15"] = lambda: build("03_village15", "DUSKA", 105.567, [
 ], title_beats=6, fade_out=2.8)
 # 04  EPIC COLD OPEN. Night watch over the enemy's campfires, then the hit at 18.1 s: fire, charge, rain, snow.
 P["04_coldopen"] = lambda: build("04_coldopen", "MARCH", 13.828, [
-    gen2("b_night_watch", 0.4, 8, z0=1.0, z1=1.07, grade="default", cap=[("cap_coming.png", 0, 7.8)]),
+    gen2("b_night_watch_b", 0.4, 8, z0=1.0, z1=1.07, grade="default", cap=[("cap_coming.png", 0, 7.8)]),
     gen2("b_siege_tower", 0.5, 3, grade="default"),
     gen("v_charge_b", 2.7, 2, z0=1.04, z1=1.1, ay=0.45, grade="warm"),
     gen2("b_rain_clash", 1.0, 3, grade="default", sfx=[("sword_hit_2.wav", 0.6, -6)]),
     gen("v_slam_b", 2.0, 3, sfx=[("sword_hit_4.wav", 0.4, -5)]),
-    gen2("b_winter_march", 1.0, 3, grade="default"),
+    gen2("b_winter_march_b", 2.5, 3, z0=1.7, z1=1.8, ax=0.4, ay=0.0, grade="default"),   # banners only: red-quartered shields sit low in frame
     gen2("b_volley_hill", 0.9, 3),   # loose + rise only: past ~2.6 s the arrows hang in the sky
     game("battle", 2.0, 4, cap=[("tag_real.png", 0, 4)], sfx=SWORDS[:2]),
-    gen2("b_victory", 1.0, 4, cap=[("cap_realm.png", 0.1, 3.8)]),
+    gen2("b_victory", 3.2, 4, z0=1.2, z1=1.26, ay=0.25, cap=[("cap_realm.png", 0.1, 3.8)]),
 ], title_beats=8)
 # 05  REVEAL. "This is a mobile game?"  Gameplay only, with the touch controls on screen.
 P["05_reveal"] = lambda: build("05_reveal", "NOBLE", 84.453, [
@@ -123,13 +124,13 @@ P["06_devlog"] = lambda: build("06_devlog", "DUSKB", 38.104, [
     game2("dbltap", 0.5, 5, cap=[("cap_dbl_dev.png", 0.1, 4.8)]),
     game2("wall", 0.3, 4, cap=[("cap_wall_dev.png", 0.1, 3.8), ("tag_speed4.png", 0, 4)]),
     game2("garrison", 1.9, 7, cap=[("cap_garr.png", 0.1, 6.8)]),
-    game2("sheep", 1.0, 3, cap=[("cap_follow.png", 0.1, 2.8)], sfx=[("sheep_bleat_1.wav", 0.8, -16)]),
+    game2("sheep", 3.0, 3, cap=[("cap_follow.png", 0.1, 2.8)], sfx=[("sheep_bleat_1.wav", 0.8, -16)]),
 ], title_beats=6, fade_out=2.8)
 # 07  HISTORY. "How medieval mills worked"  -> the game's windmill and the farms that feed it.
 P["07_mills"] = lambda: build("07_mills", "DUSKA", 28.867, [
     gen2("b_mill", 0.3, 6, z0=1.0, z1=1.06, cap=[("cap_mill_q.png", 0, 3), ("cap_sails.png", 3.1, 2.8)]),
     gen2("b_millstone", 0.5, 6, z0=1.0, z1=1.08, cap=[("cap_stones.png", 0.1, 5.8)]),
-    gen2("b_farm", 0.5, 4, cap=[("cap_fields.png", 0.1, 3.8)]),
+    gen2("b_farm_b", 0.5, 4, cap=[("cap_fields.png", 0.1, 3.8)]),
     game2("millwide", 0.3, 6, cap=[("cap_mill_game.png", 0.1, 5.8), ("tag_gameplay.png", 0, 6)]),
     game("mill", 1.0, 4, z0=1.12, z1=1.18, ay=0.35),
 ], title_beats=6, fade_out=2.8)
@@ -147,21 +148,20 @@ P["08_longbow"] = lambda: build("08_longbow", "NOBLE", 150.093, [
 # 09  HISTORY. "What did a medieval village eat?"  Bread, mutton, and boar (mostly for lords) -> hunting and herding in the game.
 P["09_food"] = lambda: build("09_food", "DUSKB", 17.229, [
     gen2("b_market", 0.3, 5, z0=1.0, z1=1.05, cap=[("cap_eat_q.png", 0, 5)]),
-    gen2("b_farm", 2.0, 3, cap=[("cap_bread.png", 0.1, 2.8)]),
+    gen2("b_farm_b", 2.0, 3, cap=[("cap_bread.png", 0.1, 2.8)]),
     gen2("b_sheep", 0.5, 3, cap=[("cap_mutton.png", 0.1, 2.8)]),
     gen2("b_boar", 1.0, 3, cap=[("cap_lords.png", 0.1, 2.8)]),
     game2("boar", 0.3, 5, cap=[("cap_hunt_game.png", 0.1, 4.8), ("tag_gameplay.png", 0, 5)], sfx=[("boar_squeal_1.wav", 1.2, -14)]),
-    game2("sheep", 0.5, 5, cap=[("cap_herd.png", 0.1, 4.8)], sfx=[("sheep_bleat_2.wav", 1.0, -15)]),
+    game2("sheep", 3.0, 5, cap=[("cap_herd.png", 0.1, 4.8)], sfx=[("sheep_bleat_2.wav", 1.0, -15)]),
 ], title_beats=6, fade_out=2.8)
 # 10  KING. "Every king needs a plan"  War table -> muster -> the army under its lion standards -> march -> conquer.
 P["10_king"] = lambda: build("10_king", "MARCH", 77.173, [
     gen2("b_king_table", 0.3, 8, z0=1.0, z1=1.06, grade="default", cap=[("cap_king.png", 0, 8)]),
     game2("banners", 0.6, 6, cap=[("cap_banners.png", 0.1, 5.8), ("tag_gameplay.png", 0, 6)]),
     game2("dbltap", 0.6, 6, cap=[("cap_dbl.png", 1.2, 4.6)]),
-    gen2("b_winter_march", 1.0, 3, grade="default", cap=[("cap_march.png", 0.1, 2.8)]),
-    game("march", 1.0, 3),
+    game("march", 1.0, 6, cap=[("cap_march.png", 0.1, 5.8)]),
     game("battle", 2.0, 5, cap=[("cap_conquer.png", 0.1, 4.8)], sfx=SWORDS),
-    gen2("b_victory", 1.0, 4),
+    gen2("b_victory", 3.2, 4, z0=1.2, z1=1.26, ay=0.25),
 ], title_beats=8)
 
 if __name__ == "__main__":

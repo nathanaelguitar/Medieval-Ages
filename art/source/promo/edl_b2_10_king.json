@@ -1,0 +1,124 @@
+{
+ "amb_db": -14,
+ "crf": 18,
+ "music": {
+  "path": "../intro/edit/music_march_decoded.m4a",
+  "start": 77.173,
+  "db": 4.2,
+  "fade_in": 0.05,
+  "fade_out": 2.4,
+  "tail": 0.3
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/fasth3_b2/b_king_table.mp4",
+   "in": 0.3,
+   "grade": "default",
+   "z0": 1.0,
+   "z1": 1.06,
+   "dur": 4.2724
+  },
+  {
+   "src": "../../out/promo/game_b2/banners.mp4",
+   "in": 0.6,
+   "grade": "game",
+   "amb": -90,
+   "dur": 3.2043
+  },
+  {
+   "src": "../../out/promo/game_b2/dbltap.mp4",
+   "in": 0.6,
+   "grade": "game",
+   "amb": -90,
+   "dur": 3.2043
+  },
+  {
+   "src": "../../out/promo/game/march.mp4",
+   "in": 1.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 3.2043
+  },
+  {
+   "src": "../../out/promo/game/battle.mp4",
+   "in": 2.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.6702
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_victory.mp4",
+   "in": 3.2,
+   "grade": "golden",
+   "z0": 1.2,
+   "z1": 1.26,
+   "ay": 0.25,
+   "dur": 2.1362
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/b2/title_text_b2.png",
+    "soon": "text/b2/title_soon_b2.png",
+    "dur": 4.7724
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/b2/cap_king.png",
+   "at": 0.0,
+   "dur": 4.272,
+   "fade": 0
+  },
+  {
+   "png": "text/b2/cap_banners.png",
+   "at": 4.326,
+   "dur": 3.097,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/tag_gameplay.png",
+   "at": 4.272,
+   "dur": 3.204,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_dbl.png",
+   "at": 8.118,
+   "dur": 2.457,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_march.png",
+   "at": 10.734,
+   "dur": 3.097,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_conquer.png",
+   "at": 13.939,
+   "dur": 2.563,
+   "fade": 0.12
+  }
+ ],
+ "sfx": [
+  {
+   "path": "../../out/sfx/game/sword_hit_1.wav",
+   "at": 14.152,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_3.wav",
+   "at": 14.793,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_5.wav",
+   "at": 15.434,
+   "db": -11
+  }
+ ]
+}

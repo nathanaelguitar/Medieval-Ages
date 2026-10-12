@@ -1,0 +1,154 @@
+{
+ "amb_db": -14,
+ "crf": 18,
+ "music": {
+  "path": "../intro/edit/music_march_decoded.m4a",
+  "start": 38.406,
+  "db": 2.8,
+  "fade_in": 0.05,
+  "fade_out": 2.4,
+  "tail": 0.3
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/fasth3_b2/b_gate.mp4",
+   "in": 0.2,
+   "grade": "golden",
+   "z0": 1.0,
+   "z1": 1.05,
+   "dur": 3.2043
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_gate_hold.mp4",
+   "in": 1.0,
+   "grade": "golden",
+   "z0": 1.03,
+   "z1": 1.0,
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/fasth3_b2/b_wall_archers.mp4",
+   "in": 1.0,
+   "grade": "golden",
+   "dur": 1.6021
+  },
+  {
+   "src": "../../out/promo/game_b2/gate.mp4",
+   "in": 2.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.6702
+  },
+  {
+   "src": "../../out/promo/game_b2/wall.mp4",
+   "in": 0.4,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.6702
+  },
+  {
+   "src": "../../out/promo/game_b2/garrison.mp4",
+   "in": 1.9,
+   "grade": "game",
+   "amb": -90,
+   "dur": 4.2724
+  },
+  {
+   "src": "../../out/promo/game_b2/gate.mp4",
+   "in": 5.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.1362
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/b2/title_text_b2.png",
+    "soon": "text/b2/title_soon_b2.png",
+    "dur": 4.7724
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/b2/cap_gate_q.png",
+   "at": 0.0,
+   "dur": 3.204,
+   "fade": 0
+  },
+  {
+   "png": "text/b2/tag_gameplay.png",
+   "at": 6.409,
+   "dur": 2.67,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_walls.png",
+   "at": 9.132,
+   "dur": 2.563,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/tag_speed4.png",
+   "at": 9.079,
+   "dur": 2.67,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_towers.png",
+   "at": 11.802,
+   "dur": 4.166,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_hold.png",
+   "at": 16.075,
+   "dur": 1.582,
+   "fade": 0.12
+  }
+ ],
+ "sfx": [
+  {
+   "path": "../../out/sfx/game/sword_hit_1.wav",
+   "at": 6.676,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_3.wav",
+   "at": 7.316,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_5.wav",
+   "at": 7.957,
+   "db": -11
+  },
+  {
+   "path": "../../out/sfx/game/hammer_hit_1.wav",
+   "at": 9.399,
+   "db": -14
+  },
+  {
+   "path": "../../out/sfx/game/hammer_hit_3.wav",
+   "at": 10.254,
+   "db": -15
+  },
+  {
+   "path": "../../out/sfx/game/bow_release_1.wav",
+   "at": 14.419,
+   "db": -12
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_2.wav",
+   "at": 16.342,
+   "db": -10
+  },
+  {
+   "path": "../../out/sfx/game/death_grunt_1.wav",
+   "at": 16.983,
+   "db": -15
+  }
+ ]
+}

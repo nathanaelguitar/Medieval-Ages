@@ -25,8 +25,8 @@
    "dur": 2.1362
   },
   {
-   "src": "../../out/promo/fasth3/v_muster.mp4",
-   "in": 0.5,
+   "src": "../../out/promo/fasth3_b2/b_gate.mp4",
+   "in": 2.2,
    "grade": "golden",
    "dur": 2.1362
   },
@@ -52,9 +52,12 @@
    "dur": 2.6702
   },
   {
-   "src": "../../out/promo/fasth3/v_banner.mp4",
-   "in": 1.0,
+   "src": "../../out/promo/fasth3_b2/b_victory.mp4",
+   "in": 3.2,
    "grade": "golden",
+   "z0": 1.2,
+   "z1": 1.26,
+   "ay": 0.25,
    "dur": 2.1362
   },
   {

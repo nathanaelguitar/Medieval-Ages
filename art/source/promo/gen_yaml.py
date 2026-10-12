@@ -107,7 +107,7 @@ WORLD_BLUE = ("Live-action 35mm film, photorealistic, England in the year 1380, 
          "rampant lion over mail and plate, kettle helmets and heater shields; all banners are blue with a white lion. "
          "No text, no modern objects.")
 # takes whose light is not golden day (night, rain, snow, candlelight) skip the GOLD suffix
-NOGOLD = {"b_night_watch", "b_rain_clash", "b_winter_march", "b_king_table", "b_siege_tower"}
+NOGOLD = {"b_night_watch", "b_rain_clash", "b_winter_march", "b_winter_march_b", "b_night_watch_b", "b_king_table", "b_siege_tower"}
 TAKES.update({
     "b_mill": (141, 9101,
         "[Shot 1] Wide low-angle shot of a tall wooden post windmill standing on a gentle hill above a golden wheat field. Its four "
@@ -121,6 +121,12 @@ TAKES.update({
         "[Shot 3] Medium shot in a golden wheat field at harvest. Peasant men in linen shirts and straw hats swing long scythes in a "
         "row, cutting the tall wheat which falls in neat swathes; a woman behind them gathers the stalks into sheaves. Thatched "
         "cottages on the horizon. Peaceful, photoreal, 35mm film, slow sideways dolly. Sound: the swish of scythes, larks.", "CIVIL", "V"),
+    # b_farm's scythes come out as handle-less blades floating in the wheat; the harvest without blades:
+    "b_farm_b": (141, 9302,
+        "[Shot 3] Medium shot in a golden wheat field at harvest, the wheat already cut and lying in rows. Peasants in linen shirts "
+        "and straw hats bind armfuls of wheat into sheaves and stand them upright in stooks; a young woman in a headscarf lifts a "
+        "heavy sheaf onto her shoulder and walks slowly toward the camera. Thatched cottages and oak trees behind. Peaceful, "
+        "photoreal, 35mm film, slow push in. Sound: larks, rustling straw.", "CIVIL", "V"),
     "b_market": (141, 9401,
         "[Shot 4] Medium shot of a busy medieval village market in the morning. Wooden stalls with loaves of bread, cabbages, apples "
         "and bolts of dyed cloth under striped awnings; villagers in wool and linen walk between them, a merchant lifts a basket of "
@@ -169,6 +175,17 @@ TAKES.update({
         "[Shot 14] A column of soldiers in blue-and-white tabards with a pale rampant lion, mail and kettle helmets marches through deep "
         "snow toward and past the camera, a tall blue banner with a white lion carried at the front; their breath steams, snow is "
         "falling. Pale cold winter light, grey sky, snowy hills. Determined, photoreal, 35mm film. Sound: wind, crunching snow.", "LION", "V"),
+    # b_winter_march put red banners and red-clad men into the lion column (WORLD_LION names the enemy); without red:
+    "b_winter_march_b": (141, 10402,
+        "[Shot 14] A column of soldiers in blue-and-white tabards with a pale rampant lion, mail and kettle helmets marches through deep "
+        "snow toward and past the camera, a tall blue banner with a white lion carried at the front; their breath steams, snow is "
+        "falling. Pale cold winter light, grey sky, snowy hills. Determined, photoreal, 35mm film. Sound: wind, crunching snow.", "BLUE", "V"),
+    # b_night_watch also drew red flags and red-clad men onto our own wall; the enemy as distant fires only:
+    "b_night_watch_b": (141, 10202,
+        "[Shot 12] Night on a stone castle wall under a dark blue sky. Two guards in blue-and-white tabards with a pale rampant lion walk "
+        "along the battlements carrying flaming torches; firelight flickers on the stones. Far below in the black valley the many "
+        "campfires of a besieging army glow like scattered embers. Moody, photoreal, 35mm film. Moonlight and orange torchlight. "
+        "Sound: wind, crackling torches.", "BLUE", "V"),
     "b_rain_clash": (141, 10501,
         "[Shot 15] Heavy rain, a muddy battlefield under dark storm clouds. A man-at-arms in a soaked blue-and-white tabard with a pale "
         "rampant lion clashes with a soldier in a plain red surcoat, swords and shields locked, rain splashing off steel and mud "
