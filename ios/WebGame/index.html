@@ -1396,8 +1396,19 @@ function tryPlace(wx,wy){
    left.sort((p,q)=>dist2(p.x,p.y,f.cx,f.cy)-dist2(q.x,q.y,f.cx,f.cy));assignBuild(left.shift(),f)}
   if(free.length>1&&left.length){left.forEach(u=>{u.order={type:'idle'};u.path=null});
    toast('Wood for '+farms.length+' farm'+(farms.length===1?'':'s')+' · '+left.length+' idle')}}
+ /* Shift-placing (desktop): the crew queues the new site and works through the queue nearest
+    first, rather than dropping the one it is on; the same queue walls use (u.wallQ) */
+ else if(shiftHeld)vills.forEach(v=>{v.wallQ=(v.wallQ||[]).filter(q=>!q.dead&&!q.done).concat(b);
+  if(!(v.order.type==='build'&&v.wallQ.includes(v.order.b)))assignBuild(v,b)});
  else vills.forEach(v=>assignBuild(v,b));
- ping(b.cx,b.cy,'#9fe08a');sfx('ok');placing=null;refreshPanel(true)}
+ ping(b.cx,b.cy,'#9fe08a');sfx('ok');
+ /* holding Shift keeps the building armed, AoE style, for as long as the stockpile pays */
+ if(shiftHeld&&b.type!=='farm'&&canAfford(0,d.cost))placing={type:b.type,ghost:[wx,wy]};else placing=null;
+ refreshPanel(true)}
+let shiftHeld=false;
+addEventListener('keydown',e=>{if(e.key==='Shift')shiftHeld=true});
+addEventListener('keyup',e=>{if(e.key==='Shift')shiftHeld=false});
+addEventListener('blur',()=>{shiftHeld=false});
 function selectArmy(){
  const a=units.filter(u=>u.team===0&&u.type!=='vill'&&!u.dead&&!u.garrisoned);
  if(a.length){selection=a;sheepSel=[];sfx('sel');toast(a.length+' soldiers · your whole army');refreshPanel(true)}}
