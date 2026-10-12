@@ -1849,11 +1849,13 @@ addEventListener('keydown',e=>{
  const c=e.code,K=e.key.length===1?e.key.toUpperCase():e.key,mod=e.ctrlKey||e.metaKey;
  /* a focused button (Begin, a bar button) must not also take Space or Enter as a click */
  if(document.activeElement&&document.activeElement.tagName==='BUTTON')document.activeElement.blur();
- /* P pauses; Esc calls off a placement or Garrison, then clears the selection, then pauses */
+ /* P toggles pause. Esc closes the pause menu, else calls off a placement or Garrison, else
+    deselects; it never pauses the game by itself. */
  if(K==='Escape'||(c==='KeyP'&&!mod)){e.preventDefault();
   if(paused){setPaused(false);return}
-  if(K==='Escape'&&(placing||garrisonPick)){placing=null;garrisonPick=false;refreshPanel(true);return}
-  if(K==='Escape'&&(selection.length||sheepSel.length)){selection=[];sheepSel=[];refreshPanel(true);return}
+  if(K==='Escape'){if(placing||garrisonPick){placing=null;garrisonPick=false;refreshPanel(true)}
+   else if(selection.length||sheepSel.length){selection=[];sheepSel=[];refreshPanel(true)}
+   return}
   setPaused(true);return}
  if(paused)return;
  /* Cmd/Ctrl+key with no meaning here stays the browser's; a key held under Cmd never gets its keyup on a Mac */
@@ -3103,7 +3105,7 @@ refreshPanel(true);
  $('pmResignYes').addEventListener('click',()=>{setPaused(false);end(false,true)});
  $('ppause').innerHTML=ICO_GEAR;
  /* Keys live in the desktop block (applyKeys and its keydown): Space looks at the selection there,
-    and P or Esc pauses. */
+    and P pauses (Esc only cancels or deselects). */
  /* Tutorial on the title screen: start a match with the lesson running, whether or not it was
     done before. It always teaches on level 1. */
  let wantTut=false;
