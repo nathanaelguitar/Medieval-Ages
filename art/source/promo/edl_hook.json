@@ -6,7 +6,7 @@
   "start": 61.045,
   "db": 0,
   "fade_in": 0.05,
-  "fade_out": 2.2
+  "fade_out": 2.6
  },
  "shots": [
   {
@@ -196,11 +196,6 @@
    "path": "../../out/sfx/game/arrow_hit_3.wav",
    "at": 13.939,
    "db": -11
-  },
-  {
-   "path": "../../out/sfx/game/arrow_flesh_1.wav",
-   "at": 14.419,
-   "db": -12
   }
  ]
 }

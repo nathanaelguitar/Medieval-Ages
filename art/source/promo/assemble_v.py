@@ -9,7 +9,8 @@ fades, text overlays are laid on top, and the audio is the music bed + the FastH
 ambience (ducked) + game SFX at given times.
 
 EDL keys:
-  music: {path, start, db, fade_in, fade_out}      amb_db: level for FastH3 clip audio
+  music: {path, start, db, fade_in, fade_out, tail}  amb_db: level for FastH3 clip audio
+         (the fade-out ends `tail` s (default 0.3) before the end, so every cut closes on true silence)
   shots: [{src, in, dur, grade, z0, z1, ax, ay, xf, amb}]   (xf: fade into this shot, 0 = cut)
          or {title: {bg, text, soon, dur}}                    (end card built from PNGs)
   overlays: [{png, at, dur, fade}]                            (times on the output timeline)
@@ -46,7 +47,10 @@ def probe_audio(p):
 
 def segment(s, i):
     """Render one shot to CACHE as 1080x1920 30 fps with a stereo 48 k track; returns its path."""
-    key = hashlib.md5(json.dumps(s, sort_keys=True).encode() + str(cfg.get("amb_db", -10)).encode()).hexdigest()[:12]
+    # key on the referenced files' size+mtime too, so a regenerated PNG/take is never served stale from cache
+    files = [s["src"]] if "src" in s else [s["title"][k] for k in ("bg", "text", "soon")]
+    stamp = "".join(f"{os.path.getsize(P(f))}:{os.path.getmtime(P(f))};" for f in files)
+    key = hashlib.md5(json.dumps(s, sort_keys=True).encode() + str(cfg.get("amb_db", -10)).encode() + stamp.encode()).hexdigest()[:12]
     out = os.path.join(CACHE, f"seg_{key}.mkv")
     if os.path.exists(out): return out
     if "title" in s:
@@ -125,12 +129,14 @@ for o in cfg.get("overlays", []):
 m = cfg["music"]
 inputs += ["-i", P(m["path"])]
 fc.append(f"[{k}:a]atrim=start={m['start']}:duration={total:.3f},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,"
-          f"afade=t=in:d={m.get('fade_in',0.05)},afade=t=out:st={total-m.get('fade_out',2.0):.3f}:d={m.get('fade_out',2.0)},volume={m.get('db',0)}dB[mus]")
+          f"afade=t=in:d={m.get('fade_in',0.05)},afade=t=out:st={total-m.get('fade_out',2.0)-m.get('tail',0.3):.3f}:d={m.get('fade_out',2.0)}:curve=qsin,volume={m.get('db',0)}dB[mus]")
 mix = ["[mus]", f"[{cur_a}]"]; k += 1
 for j, x in enumerate(cfg.get("sfx", [])):
     inputs += ["-i", P(x["path"])]
     ms = int(x["at"] * 1000)
-    fc.append(f"[{k}:a]aformat=sample_rates=48000:channel_layouts=stereo,volume={x.get('db',-6)}dB,adelay={ms}|{ms}[s{j}]")
+    # 12 ms fade at each end of every effect: a file that stops on a non-zero sample would otherwise click
+    fc.append(f"[{k}:a]aformat=sample_rates=48000:channel_layouts=stereo,afade=t=in:d=0.004,areverse,afade=t=in:d=0.012,areverse,"
+              f"volume={x.get('db',-6)}dB,adelay={ms}|{ms}[s{j}]")
     mix.append(f"[s{j}]"); k += 1
 fc.append(f"{''.join(mix)}amix=inputs={len(mix)}:duration=first:normalize=0,alimiter=limit=0.93,atrim=duration={total:.3f}[aout]")
 fc.append(f"[{cur_v}]setsar=1,format=yuv420p[vout]")

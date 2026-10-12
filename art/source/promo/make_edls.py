@@ -6,7 +6,7 @@ Each cut is a list of shots measured in beats. A shot that fades in (xf) is leng
 following cuts stay on the grid. Captions are tied to shots, so retiming a shot moves its caption.
 
 Usage: make_edls.py            -> writes edl_hook.json, edl_cinematic.json, edl_howitplays.json
-Render: assemble_v.py edl_hook.json ../../out/promo/medieval_ages_hook_9x16.mp4
+Render: assemble_v.py edl_hook.json ../../out/promo/medieval_ages_hook_9x16_v2.mp4
 """
 import json, os
 
@@ -39,6 +39,7 @@ def build(name, music_start, shots, title_beats, title_xf=0.5, fade_out=2.2):
         while j + 1 < len(ends) and o["at"] + o["dur"] > ends[j] + 0.01: j += 1   # caption spans later shots
         lim = ends[j] - xfs[j]
         if o["at"] + o["dur"] > lim: o["dur"] = round(lim - o["at"], 3)
+    for x in sfx: assert x["at"] < ends[-1] - title_xf, ("sfx inside the end-card fade", x)
     title = dict(TITLE, dur=round(title_beats * B + title_xf, 4))
     out.append({"title": title, "xf": title_xf, "xfk": "fadeblack"})
     cfg = {"amb_db": -11, "crf": 18,
@@ -59,8 +60,10 @@ build("hook", 61.045, [
     game("battle", 2.0, 6, cap=[("cap_w_conquer.png", 0.1, 4.0)],
          sfx=[("bow_release_1.wav", 0.2, -10), ("sword_hit_1.wav", 0.9, -9), ("arrow_hit_2.wav", 1.6, -12), ("sword_hit_3.wav", 2.2, -9),
               ("sword_swing_2.wav", 3.0, -11), ("sword_hit_5.wav", 3.6, -9), ("death_grunt_1.wav", 4.4, -14), ("sword_hit_2.wav", 5.1, -10)]),
-    game("tower", 0.5, 3, z0=1.0, z1=1.06, ay=0.3, sfx=[("bow_release_1.wav", 0.3, -9), ("arrow_hit_3.wav", 1.1, -11), ("arrow_flesh_1.wav", 2.0, -12)]),
-], title_beats=7)
+    game("tower", 0.5, 3, z0=1.0, z1=1.06, ay=0.3, sfx=[("bow_release_1.wav", 0.3, -9), ("arrow_hit_3.wav", 1.1, -11)]),
+], title_beats=7, fade_out=2.6)
+# (v1 had arrow_flesh_1.wav at 2.0 here: a 120 ms 172 Hz buzz that stops on a non-zero sample -- the "beep" before
+#  the end card. Never use it in promos; the game itself plays it at volume 0.1.)
 
 # 2. CINEMATIC, ~29.5 s. Music from 30.081: the quiet opening under the village, the build (40.7-44)
 #    under the lookout, full march from 43.96 under muster, volley, charge and the slam on the 55.7 hit.
