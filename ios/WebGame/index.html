@@ -261,12 +261,17 @@ body.desk .abtn kbd{display:block;position:absolute;top:1px;right:2px;font:800 8
 body.desk #pli,body.desk #ppause{cursor:pointer}
 /* "?" pill beside the gear, and the key card it opens (shown once on the first desktop game). */
 body.desk #keyQ{display:flex;pointer-events:auto;cursor:pointer;font-weight:800;color:#e3c27a;padding:4px 10px}
-#keyCard{position:absolute;right:calc(12px + env(safe-area-inset-right));top:calc(148px + env(safe-area-inset-top));width:300px;max-height:calc(100% - 230px);overflow-y:auto;padding:10px 12px 8px;border-radius:14px;background:rgba(14,18,11,.92);border:1px solid rgba(227,194,122,.45);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#efe8d6;font-size:11.5px;line-height:1.35;pointer-events:auto;z-index:8}
+#keyCard{position:absolute;right:calc(12px + env(safe-area-inset-right));top:calc(148px + env(safe-area-inset-top));width:404px;max-height:calc(100% - 166px);overflow-y:auto;padding:10px 12px 8px;border-radius:14px;background:rgba(14,18,11,.92);border:1px solid rgba(227,194,122,.45);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#efe8d6;font-size:11.5px;line-height:1.35;pointer-events:auto;z-index:8}
 #keyCard[hidden]{display:none}
 #keyCard h3{font:700 12px Palatino,Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#e3c27a;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
 #keyCard h3 button{background:none;border:0;color:#d9cfb4;font-size:15px;cursor:pointer;line-height:1}
 #keyCard div{display:flex;gap:8px;padding:2px 0;border-top:1px solid rgba(255,255,255,.06)}
-#keyCard div b{flex:0 0 96px;color:#d9b36a;font-weight:700}
+#keyCard div b{flex:0 0 84px;color:#d9b36a;font-weight:700}
+#keyCard h4{font:700 9.5px -apple-system,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#a99a76;margin:7px 0 2px}
+#keyCard p{margin:6px 0 2px;color:#b9b09a;font-size:10.5px}
+/* F3 / P (desktop): AoE2's bare pause -- the board freezes under a "Paused" plate, no menu */
+#pauseOv.bare #pmMain,#pauseOv.bare #pmConfirm{display:none}
+#pauseOv.bare .pmTitle{margin:0}
 #keyCard kbd,#tipBox kbd{font:700 10px -apple-system,system-ui,sans-serif;color:#1c1608;background:#d9b36a;border-radius:3px;padding:0 3px;margin:0 1px}
 /* Hover tooltip for the bar buttons: name, cost and hotkey, styled like the toasts. */
 #tipBox{position:absolute;display:none;padding:5px 9px;border-radius:9px;background:rgba(12,16,10,.94);border:1px solid rgba(217,179,106,.5);color:#f0e9d7;font-size:11.5px;font-weight:600;white-space:nowrap;pointer-events:none;z-index:12;transform:translate(-50%,-100%)}
@@ -429,10 +434,18 @@ const lastTap={t:0,x:0,y:0,ty:null};
 let DESK=false,selAdd=false;   /* selAdd: Shift held on the click or box being resolved */
 const mouse={x:0,y:0,in:false,focus:true,mid:null};
 const keys=new Set();
-/* One table for the hotkeys: the dispatcher, the button badges, the tooltips and the key card all
-   read it. Letters avoid WASD (pan), P (pause) and Q/R/U (training, unload, gate turn). */
-const HK={house:'H',farm:'F',barracks:'B',woodyard:'E',mill:'M',mine:'N',market:'K',palisade:'L',stonewall:'O',gate:'G',tower:'T',vill:'Q',swords:'Q',archer:'R',ungarrison:'U'};
-function setDesk(on){if(DESK===on)return;DESK=on;document.body.classList.toggle('desk',on);
+/* AoE2 DE grid hotkeys: every command button sits at a fixed cell of the 3x5 grid Q W E R T /
+   A S D F G / Z X C V B, at the cell AoE2 gives it (holes where this game lacks AoE2's building,
+   e.g. S is the Blacksmith), so the hands land where an AoE2 player expects. The dispatcher, the
+   badges, the tooltips and the key card all read it. Villagers build through two pages (desktop
+   only): Q economic, W military. Market: sell on the top row, buy below. */
+const GRID='QWERTASDFGZXCVB';
+const HK={bEco:'Q',bMil:'W',garrison:'T',house:'Q',mill:'W',mine:'E',woodyard:'R',farm:'A',market:'D',
+ barracks:'Q',palisade:'S',stonewall:'D',tower:'F',gate:'Z',vill:'Q',swords:'Q',archer:'W',ungarrison:'G',back:'Esc'};
+const ECO=['house','mill','mine','woodyard','farm','market'];
+const hkOf=a=>a.t==='trade'?(a.sell?'QWE':'ASD')['wfs'.indexOf(a.k)]:HK[a.t];
+let bPage=null;   /* desktop build page open on the bar: null (villager root), 'eco' or 'mil' */
+function setDesk(on){if(DESK===on)return;DESK=on;document.body.classList.toggle('desk',on);bPage=null;
  if(on){if(started)keyHintOnce()}else $('keyCard').hidden=true;
  tipHide();refreshPanel(true)}
 const cv=$('game'),mainCtx=cv.getContext('2d');let ctx=mainCtx;   /* `ctx` is swapped to an offscreen canvas while silhouettes are drawn */
@@ -687,7 +700,7 @@ function garrisonVillagers(villagers,tc){
  if(!room){toast(DEFS[tc.type].name+' garrison is full');sfx('no');return}
  const put=villagers.filter(u=>u.team===tc.team&&!u.dead&&!u.garrisoned&&canGarrison(u)).slice(0,room);
  put.forEach(u=>{
-  rememberTask(u);
+  rememberTask(u);u.oq=null;
   if(u.carry>0){const k=u.order.ctype||(u.lastRes&&KCT[u.lastRes.kind]);if(k)res[u.team][k]+=Math.floor(u.carry);u.carry=0}
   u.garrisoned=tc;u.order={type:'garrison',building:tc};u.path=null;u.moving=false;u.x=tc.cx;u.y=tc.cy;tc.garrison.push(u)
  });
@@ -734,7 +747,7 @@ function resumeTask(u){
 }
 function commandVillagers(){
  const v=selection.filter(s=>s.kind==='unit'&&s.team===0&&s.type==='vill'&&!s.dead);
- if(!v.length)return false;
+ if(!v.length)return false;v.forEach(u=>u.oq=null);
  let cx=0,cy=0;v.forEach(u=>{cx+=u.x;cy+=u.y});cx/=v.length;cy/=v.length;
  let pending=null,bd=1e9;
  for(const b of buildings){if(b.dead||b.done||b.team!==0)continue;const d=dist2(cx,cy,b.cx,b.cy);if(d<bd){bd=d;pending=b}}
@@ -932,6 +945,9 @@ function damage(t,amt,fromTeam,src){
   if(o.type==='idle'&&dist2(t.x,t.y,src.x,src.y)<=reach*reach){t.order={type:'attack',target:src,auto:true,ax:t.x,ay:t.y};t.path=null;t.nT=0}
   else if(o.type==='amove'&&(!o.tgt||o.tgt.dead||o.tgt.kind==='bld'))o.tgt=src}
  t.hp-=amt;t.flash=0.15;if(fromTeam===0)t.myHitT=time;
+ /* the last notification Space/Home jumps to; on desktop an attack out of view also says so */
+ if(t.team===0&&fromTeam===1){const[nx,ny]=entPos(t),[sx,sy]=w2s(nx,ny);lastNote={x:nx,y:ny,t:time};
+  if(DESK&&time>noteToastT&&(Math.abs(sx-camX)>cw/(2*zoom)||Math.abs(sy-camY)>ch/(2*zoom))){noteToastT=time+20;toast('Under attack! Press Space to look')}}
  if((t.team===0&&fromTeam===1)||(t.team===1&&fromTeam===0))lastFight=time;
  bleed(t,amt);
  /* floating damage numbers, but only for fights the player is part of, and throttled so a
@@ -1024,6 +1040,7 @@ function afterBuild(u){
  /* a wall crew works its way along the line, nearest unfinished section next */
  if(u.wallQ){const n=u.wallQ.filter(w=>!w.dead&&!w.done).sort((p,q)=>dist2(u.x,u.y,p.cx,p.cy)-dist2(u.x,u.y,q.cx,q.cy))[0];
   if(n){assignBuild(u,n);return}u.wallQ=null}
+ if(u.oq){u.order={type:'idle'};return}   /* Shift-queued orders come next */
  const r=u.lastRes;
  if(r&&!r.dead&&r.amt>0)setGather(u,r);
  else{u.order={type:'idle'};u.lastTask=null}}
@@ -1035,7 +1052,10 @@ function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
     farmer and anyone else who helped goes back to what they were doing. */
  let farmer=null;
  if(b.type==='farm'){const bs=units.filter(u=>!u.dead&&u.order.type==='build'&&u.order.b===b);
-  farmer=bs.sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy))[0]||null}
+  farmer=bs.sort((p,q)=>dist2(p.x,p.y,b.cx,b.cy)-dist2(q.x,q.y,b.cx,b.cy))[0]||null;
+  /* Shift-queued fields: a lone builder with more sites queued goes on to them and farms the last
+     one (as in AoE2); with a crew, the nearest stays and the rest carry the shared queue on */
+  if(bs.length===1&&farmer.wallQ&&farmer.wallQ.some(w=>w!==b&&!w.dead&&!w.done))farmer=null}
  /* Builders of a drop-off go straight to work the resource it serves: the nearest trees for a
     Wood Yard, gold or stone for a Mining Camp, berries for a Mill. With nothing in reach they
     return to what they were doing. */
@@ -1045,7 +1065,8 @@ function completeB(b){b.done=true;b.progress=1;b.hp=b.maxhp;recalcPop();
   if(r&&(!near||dist2(r.gx,r.gy,b.cx,b.cy)<dist2(near.gx,near.gy,b.cx,b.cy)))near=r}}
  units.forEach(u=>{if(u.lastTask&&u.lastTask.type==='build'&&u.lastTask.b===b)u.lastTask=null;
   if(u.order.type==='build'&&u.order.b===b){
-   if(u===farmer)setGather(u,b);
+   if(u.oq&&u.oq.length)u.order={type:'idle'};   /* off to its queued orders */
+   else if(u===farmer)setGather(u,b);
    else if(near&&u.type==='vill'){
     /* spread a crew over neighbouring nodes of the same kind instead of one tree */
     const r=findResByKind(near.kind,u.x,u.y,3)||near;setGather(u,r)}
@@ -1234,13 +1255,14 @@ function updUnit(u,dt){
    for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++)if(passable(fx+i,fy+j,u.team)){const d=i*i+j*j;if(d<bd){bd=d;best=[fx+i,fy+j]}}
    if(best){u.x=best[0]+0.5;u.y=best[1]+0.5;u.path=null;u.nT=0}}}
  else u.stuckIn=0;
+ if(u.oq&&u.order.type==='idle')nextOrd(u);   /* Shift-queued orders (desktop) */
  const o=u.order;
  switch(o.type){
   case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e,auto:true,ax:u.x,ay:u.y}}break;   /* the AI's idle troops watch a wider radius */
   case 'drive':{const b=u.type==='vill'?nearbyBuild(u):null;if(b)assignBuild(u,b);break}
   case 'move':{
    const reached=followPath(u,dt);
-   const b=u.type==='vill'?nearbyBuild(u):null;
+   const b=u.type==='vill'&&!o.wp?nearbyBuild(u):null;   /* a queued waypoint is just a waypoint */
    if(b&&dist2(u.dx,u.dy,b.cx,b.cy)<16){assignBuild(u,b);break}
    if(reached)u.order={type:'idle'};break}
   case 'amove':
@@ -1317,7 +1339,25 @@ function aiThink(){
    notice('⚔ The enemy army is marching!');sfx('horn')   /* the horn still sounds every wave */}}}
 
 /* ============ orders & placement ============ */
-function orderMove(list,wx,wy){list.forEach((u,i)=>{rememberTask(u);const o=FORM[i%FORM.length];u.order={type:'move'};u.path=null;u.nT=0;setPath(u,wx+o[0]+rnd(-0.15,0.15),wy+o[1]+rnd(-0.15,0.15))})}
+/* Shift+right-click (desktop) queues orders per unit, AoE2 style: u.oq holds what comes after the
+   current order -- moves chain as waypoints, then gather, build or attack. A unit takes the next one
+   when it goes idle (or finishes a build); a plain order drops the queue. */
+const entPos=t=>t.kind==='bld'?[t.cx,t.cy]:t.x!==undefined?[t.x,t.y]:[t.gx,t.gy];
+function runOrd(u,o){
+ if(o.t==='move'){u.order={type:'move',wp:1};u.path=null;u.nT=0;setPath(u,o.x,o.y);return true}
+ if(o.t==='gather'){if(u.type!=='vill'||!o.r||o.r.dead||!(o.r.amt>0))return false;setGather(u,o.r);return true}
+ if(o.t==='build')return u.type==='vill'&&assignBuild(u,o.b);
+ if(!o.e||o.e.dead||o.e.hp<=0)return false;u.order={type:'attack',target:o.e};u.path=null;u.nT=0;return true}
+function nextOrd(u){while(u.oq&&u.oq.length)if(runOrd(u,u.oq.shift()))return;u.oq=null}
+const ordPt=o=>o.t==='move'?[o.x,o.y]:entPos(o.r||o.b||o.e);
+function queueOrders(e,wx,wy){const f=selUnits(0);
+ f.forEach((u,i)=>{const v=u.type==='vill',fo=FORM[i%FORM.length];
+  const o=e&&e.team===1?{t:'attack',e}:e&&v&&(KCT[e.kind]||e.type==='farm'&&e.done)?{t:'gather',r:e}:e&&v&&e.kind==='bld'&&!e.done?{t:'build',b:e}:{t:'move',x:wx+fo[0],y:wy+fo[1]};
+  /* a unit on a finite errand (or already queued) takes it after; an idle or gathering one starts now */
+  if(u.oq||u.order.type==='move'||u.order.type==='amove'||u.order.type==='attack'||u.order.type==='build')(u.oq=u.oq||[]).push(o);
+  else{rememberTask(u);u.oq=[];if(!runOrd(u,o))u.oq=null}});
+ const p=e?entPos(e):[wx,wy];ping(p[0],p[1],e&&e.team===1?'#ff8a7a':'#9fe08a');sfx('ok');voice(f[0].type==='vill'?'ack':'select',f[0])}
+function orderMove(list,wx,wy){list.forEach((u,i)=>{rememberTask(u);u.oq=null;const o=FORM[i%FORM.length];u.order={type:'move'};u.path=null;u.nT=0;setPath(u,wx+o[0]+rnd(-0.15,0.15),wy+o[1]+rnd(-0.15,0.15))})}
 function startPlace(type){
  if(placing&&placing.type===type){placing=null;refreshPanel(true);return}
  if(!canAfford(0,DEFS[type].cost)){toast('Not enough resources');sfx('no');return}
@@ -1364,7 +1404,7 @@ function approveWall(){
  /* spread the crew along the line rather than piling everyone on one end */
  vills.forEach((u,i)=>{u.wallQ=made;assignBuild(u,made[Math.min(made.length-1,Math.floor((i+0.5)*made.length/vills.length))])});
  toast(made.length+' wall section'+(made.length===1?'':'s')+(short?' · short by '+short:''));
- ping(made[0].cx,made[0].cy,'#9fe08a');sfx('ok');placing=null;refreshPanel(true)}
+ ping(made[0].cx,made[0].cy,'#9fe08a');sfx('ok');placing=null;bPage=null;refreshPanel(true)}
 function redrawWall(){if(placing){placing.line=null;placing.pend=false}}
 function tryPlace(wx,wy){
  const d=DEFS[placing.type];
@@ -1380,7 +1420,7 @@ function tryPlace(wx,wy){
     for every villager not already headed to build one: the tapped field plus neighbouring fields
     around it, as many as the wood pays for. Villagers left without a farm stand idle. Other
     buildings take the whole group. */
- if(b.type==='farm'){
+ if(b.type==='farm'&&!shiftHeld){
   const free=vills.filter(u=>!(u.order.type==='build'&&u.order.b&&u.order.b.type==='farm'&&!u.order.b.done));
   const farms=[b];
   if(free.length>1){
@@ -1397,13 +1437,14 @@ function tryPlace(wx,wy){
   if(free.length>1&&left.length){left.forEach(u=>{u.order={type:'idle'};u.path=null});
    toast('Wood for '+farms.length+' farm'+(farms.length===1?'':'s')+' · '+left.length+' idle')}}
  /* Shift-placing (desktop): the crew queues the new site and works through the queue nearest
-    first, rather than dropping the one it is on; the same queue walls use (u.wallQ) */
+    first, rather than dropping the one it is on; the same queue walls use (u.wallQ). Farms too, one
+    field per click, AoE2 style: completeB leaves a farmer on each as the crew moves on. */
  else if(shiftHeld)vills.forEach(v=>{v.wallQ=(v.wallQ||[]).filter(q=>!q.dead&&!q.done).concat(b);
   if(!(v.order.type==='build'&&v.wallQ.includes(v.order.b)))assignBuild(v,b)});
- else vills.forEach(v=>assignBuild(v,b));
+ else vills.forEach(v=>{v.oq=null;assignBuild(v,b)});
  ping(b.cx,b.cy,'#9fe08a');sfx('ok');
  /* holding Shift keeps the building armed, AoE style, for as long as the stockpile pays */
- if(shiftHeld&&b.type!=='farm'&&canAfford(0,d.cost))placing={type:b.type,ghost:[wx,wy]};else placing=null;
+ if(shiftHeld&&canAfford(0,d.cost))placing={type:b.type,ghost:[wx,wy]};else{placing=null;bPage=null}
  refreshPanel(true)}
 let shiftHeld=false;
 addEventListener('keydown',e=>{if(e.key==='Shift')shiftHeld=true});
@@ -1481,6 +1522,8 @@ function tap(px,py,mode){
   const act=e.team===1?selUnits(0).length||selection.some(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done)
    :KCT[e.kind]&&!own||farm?v||rb:own&&!e.done?v:false;
   if(!act)e=null}
+ /* Shift+right-click queues the order behind what each unit is doing */
+ if(cmd&&selAdd&&!rb&&selUnits(0).length){lastTap.ty=null;queueOrders(e,wx,wy);refreshPanel(true);return}
  if(!sel&&rb&&e&&(KCT[e.kind]||(e.kind==='bld'&&e.team===0&&e.type==='farm'&&e.done))){
   lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
   rb.rally={x:e.gx,y:e.gy};rb.rallyRes=e;ping(e.gx,e.gy,'#7fd4ff');sfx('ok');
@@ -1490,7 +1533,8 @@ function tap(px,py,mode){
   if(e.kind==='unit'&&e.team===0){
    const dbl=lastTap.ty===e.type&&now-lastTap.t<(sel?450:350)&&Math.hypot(px-lastTap.x,py-lastTap.y)<50;
    /* double-tap: a villager selects the villagers on screen, any soldier the whole army */
-   if(dbl){if(e.type==='vill')selectType(e.type);else selectArmy()}
+   /* desktop (AoE2): double-click selects that type on screen, soldiers included; touch keeps the army */
+   if(dbl){if(e.type==='vill'||sel)selectType(e.type);else selectArmy()}
    else if(sel&&selAdd){selection=selection.includes(e)?selection.filter(s=>s!==e):selection.filter(s=>s.kind==='unit').concat(e);sfx('sel')}   /* Shift-click toggles */
    else{selection=[e];sfx('sel')}
    voice('select',e);
@@ -1498,7 +1542,7 @@ function tap(px,py,mode){
   if((e.kind==='unit'&&e.team===1)||(e.kind==='bld'&&e.team===1)){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const f=sel?[]:selUnits(0);
-   if(f.length){f.forEach(u=>{rememberTask(u);u.order={type:'attack',target:e};u.path=null;u.nT=0});
+   if(f.length){f.forEach(u=>{rememberTask(u);u.oq=null;u.order={type:'attack',target:e};u.path=null;u.nT=0});
     ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk');
     const sol=f.find(u=>u.type!=='vill');voice(sol?'attack':'ack',sol||f[0])}
    else if(!sel&&selection.length&&selection.every(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done)){
@@ -1510,14 +1554,14 @@ function tap(px,py,mode){
   if(KCT[e.kind]){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill');
-   if(v.length&&!sel){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok');voice('ack',v[0])}
+   if(v.length&&!sel){v.forEach(u=>{u.oq=null;setGather(u,e)});ping(e.gx,e.gy,'#ffe08a');sfx('ok');voice('ack',v[0])}
    else{toast(RESNAME[e.kind]+': '+Math.ceil(e.amt)+' remaining');if(sel&&!selAdd)selection=[]}
    refreshPanel(true);return}
   if(e.kind==='bld'&&e.team===0){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill'),gv=selUnits(0).filter(canGarrison);
-   if(!sel&&!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
-   else if(!sel&&e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
+   if(!sel&&!e.done&&v.length){v.forEach(u=>{u.oq=null;assignBuild(u,e)});ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
+   else if(!sel&&e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>{u.oq=null;setGather(u,e)});ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
    else if(!cmd){selection=[e];sfx('sel')}   /* a left click on your building just selects it */
    refreshPanel(true);return}
  }
@@ -1529,6 +1573,12 @@ function tap(px,py,mode){
   if(f.length&&!sel){orderMove(f,wx,wy);ping(wx,wy,'#9fe08a');sfx('ok');voice(f[0].type==='vill'?'ack':'select',f[0])}
   else if(!cmd&&!(sel&&selAdd))selection=[]}
  refreshPanel(true)}
+function ctrlSel(px,py){const[wx,wy]=scr2w(px,py),e=unitAtScreen(px,py)||entityAt(wx,wy);
+ if(!e||e.team!==0||(e.kind!=='unit'&&e.kind!=='bld'))return false;sheepSel=[];
+ if(e.kind==='unit')selectType(e.type);
+ else{const L=camX-cw/(2*zoom),R=camX+cw/(2*zoom),T=camY-ch/(2*zoom),B=camY+ch/(2*zoom);
+  selection=buildings.filter(b=>b.team===0&&!b.dead&&b.type===e.type&&(([x,y])=>x>L&&x<R&&y>T&&y<B)(w2s(b.cx,b.cy)));sfx('sel')}
+ refreshPanel(true);return true}
 function doBox(){sheepSel=[];
  const x0=Math.min(box.x0,box.x1),x1=Math.max(box.x0,box.x1);
  const y0=Math.min(box.y0,box.y1),y1=Math.max(box.y0,box.y1);
@@ -1598,7 +1648,10 @@ cv.addEventListener('pointerdown',e=>{
  /* Mouse: a right press gives the context order (or calls off a placement) and a middle press
     drags the view. Neither enters ptrs, so a second button can never read as a pinch. */
  const ms=e.pointerType==='mouse';
- if(ms&&e.button===2){if(placing){placing=null;refreshPanel(true)}else tap(e.clientX,e.clientY,'cmd');return}
+ /* Ctrl/Cmd+click (AoE2): every one of that kind on screen. A Mac turns Ctrl+click into a right
+    press, so either button counts. */
+ if(ms&&(e.ctrlKey||e.metaKey)&&(e.button===0||e.button===2)&&!placing&&!garrisonPick&&ctrlSel(e.clientX,e.clientY))return;
+ if(ms&&e.button===2){if(placing){placing=null;refreshPanel(true)}else{selAdd=e.shiftKey;tap(e.clientX,e.clientY,'cmd');selAdd=false}return}
  if(ms&&e.button===1){mouse.mid={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}return}
  if(ms&&e.button!==0)return;
  try{cv.setPointerCapture(e.pointerId)}catch(_){}
@@ -1688,7 +1741,7 @@ $('sword').addEventListener('pointerdown',e=>{
  units.forEach(t=>{if(t.dead||t.team===0)return;const d=dist2(bx,by,t.x,t.y);if(d<bd){bd=d;best=t}});
  buildings.forEach(t=>{if(t.dead||t.team===0)return;const d=dist2(bx,by,t.cx,t.cy);if(d<bd){bd=d;best=t}});
  if(best){const tx=best.x!==undefined?best.x:best.cx,ty=best.y!==undefined?best.y:best.cy;
-  own.forEach(u=>{rememberTask(u);u.order={type:'amove',x:tx,y:ty,tgt:null};u.path=null;u.nT=0;setPath(u,tx+rnd(-1,1),ty+rnd(-1,1))});
+  own.forEach(u=>{rememberTask(u);u.oq=null;u.order={type:'amove',x:tx,y:ty,tgt:null};u.path=null;u.nT=0;setPath(u,tx+rnd(-1,1),ty+rnd(-1,1))});
   ping(tx,ty,'#ff8a7a');sfx('atk');voice('attack',own[0])}
  else toast('No enemies discovered yet')});
 
@@ -1737,6 +1790,7 @@ function refreshPanel(force){
  selection=selection.filter(s=>!s.dead);
  updateCommandButton();
  const sig=selection.map(s=>s.id).join('.');
+ if(sig!==pSig)bPage=null;   /* a new selection opens on its root card, as in AoE2 */
  if(!force&&sig===pSig)return;
  pSig=sig;
  const el=$('panel');pHP=pQF=pQT=null;pActs=[];
@@ -1771,8 +1825,16 @@ function refreshPanel(force){
    for(const k of['w','f','s'])acts.push({l:'Sell 100 '+RESLABEL[k]+' for '+mktSell(k)+' gold',s:'Sell',c:mktSell(k)+'g',t:'trade',sell:true,k,ic:ICO[k]});
    for(const k of['w','f','s'])acts.push({l:'Buy 100 '+RESLABEL[k]+' for '+mktBuy(k)+' gold',s:'Buy',c:mktBuy(k)+'g',t:'trade',sell:false,k,ic:ICO[k]})}
   if(counts.barracks)acts.push({l:'Man-at-Arms',s:'Man-at-Arms',c:'60f 20g',t:'swords',q:1},{l:'Archer',s:'Archer',c:'40w 30g',t:'archer',q:1})}
+ /* Desktop: AoE2's command card. Villagers show Build economic (Q) and Build military (W), each
+    opening a page of buildings with Back (Esc); placing one returns to the root. Buttons sit in
+    grid order with their key as the badge. Touch keeps the flat bar exactly as it was. */
+ if(DESK&&acts.length){
+  if(counts.vill&&!enemy){const bs=acts.filter(a=>DEFS[a.t]&&DEFS[a.t].size),rest=acts.filter(a=>!bs.includes(a));acts.length=0;
+   if(bPage)acts.push(...bs.filter(a=>ECO.includes(a.t)===(bPage==='eco')),{l:'Back',s:'Back',c:'',t:'back',ic:'<svg viewBox="0 0 20 20"><path d="M8.5 4.5 3 10l5.5 5.5M3.5 10H17" fill="none" stroke="#e8e2d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'});
+   else acts.push({l:'Build economic',s:'Economic',c:'',t:'bEco',ic:ICON.house},{l:'Build military',s:'Military',c:'',t:'bMil',ic:ICON.barracks},...rest)}
+  acts.forEach(a=>a.hk=hkOf(a));const gi=a=>{const i=GRID.indexOf(a.hk);return i<0?99:i};acts.sort((p,q)=>gi(p)-gi(q))}
  if(acts.length){
-  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn${(placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick)?' on':''}" data-i="${i}" data-t="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span>${HK[a.t]?`<kbd>${HK[a.t]}</kbd>`:''}</button>`).join('')+'</div>';
+  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn${(placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick)?' on':''}" data-i="${i}" data-t="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span>${a.hk?`<kbd>${a.hk}</kbd>`:''}</button>`).join('')+'</div>';
   if(acts.some(a=>a.q)&&selection.length===1&&first.kind==='bld')html+='<div class="pq"><div id="pqf"></div><span id="pqt">Idle</span></div>'}
  el.innerHTML=html;tipHide();
  /* The red X first cancels a building waiting to be placed, then clears the selection. Clearing
@@ -1785,6 +1847,7 @@ function refreshPanel(force){
    else if(a.t==='ungarrison')ungarrison(selection[0]);
    else if(a.t==='garrison'){garrisonPick=!garrisonPick;if(garrisonPick){placing=null;toast('Tap your Town Center or a tower')}}
    else if(a.t==='trade')tradeMarket(selection[0],a);
+   else if(a.t==='bEco'||a.t==='bMil'||a.t==='back')bPage=a.t==='bEco'?'eco':a.t==='bMil'?'mil':null;
    else{const b=selection[0];if(b&&b.kind==='bld')tryQueue(b,a.t)}
    refreshPanel(true)}});
  pActs=acts;
@@ -1829,12 +1892,13 @@ function selectIdle(){
  refreshPanel(true)}
 
 /* ============ desktop: keys, tooltips, key card ============ */
-/* Held keys pan like the stick (speed divided by zoom, so the map moves at one rate on screen
+/* Held arrow keys pan like the stick (speed divided by zoom, so the map moves at one rate on screen
    however far in), Shift doubles it, and the cursor in a 12px band at the window's edge does the
-   same -- only while the window has focus and the cursor is inside it. */
+   same -- only while the window has focus and the cursor is inside it. No WASD: as in AoE2, those
+   letters belong to the command grid. */
 function applyKeys(dt){
  const k=c=>keys.has(c);
- let vx=(k('KeyD')||k('ArrowRight')?1:0)-(k('KeyA')||k('ArrowLeft')?1:0),vy=(k('KeyS')||k('ArrowDown')?1:0)-(k('KeyW')||k('ArrowUp')?1:0);
+ let vx=(k('ArrowRight')?1:0)-(k('ArrowLeft')?1:0),vy=(k('ArrowDown')?1:0)-(k('ArrowUp')?1:0);
  if(DESK&&mouse.in&&mouse.focus&&!mouse.mid){const E=12;
   if(mouse.x<E)vx=-1;else if(mouse.x>cw-E)vx=1;if(mouse.y<E)vy=-1;else if(mouse.y>ch-E)vy=1}
  if(!vx&&!vy)return;
@@ -1845,71 +1909,117 @@ function centreOn(list){const l=list.filter(s=>s&&!s.dead&&!s.garrisoned);if(!l.
  camX=x/l.length;camY=y/l.length;clampCam();followMute=1.5;return true}
 /* A letter presses the bar button it is printed on, so it does exactly what a click does, and only
    when that button is on offer for the current selection. */
-function pressAct(K){const i=pActs.findIndex(a=>HK[a.t]===K);if(i<0)return false;
+function pressAct(K){const i=pActs.findIndex(a=>a.hk===K);if(i<0)return false;
  const b=$('panel').querySelector('.abtn[data-i="'+i+'"]');if(!b)return false;b.onclick();return true}
 let idleI=0;
 function cycleIdle(){T.idle=true;
  const idle=units.filter(u=>u.team===0&&!u.dead&&!u.garrisoned&&u.type==='vill'&&u.order.type==='idle');
  if(!idle.length){toast('No idle villagers');sfx('no');return}
  const u=idle[idleI++%idle.length];selection=[u];sheepSel=[];placing=null;garrisonPick=false;refreshPanel(true);centreOn([u]);sfx('sel');voice('select',u)}
+/* , cycles idle soldiers the way . cycles idle villagers; H selects the Town Center and looks at
+   it, again for the next one if there are several (AoE2's "go to Town Center"). */
+let milI=0;
+function cycleIdleMil(){
+ const idle=units.filter(u=>u.team===0&&!u.dead&&!u.garrisoned&&u.type!=='vill'&&u.order.type==='idle'&&!u.oq);
+ if(!idle.length){toast('No idle soldiers');sfx('no');return}
+ const u=idle[milI++%idle.length];selection=[u];sheepSel=[];placing=null;garrisonPick=false;refreshPanel(true);centreOn([u]);sfx('sel');voice('select',u)}
+function goTC(){const l=buildings.filter(b=>b.team===0&&b.type==='tc'&&!b.dead);if(!l.length)return;
+ const i=selection.length===1?l.indexOf(selection[0]):-1,b=l[(i+1)%l.length];
+ selection=[b];sheepSel=[];placing=null;garrisonPick=false;refreshPanel(true);centreOn([b]);sfx('sel')}
+/* Last notification (Space, or Home as in AoE2): where you were last attacked, while it is fresh;
+   otherwise Space looks at the selection as before. */
+let lastNote=null,noteToastT=-99;
+function goNote(){if(lastNote&&time-lastNote.t<45){const[sx,sy]=w2s(lastNote.x,lastNote.y);camX=sx;camY=sy;clampCam();followMute=1.5;ping(lastNote.x,lastNote.y,'#ff8a7a');return}
+ centreOn(selection.length?selection:sheepSel.length?sheepSel:[homeTC()])}
+/* Delete (Mac: delete) removes your selected unit or building through the normal death or collapse,
+   with no refund; Shift+Delete removes the whole selection (AoE2). Your last Town Center only
+   goes with Shift, since losing it ends the match. */
+function delSel(all){const own=selection.filter(s=>s.team===0&&!s.dead&&(s.kind==='unit'||s.kind==='bld'));if(!own.length)return;
+ const list=all?own:[own[0]];
+ const tcs=buildings.filter(b=>b.team===0&&b.type==='tc'&&!b.dead);
+ if(!all&&list[0].type==='tc'&&tcs.length<=1){toast('Shift+Delete to delete your last Town Center');sfx('no');return}
+ list.forEach(kill);selection=selection.filter(s=>!s.dead);refreshPanel(true)}
+/* Control groups (AoE2): Ctrl+digit makes one, Shift+digit adds to it, the digit selects it, twice
+   (or Alt+digit) looks at it. Cmd counts as Ctrl; where the OS or browser keeps Ctrl/Cmd+digit for
+   itself, Shift+digit onto an empty group makes it. */
 const groups=[],grpT={n:0,t:0};
-const PAN_KEYS=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight']);
+const PAN_KEYS=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight']);
 addEventListener('keydown',e=>{
  const tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;
  if(!started||over)return;
  const c=e.code,K=e.key.length===1?e.key.toUpperCase():e.key,mod=e.ctrlKey||e.metaKey;
  /* a focused button (Begin, a bar button) must not also take Space or Enter as a click */
  if(document.activeElement&&document.activeElement.tagName==='BUTTON')document.activeElement.blur();
- /* P toggles pause. Esc closes the pause menu, else calls off a placement or Garrison, else
-    deselects; it never pauses the game by itself. */
- if(K==='Escape'||(c==='KeyP'&&!mod)){e.preventDefault();
-  if(paused){setPaused(false);return}
-  if(K==='Escape'){if(placing||garrisonPick){placing=null;garrisonPick=false;refreshPanel(true)}
-   else if(selection.length||sheepSel.length){selection=[];sheepSel=[];refreshPanel(true)}
-   return}
-  setPaused(true);return}
+ /* F3 and P pause bare (the board freezes, no menu); F10 opens the menu. Esc closes either, else
+    calls off a placement or Garrison, else backs out of a build page, else deselects, else closes the
+    key card -- it never pauses the game by itself. */
+ if(K==='F3'||K==='F10'||(c==='KeyP'&&!mod)){e.preventDefault();if(e.repeat)return;
+  const bare=K!=='F10';if(paused&&$('pauseOv').classList.contains('bare')!==bare)setPaused(true,bare);else setPaused(!paused,bare);return}
+ if(K==='Escape'){e.preventDefault();
+  if(paused)setPaused(false);
+  else if(placing||garrisonPick){placing=null;garrisonPick=false;refreshPanel(true)}
+  else if(bPage){bPage=null;refreshPanel(true)}
+  else if(selection.length||sheepSel.length){selection=[];sheepSel=[];refreshPanel(true)}
+  else if(!$('keyCard').hidden)keyCard(false);
+  return}
  if(paused)return;
  /* Cmd/Ctrl+key with no meaning here stays the browser's; a key held under Cmd never gets its keyup on a Mac */
  if(PAN_KEYS.has(c)){e.preventDefault();if(!mod)keys.add(c);return}
  const dg=/^(?:Digit|Numpad)([1-9])$/.exec(c);
- if(dg){e.preventDefault();if(e.repeat)return;const n=+dg[1];
-  /* Ctrl/Cmd+digit sets a group; Shift+digit too, since browsers keep Cmd+1-9 for their tabs */
-  if(mod||e.shiftKey){groups[n]=selection.filter(s=>s.team===0&&!s.dead);toast(groups[n].length?'Group '+n+' · '+groups[n].length+' set':'Group '+n+' cleared');sfx('sel');return}
+ if(dg){e.preventDefault();if(e.repeat)return;const n=+dg[1],sel=selection.filter(s=>s.team===0&&!s.dead);
+  if(mod){groups[n]=sel;toast(sel.length?'Group '+n+' · '+sel.length+' set':'Group '+n+' cleared');sfx('sel');return}
+  if(e.shiftKey){groups[n]=[...new Set((groups[n]||[]).filter(s=>!s.dead).concat(sel))];toast('Group '+n+' · '+groups[n].length);sfx('sel');return}
   const g=(groups[n]||[]).filter(s=>!s.dead&&!s.garrisoned);if(!g.length)return;
   selection=g;sheepSel=[];placing=null;garrisonPick=false;refreshPanel(true);sfx('sel');
-  const now=performance.now();if(grpT.n===n&&now-grpT.t<450)centreOn(g);grpT.n=n;grpT.t=now;return}
+  const now=performance.now();if(e.altKey||grpT.n===n&&now-grpT.t<450)centreOn(g);grpT.n=n;grpT.t=now;return}
+ if(K==='Delete'||K==='Backspace'){e.preventDefault();if(!e.repeat)delSel(e.shiftKey);return}
  if(mod||e.altKey||e.repeat)return;
- if(K===' '){e.preventDefault();centreOn(selection.length?selection:sheepSel.length?sheepSel:[homeTC()]);return}
+ if(K===' '||K==='Home'){e.preventDefault();goNote();return}
  if(K==='Enter'){if(placing&&placing.pend){e.preventDefault();$('wallOk').click()}return}
  if(K==='.'||K==='>'){e.preventDefault();cycleIdle();return}
+ if(K===','||K==='<'){e.preventDefault();cycleIdleMil();return}
  if(K==='?'||K==='/'){e.preventDefault();keyCard();return}
- if(K==='Delete'||K==='Backspace'){e.preventDefault();return}   /* never destructive */
  if(K==='R'&&placing&&placing.type==='gate'){e.preventDefault();rotGate();return}
- if(/^[A-Z]$/.test(K)&&pressAct(K))e.preventDefault()});
+ if(/^[A-Z]$/.test(K)&&pressAct(K)){e.preventDefault();return}
+ if(K==='H'){e.preventDefault();goTC()}});
 addEventListener('keyup',e=>{keys.delete(e.code);if(e.key==='Meta'||e.key==='Control')keys.clear()});
 /* Hover tooltip on the bar buttons: name, cost, hotkey. */
 function tipHide(){const t=$('tipBox');if(t)t.style.display='none'}
 $('panel').addEventListener('pointerover',e=>{if(e.pointerType!=='mouse')return;
  const b=e.target.closest&&e.target.closest('.abtn'),a=b&&pActs[+b.dataset.i];if(!a){tipHide();return}
- const t=$('tipBox');t.innerHTML='<b>'+a.l+'</b>'+(a.c?'<span>'+costHTML(a.c)+'</span>':'')+(HK[a.t]?'<kbd>'+HK[a.t]+'</kbd>':'');
+ const t=$('tipBox');t.innerHTML='<b>'+a.l+'</b>'+(a.c?'<span>'+costHTML(a.c)+'</span>':'')+(a.hk?'<kbd>'+a.hk+'</kbd>':'');
  t.style.display='block';const r=b.getBoundingClientRect(),w=t.offsetWidth;
  t.style.left=clamp(r.left+r.width/2,w/2+6,cw-w/2-6)+'px';t.style.top=(r.top-6)+'px'});
 $('panel').addEventListener('pointerout',e=>{const r=e.relatedTarget;if(!r||!r.closest||!r.closest('.abtn'))tipHide()});
-/* The key card: opened by "?" (pill or key), shown once on the first desktop game. */
+/* The key card: opened by "?" (pill or key), shown once on the first desktop game. Laid out like
+   AoE2's hotkey screen: camera, selection, orders, the command grid, game. ('#' rows are headings.) */
 const KEYMAP=()=>[
- ['Look around','<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, arrows or the screen edge · <kbd>Shift</kbd> faster'],
- ['Zoom · drag view','Mouse wheel · middle-drag'],
- ['Select','Click · drag a box · <kbd>Shift</kbd> adds · double-click selects that type (a soldier: the army)'],
- ['Orders','Right-click: move, gather, attack, build, farm, garrison in a Town Center or tower, rally flag'],
- ['Build','With villagers: '+Object.keys(HK).filter(t=>DEFS[t]&&DEFS[t].size).map(t=>'<kbd>'+HK[t]+'</kbd> '+DEFS[t].name).join(', ')],
- ['Place','Click · drag a wall, then <kbd>Enter</kbd> · <kbd>R</kbd> turns a gate · right-click or <kbd>Esc</kbd> cancels'],
- ['Train','<kbd>Q</kbd> Villager (Town Center), Man-at-Arms (Barracks) · <kbd>R</kbd> Archer · <kbd>U</kbd> Unload'],
- ['Groups','<kbd>Ctrl</kbd>/<kbd>⌘</kbd>/<kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>9</kbd> set · <kbd>1</kbd>–<kbd>9</kbd> select, twice to look'],
- ['More','<kbd>.</kbd> next idle villager · <kbd>Space</kbd> look at selection · <kbd>Esc</kbd> cancel, deselect · <kbd>P</kbd> pause · <kbd>?</kbd> this card']];
+ ['#','Camera'],
+ ['Scroll','<kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> or the screen edge (<kbd>Shift</kbd> faster) · middle-drag · wheel zooms'],
+ ['Last alert','<kbd>Space</kbd> / <kbd>Home</kbd>: where you were last attacked, else the selection'],
+ ['#','Selection'],
+ ['Select','Click · drag a box · <kbd>Shift</kbd>+click adds or removes'],
+ ['All of a kind','Double-click, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+click: that type on screen'],
+ ['Find','<kbd>H</kbd> Town Center (again: the next) · <kbd>.</kbd> idle villager · <kbd>,</kbd> idle soldier'],
+ ['Groups','<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>1</kbd>–<kbd>9</kbd> make · <kbd>Shift</kbd>+digit add · digit selects, twice or <kbd>Alt</kbd>+digit goes there'],
+ ['#','Orders'],
+ ['Right-click','Move, gather, attack, build, garrison · with a building selected: its gather point'],
+ ['Queue','<kbd>Shift</kbd>+right-click: waypoints and orders in turn (dotted line)'],
+ ['Place','Click · <kbd>Shift</kbd> keeps placing, the crew queues each (farms too) · walls: drag, <kbd>Enter</kbd> · <kbd>R</kbd> turns a gate · right-click or <kbd>Esc</kbd> cancels'],
+ ['Delete','<kbd>Delete</kbd> (Mac <kbd>delete</kbd>) one · <kbd>Shift</kbd>+<kbd>Delete</kbd> all selected · the last Town Center needs Shift'],
+ ['#','Command grid · AoE2 positions'],
+ ['Villager','<kbd>Q</kbd> Economic ▸ <kbd>Q</kbd> House <kbd>W</kbd> Mill <kbd>E</kbd> Mining Camp <kbd>R</kbd> Wood Yard <kbd>A</kbd> Farm <kbd>D</kbd> Market'],
+ ['','<kbd>W</kbd> Military ▸ <kbd>Q</kbd> Barracks <kbd>S</kbd> Palisade <kbd>D</kbd> Stone Wall <kbd>F</kbd> Tower <kbd>Z</kbd> Gate · <kbd>T</kbd> Garrison'],
+ ['Buildings','Town Center <kbd>Q</kbd> Villager · Barracks <kbd>Q</kbd> Man-at-Arms <kbd>W</kbd> Archer · <kbd>G</kbd> Unload · Market <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> sell <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> buy'],
+ ['#','Game'],
+ ['Pause','<kbd>F3</kbd> or <kbd>P</kbd> pause · <kbd>F10</kbd> menu · <kbd>?</kbd> this card'],
+ ['Esc','Closes the menu, cancels a placement, leaves a build page, then deselects'],
+ ['','<p>Arrows scroll, not WASD: as in AoE2 those letters are grid keys. If your browser keeps Ctrl/⌘+digit, Shift+digit onto an empty group makes it.</p>']];
 function keyCard(show){const k=$('keyCard');if(show===undefined)show=k.hidden;
- if(show&&!k.innerHTML)k.innerHTML='<h3>Keys &amp; mouse<button id="keyX" aria-label="Close">✕</button></h3>'+KEYMAP().map(([a,b])=>`<div><b>${a}</b><span>${b}</span></div>`).join('');
- k.hidden=!show;if(!show)try{localStorage.setItem('pe_keys_seen','1')}catch(_){}}
-function keyHintOnce(){try{if(localStorage.getItem('pe_keys_seen')==='1')return}catch(_){return}keyCard(true)}
+ if(show&&!k.innerHTML)k.innerHTML='<h3>Hotkeys<button id="keyX" aria-label="Close">✕</button></h3>'+KEYMAP().map(([a,b])=>a==='#'?`<h4>${b}</h4>`:b.startsWith('<p>')?b:`<div><b>${a}</b><span>${b}</span></div>`).join('');
+ k.hidden=!show;if(!show)try{localStorage.setItem('pe_keys_seen2','1')}catch(_){}}
+/* the key moved to …2 with the AoE2 layout, so players who closed the old card see the new one once */
+function keyHintOnce(){try{if(localStorage.getItem('pe_keys_seen2')==='1')return}catch(_){return}keyCard(true)}
 $('keyCard').addEventListener('click',e=>{if(e.target.id==='keyX')keyCard(false)});
 $('keyQ').addEventListener('click',e=>{e.stopPropagation();keyCard()});
 
@@ -2786,6 +2896,14 @@ function render(){
   ctx.beginPath();ctx.ellipse(sx,sy,9,4.5,0,0,7);ctx.stroke();
   ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx,sy-15);ctx.stroke();
   ctx.fillStyle='#7fd4ff';ctx.beginPath();ctx.moveTo(sx,sy-15);ctx.lineTo(sx+8,sy-12.5);ctx.lineTo(sx,sy-10);ctx.closePath();ctx.fill()}
+ /* Shift-queued orders of the selected units: a faint dotted line from each unit through its current
+    target and every queued waypoint, with a dot at each stop */
+ for(const u of selection){if(u.kind!=='unit'||u.dead||!u.oq)continue;const o=u.order;
+  const cur=o.type==='move'||o.type==='amove'?[u.dx,u.dy]:o.type==='gather'&&o.res?entPos(o.res):o.type==='build'&&o.b?entPos(o.b):o.type==='attack'&&o.target?entPos(o.target):null;
+  const pts=[[u.x,u.y]].concat(cur?[cur]:[],u.oq.map(ordPt)).map(p=>w2s(p[0],p[1]));if(pts.length<2)continue;
+  ctx.setLineDash([3,4]);ctx.strokeStyle='rgba(240,255,240,.55)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(240,255,240,.7)';for(const p of pts.slice(1)){ctx.beginPath();ctx.ellipse(p[0],p[1],2.6,1.4,0,0,7);ctx.fill()}}
  if(wallBarEl.hidden===!!(placing&&placing.pend))wallBarEl.hidden=!(placing&&placing.pend);
  if(placing&&placing.line){
   const d=DEFS[placing.type];
@@ -3016,7 +3134,7 @@ function update(dt){
  afT-=dt;
  if(afT<=0){afT=0.4;
   $('panel').querySelectorAll('.abtn').forEach((btn,i)=>{const a=pActs[i];if(!a)return;
-   const affordable=a.t==='ungarrison'||a.t==='garrison'||(a.t==='trade'?(a.sell?res[0][a.k]>=100:res[0].g>=mktBuy(a.k)):canAfford(0,DEFS[a.t].cost));
+   const affordable=a.t==='ungarrison'||a.t==='garrison'||(!DEFS[a.t]&&a.t!=='trade')||(a.t==='trade'?(a.sell?res[0][a.k]>=100:res[0].g>=mktBuy(a.k)):canAfford(0,DEFS[a.t].cost));
    btn.classList.toggle('no',!affordable);
    btn.classList.toggle('on',(!!placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick))})}
  if(pHP&&selection.length===1)pHP.style.width=(Math.max(0,selection[0].hp/selection[0].maxhp*100))+'%';
@@ -3051,8 +3169,8 @@ const PERF={n:0,up:0,rd:0,worst:0,last:0,t0:0,sil:0,silMax:0,
    this.n=this.up=this.rd=this.worst=this.sil=this.silMax=0;this.t0=ts}}};
 /* Pause sits with the resource pills because that row is already the player's status strip, and
    `time` drives every idle cycle, so freezing it stops the whole board rather than just movement. */
-function setPaused(on){
- paused=on;
+function setPaused(on,bare){
+ paused=on;$('pauseOv').classList.toggle('bare',!!(on&&bare));   /* bare: F3/P, no menu card */
  const b=$('ppause');
  b.classList.toggle('on',paused);
  b.innerHTML=ICO_GEAR;b.title='Settings';
@@ -3115,8 +3233,8 @@ refreshPanel(true);
  $('pmResignNo').addEventListener('click',()=>{$('pmMain').style.display='';$('pmConfirm').style.display='none'});
  $('pmResignYes').addEventListener('click',()=>{setPaused(false);end(false,true)});
  $('ppause').innerHTML=ICO_GEAR;
- /* Keys live in the desktop block (applyKeys and its keydown): Space looks at the selection there,
-    and P pauses (Esc only cancels or deselects). */
+ /* Keys live in the desktop block (applyKeys and its keydown): Space goes to the last alert there,
+    F3/P pause, F10 opens this menu (Esc only closes, cancels or deselects). */
  /* Tutorial on the title screen: start a match with the lesson running, whether or not it was
     done before. It always teaches on level 1. */
  let wantTut=false;
@@ -3162,8 +3280,12 @@ const selIs=t=>selection.length===1&&selection[0].kind==='bld'&&selection[0].tea
 const vOr=g=>selV().length?g:{grp:myVills()};
 /* Tapping the Town Center with villagers selected garrisons them, so TC steps clear that first. */
 const viaTC=(say,tg,dsay)=>({t:()=>selV().length?'Clear the selection with the red ✕ first.':selIs('tc')?(DESK&&dsay||say):'Tap your Town Center.',
- tg:()=>selV().length?{el:$('pcx')}:selIs('tc')?tg():{b:homeTC()}});
+ tg:()=>selV().length?{el:$('pcx')}:selIs('tc')?tg():{b:homeTC()},
+ /* desktop: H selects the Town Center from anywhere, whatever is selected (AoE2) */
+ dt:()=>selIs('tc')?dsay:'Press H to select your Town Center.',dtg:()=>selIs('tc')?tg():{b:homeTC()}});
 const army=()=>units.filter(u=>u.team===0&&!u.dead&&!u.garrisoned&&u.type!=='vill');
+/* desktop rings: a building sits on a build page, so ring its button, else the page's, else Back */
+const pgBtn=(l,pg)=>abtn('="'+l+'"')||abtn('="Build '+pg+'"')||abtn('="Back"');
 function tutHome(){const tc=homeTC();if(!tc)return;const c=w2s(tc.cx+2,tc.cy+2);camX=c[0];camY=c[1];clampCam();followMute=1.5}
 /* Desktop captions: a step's `dt` (and ring `dtg`) replace `t`/`tg` when playing with mouse and keys;
    any other caption has its tap/Tap read as click. The narration clips stay as recorded. */
@@ -3177,7 +3299,7 @@ const TUT=[
   in:()=>{if(!selV().length){selection=myVills();refreshPanel(true)}}},
  {t:'Tap the red ✕ to clear the selection.',tg:()=>({el:$('pcx')}),ok:()=>!selection.length,dt:'Click the red ✕, or press Esc, to clear the selection.'},
  {t:'With nothing selected, the stick or a finger dragged across the map moves the view. Look around.',tg:()=>({el:$('joyZone')}),ok:()=>T.pan>450,
-  dt:'Use WASD, the arrow keys or the screen edge to look around.',dtg:()=>null,
+  dt:'Use the arrow keys, or push the mouse to the screen edge, to look around.',dtg:()=>null,
   in:()=>{if(selection.length){selection=[];refreshPanel(true)}}},
  {t:'The minimap shows the whole realm: tap it to jump anywhere. Pinch to zoom.',tg:()=>({el:$('mmWrap')}),next:1,ok:()=>T.mm,
   dt:'The minimap shows the whole realm: click it to jump anywhere. The mouse wheel zooms.'},
@@ -3188,14 +3310,14 @@ const TUT=[
  {t:'Wood builds everything. Select a villager, then tap a tree.',dt:'Wood builds everything. Select a villager, then right-click a tree.',tg:()=>vOr({r:nearR('tree')}),ok:()=>busy(o=>o.kind==='tree'),in:()=>tutLook('tree')},
  {t:'Gold pays for soldiers, stone for walls. Send a villager to either.',dt:'Gold pays for soldiers, stone for walls. Right-click either with a villager selected.',tg:()=>vOr({r:nearR('gold')}),ok:()=>busy(o=>o.kind==='gold'||o.kind==='stone'),in:()=>tutLook('gold')},
  {t:'Your stores: wood, food, gold and stone, then population.',tg:()=>({el:$('resbar')}),next:1},
- {t:'A House holds 5 more people. Select a villager, tap House, then tap open ground to place it.',dt:'A House holds 5 more people. Select a villager, press H (or click House), then click open ground.',tg:()=>vOr({el:abtn('="House"')}),
+ {t:'A House holds 5 more people. Select a villager, tap House, then tap open ground to place it.',dt:'A House holds 5 more people. Select a villager, then press Q (Economic) and Q again (House).',tg:()=>vOr({el:abtn('="House"')}),dtg:()=>vOr({el:pgBtn('House','economic')}),
   quick:1,in:()=>{T.h0=nB('house')},ok:()=>placing&&placing.type==='house'||nB('house')>T.h0},
  {t:'Tap open ground to set it down. Green fits; the red ✕ cancels.',dt:'Click open ground to set it down. Green fits; right-click or Esc cancels.',nodim:1,tg:()=>placing&&placing.ghost?{w:placing.ghost}:null,
   /* back to the House step only if a placement was started here and then cancelled */
   ok:()=>nB('house')>T.h0,back:()=>{if(placing)T.armed=true;return T.armed&&!placing&&nB('house')<=T.h0}},
- {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',dt:'Drop-offs save long walks. Build a Wood Yard (E) by the trees.',tg:()=>vOr({el:abtn('="Wood Yard"')}),next:1,
+ {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',dt:'Drop-offs save long walks. Build a Wood Yard by the trees: Q, then R.',tg:()=>vOr({el:abtn('="Wood Yard"')}),dtg:()=>vOr({el:pgBtn('Wood Yard','economic')}),next:1,
   ok:()=>nB('woodyard')+nB('mill')+nB('mine')>T.base.drop},
- {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',dt:'Farms never run dry. Press F (or click Farm), then click the ground: one farm per villager.',tg:()=>vOr({el:abtn('="Farm"')}),ok:()=>nB('farm')>T.base.farm},
+ {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',dt:'Farms never run dry. Press Q then A (Farm) and click the ground: one farm per villager. Hold Shift to lay one per click.',tg:()=>vOr({el:abtn('="Farm"')}),dtg:()=>vOr({el:pgBtn('Farm','economic')}),ok:()=>nB('farm')>T.base.farm},
  {t:'With villagers selected, the hammer sends them back to work or to help build.',tg:()=>({el:$('sword')}),next:1,ok:()=>T.sword},
  {...viaTC('Tap Villager to train one (50 food).',()=>({el:abtn('="Villager"')}),'Click Villager, or press Q, to train one (50 food).'),
   ok:()=>{const tc=homeTC();return tc&&tc.queue.length>0||popOf(0)>T.base.pop}},
@@ -3206,14 +3328,16 @@ const TUT=[
   dt:'Raiders? Select villagers, then right-click the Town Center. Each one inside adds an arrow.',dtg:()=>selV().length?{b:homeTC()}:{grp:myVills()}},
  /* unloading gets its own step (v: its own narration clip, added after the first 25) */
  {v:'s25',t:()=>{const tc=homeTC();return tc&&!tc.garrison.length?'Everyone is out again.':selIs('tc')?'Tap Unload to bring them out. They walk to its flag.':'To bring them out, tap the Town Center, then Unload.'},
+  dt:()=>{const tc=homeTC();return tc&&!tc.garrison.length?'Everyone is out again.':selIs('tc')?'Click Unload, or press G, to bring them out. They walk to its flag.':'To bring them out, click the Town Center (or press H), then Unload.'},
   tg:()=>{const tc=homeTC();return tc&&tc.garrison.length&&selIs('tc')?{el:abtn('^="Unload"')}:{b:homeTC()}},next:1,
   ok:()=>{const tc=homeTC();return T.garr&&tc&&!tc.garrison.length},
   out:()=>{const tc=homeTC();if(tc&&tc.garrison.length)releaseGarrison(tc)}},
- {t:'The Idle button finds villagers with nothing to do.',tg:()=>({el:$('pli')}),next:1,ok:()=>T.idle,dt:'The Idle button, or the . key, finds villagers with nothing to do.'},
+ {t:'The Idle button finds villagers with nothing to do.',tg:()=>({el:$('pli')}),next:1,ok:()=>T.idle,dt:'The Idle button, or the . key, finds villagers with nothing to do (the , key: idle soldiers).'},
  {t:()=>res[0].w<125&&!placing?'A Barracks needs 125 wood: put villagers on trees first.':'Now an army. Select a villager and build a Barracks.',
-  dt:()=>res[0].w<125&&!placing?'A Barracks needs 125 wood: put villagers on trees first.':'Now an army. Select a villager and press B to build a Barracks.',
-  tg:()=>vOr({el:abtn('="Barracks"')}),ok:()=>nB('barracks')>T.base.rax},
+  dt:()=>res[0].w<125&&!placing?'A Barracks needs 125 wood: put villagers on trees first.':'Now an army. Select a villager and press W (Military), then Q, to build a Barracks.',
+  tg:()=>vOr({el:abtn('="Barracks"')}),dtg:()=>vOr({el:pgBtn('Barracks','military')}),ok:()=>nB('barracks')>T.base.rax},
  {t:()=>{const b=myRax();return !b?'Build a Barracks first.':!b.done?'Your builders are raising the Barracks…':selIs('barracks')?'Train Men-at-Arms (food, gold) or Archers (wood, gold).':'Tap the Barracks to train soldiers.'},
+  dt:()=>{const b=myRax();return !b?'Build a Barracks first.':!b.done?'Your builders are raising the Barracks…':selIs('barracks')?'Train Men-at-Arms (Q: food, gold) or Archers (W: wood, gold).':'Click the Barracks to train soldiers.'},
   tg:()=>{const b=myRax();return !b?null:b.done&&selIs('barracks')?{el:abtn('="Man-at-Arms"')}:{b}},
   ok:()=>buildings.some(b=>b.team===0&&b.type==='barracks'&&b.queue.length)||army().length>0},
  /* the rally flag: where fresh soldiers gather (with none they join the army's banner) */
@@ -3221,9 +3345,9 @@ const TUT=[
   dt:()=>selIs('barracks')?'Now right-click open ground: the flag marks where new soldiers gather.':'Click the Barracks, then right-click the ground to plant its rally flag.',
   nodim:1,tg:()=>{const b=myRax();return b&&!selIs('barracks')?{b}:null},next:1,
   in:()=>{const b=myRax();T.r0=b&&b.rally},ok:()=>{const b=myRax();return !!(b&&b.rally&&b.rally!==T.r0)}},
- {t:'Double-tap a soldier to select your whole army, then press the sword to charge.',dt:'Double-click a soldier to select your whole army, then right-click an enemy or press the sword to charge.',tg:()=>!selMil().length&&army().length?{grp:army()}:{el:$('sword')},next:1},
+ {t:'Double-tap a soldier to select your whole army, then press the sword to charge.',dt:'Double-click (or Ctrl+click) a soldier to select all of that kind on screen, then right-click an enemy, or press the sword, to charge.',tg:()=>!selMil().length&&army().length?{grp:army()}:{el:$('sword')},next:1},
  {t:'Soldiers hold their ground: they fight what comes near, but never chase far.',tg:()=>army().length?{grp:army()}:null,next:1},
- {t:'The gear pauses the game: sound, music, and this lesson again.',dt:'The gear (or P) pauses the game: sound, music, and this lesson again. Press ? for the keys.',tg:()=>({el:$('ppause')}),next:1},
+ {t:'The gear pauses the game: sound, music, and this lesson again.',dt:'The gear, or F10, opens the menu: sound, music, and this lesson again. F3 or P pauses. Press ? for every hotkey.',tg:()=>({el:$('ppause')}),next:1},
  {t:'Destroy the enemy’s Town Center, far to the east. The enemy wakes now. Godspeed, my liege.',tg:()=>({el:$('mmWrap')}),next:1}];
 {let k=0;for(const s of TUT)if(!s.v)s.v='s'+String(k++).padStart(2,'0')}
 function tutSnap(){const tc=homeTC();
