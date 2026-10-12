@@ -91,6 +91,107 @@ TAKES = {
         "epic. Sound: a deep war cry and pounding feet.", "RED", "V"),
 }
 
+# ---- batch 2 promos (ten daily posts): new portrait shots, reusable across cuts ----
+WORLD_HUNT = ("Live-action 35mm film, photorealistic, an English oak forest in the year 1380, natural light, fine film grain, "
+         "anamorphic lens, shallow depth of field. Peasant hunters in simple wool and leather clothes carry long wooden boar spears; "
+         "no armour, no banners. No text, no modern objects.")
+WORLD_THREAT = ("Live-action 35mm film, photorealistic, England in the year 1380, natural light, fine film grain, "
+         "anamorphic lens, shallow depth of field. Ordinary villagers in simple wool and linen clothes, unarmed. The enemy army "
+         "wears plain red surcoats over mail and carries many tall red banners. No text, no modern objects.")
+WORLD_KING = ("Live-action 35mm film, photorealistic, England in the year 1380, fine film grain, anamorphic lens, shallow depth "
+         "of field. The king wears a gold crown and a royal blue surcoat with a white rampant lion over mail, a fur-trimmed cloak; "
+         "his captains wear blue-and-white quartered tabards with a pale rampant lion. No text, no modern objects.")
+# no enemy in shot: a world block that never mentions red, so none bleeds into the player's ranks
+WORLD_BLUE = ("Live-action 35mm film, photorealistic, England in the year 1380, natural light, fine film grain, "
+         "anamorphic lens, shallow depth of field. Every soldier wears the same blue-and-white quartered tabard with a pale "
+         "rampant lion over mail and plate, kettle helmets and heater shields; all banners are blue with a white lion. "
+         "No text, no modern objects.")
+# takes whose light is not golden day (night, rain, snow, candlelight) skip the GOLD suffix
+NOGOLD = {"b_night_watch", "b_rain_clash", "b_winter_march", "b_king_table", "b_siege_tower"}
+TAKES.update({
+    "b_mill": (141, 9101,
+        "[Shot 1] Wide low-angle shot of a tall wooden post windmill standing on a gentle hill above a golden wheat field. Its four "
+        "large lattice sails turn slowly and steadily in the wind. A miller in a flour-dusted tunic walks toward the camera along the "
+        "path carrying a sack over his shoulder. Calm, photoreal, 35mm film, slow push in. Sound: wind, creaking wood.", "CIVIL", "V"),
+    "b_millstone": (141, 9201,
+        "[Shot 2] Interior of a medieval mill, dusty shafts of sunlight. A huge round grey millstone turns slowly on top of another "
+        "stone; golden grain trickles from a wooden hopper into the hole at its centre and fine white flour spills from its rim into "
+        "a wooden trough. Big wooden cog wheels turn behind it. Close-up, photoreal, 35mm film. Sound: grinding stone, creaking gears.", "CIVIL", "V"),
+    "b_farm": (141, 9301,
+        "[Shot 3] Medium shot in a golden wheat field at harvest. Peasant men in linen shirts and straw hats swing long scythes in a "
+        "row, cutting the tall wheat which falls in neat swathes; a woman behind them gathers the stalks into sheaves. Thatched "
+        "cottages on the horizon. Peaceful, photoreal, 35mm film, slow sideways dolly. Sound: the swish of scythes, larks.", "CIVIL", "V"),
+    "b_market": (141, 9401,
+        "[Shot 4] Medium shot of a busy medieval village market in the morning. Wooden stalls with loaves of bread, cabbages, apples "
+        "and bolts of dyed cloth under striped awnings; villagers in wool and linen walk between them, a merchant lifts a basket of "
+        "apples, a dog trots past. Lively, photoreal, 35mm film, slow push in. Sound: market chatter, a cart.", "CIVIL", "V"),
+    "b_sheep": (141, 9501,
+        "[Shot 5] Low angle on a dusty country lane between hedgerows. A large flock of white sheep streams toward and past the camera, "
+        "a shepherd with a long wooden crook walks behind them and a black-and-white sheepdog runs along the side of the flock. "
+        "Dust glows in the low sun. Pastoral, photoreal, 35mm film. Sound: bleating sheep, a whistle.", "CIVIL", "V"),
+    "b_boar": (141, 9601,
+        "[Shot 6] Low angle at ground level in an oak forest. A huge dark wild boar with tusks bursts out of the ferns and charges "
+        "straight toward the camera, leaves and dirt flying; behind it two hunters run in with long spears lowered. High-speed slow "
+        "motion, hard shafts of sunlight through the trees. Thrilling, photoreal, 35mm film. Sound: a squeal, crashing undergrowth.", "HUNT", "V"),
+    "b_gate": (141, 9701,
+        "[Shot 7] Inside a stone castle gatehouse. Two huge iron-studded oak gates swing shut toward the camera, and men-at-arms in "
+        "blue-and-white tabards with a pale rampant lion heave a thick wooden beam down across them to bar the gate. Dust falls from "
+        "the arch, urgent shouting. Tense, photoreal, 35mm film. Sound: a heavy boom of the gates, the thud of the beam.", "LION", "V"),
+    "b_gate_hold": (141, 9801,
+        "[Shot 8] Close shot inside a castle gate. Men-at-arms in blue-and-white tabards with a pale rampant lion brace their shoulders "
+        "and heater shields against the barred oak gate as it shudders from a battering ram outside; dust and splinters burst from the "
+        "wood with each blow. Gritty, photoreal, 35mm film, handheld. Sound: thunderous blows, gritted shouts.", "LION", "V"),
+    "b_wall_archers": (141, 9901,
+        "[Shot 9] Side view along the battlements of a stone castle wall. A row of English longbowmen in blue-and-white tabards and "
+        "kettle helmets stand at the crenellations facing screen right and draw tall longbows to full draw, arrows pointing out over "
+        "the field. Banners with a white lion flutter above them. Tense, photoreal, 35mm film. Sound: creaking bowstrings, wind.", "LION", "V"),
+    "b_volley_hill": (141, 10001,
+        "[Shot 10] Shot from behind a long line of English longbowmen in blue-and-white tabards standing on a grassy hill. They loose "
+        "together and the arrows fly away from the camera, point first, rising high into the sky toward a distant red army in the "
+        "valley below. Slow motion, dust in the air. Epic, photoreal, 35mm film. Sound: the thrum of bowstrings, whistling arrows.", "LION", "V"),
+    "b_volley_hill_b": (141, 10002,
+        "[Shot 10] Shot from behind a long line of English longbowmen in blue-and-white tabards standing on a grassy hill. They loose "
+        "together and the arrows fly away from the camera, point first, rising high into the sky toward a distant red army in the "
+        "valley below. Slow motion, dust in the air. Epic, photoreal, 35mm film. Sound: the thrum of bowstrings, whistling arrows.", "LION", "V"),
+    "b_king_table": (141, 10101,
+        "[Shot 11] Inside a war tent at night lit by candles and braziers. A bearded king with a gold crown stands over a large wooden "
+        "table covered with a painted map and carved wooden markers; he pushes a blue marker forward across the map while his captains "
+        "lean in around the table. Warm candlelight, deep shadows. Commanding, photoreal, 35mm film, slow push in. Sound: crackling fire.", "KING", "V"),
+    "b_night_watch": (141, 10201,
+        "[Shot 12] Night on a stone castle wall under a dark blue sky. Two guards in blue-and-white tabards with a pale rampant lion walk "
+        "along the battlements carrying flaming torches; firelight flickers on the stones. Far below in the black valley the many "
+        "campfires of an enemy army glow. Moody, photoreal, 35mm film. Moonlight and orange torchlight. Sound: wind, crackling torches.", "LION", "V"),
+    "b_siege_tower": (141, 10301,
+        "[Shot 13] Dusk, low angle at the foot of a stone castle wall. A tall wooden siege tower draped with red banners is engulfed in "
+        "roaring orange flames and thick black smoke, burning timbers falling from it; embers swirl up into the darkening sky. "
+        "Dramatic, photoreal, 35mm film, slow push in. Firelight against a deep blue dusk sky. Sound: roaring fire, cracking timber.", "LION", "V"),
+    "b_winter_march": (141, 10401,
+        "[Shot 14] A column of soldiers in blue-and-white tabards with a pale rampant lion, mail and kettle helmets marches through deep "
+        "snow toward and past the camera, a tall blue banner with a white lion carried at the front; their breath steams, snow is "
+        "falling. Pale cold winter light, grey sky, snowy hills. Determined, photoreal, 35mm film. Sound: wind, crunching snow.", "LION", "V"),
+    "b_rain_clash": (141, 10501,
+        "[Shot 15] Heavy rain, a muddy battlefield under dark storm clouds. A man-at-arms in a soaked blue-and-white tabard with a pale "
+        "rampant lion clashes with a soldier in a plain red surcoat, swords and shields locked, rain splashing off steel and mud "
+        "spraying. High-speed slow motion, cold grey light. Brutal, photoreal, 35mm film. Sound: rain, clashing steel.", "LION", "V"),
+    "b_red_horizon": (141, 10601,
+        "[Shot 16] From behind a small group of villagers standing on a hilltop at the edge of their village, looking down into a wide "
+        "valley. In the distance a huge army in red surcoats with dozens of tall red banners marches toward them across the fields, "
+        "dust rising. The villagers stand frozen. Ominous, photoreal, 35mm film, slow push in over their shoulders. Sound: distant drums.", "THREAT", "V"),
+    "b_bell": (141, 10701,
+        "[Shot 17] Low angle inside a small stone bell tower. A young villager in a brown tunic hauls desperately on a thick rope and a "
+        "large bronze bell swings above him, ringing the alarm; dust shakes loose from the beams. Urgent, photoreal, 35mm film, "
+        "handheld. Sound: a clanging alarm bell.", "CIVIL", "V"),
+    "b_victory": (141, 10901,
+        "[Shot 19] Low angle hero shot at golden hour on a hilltop after a battle. A man-at-arms in a blue-and-white tabard with a pale "
+        "rampant lion drives the pole of a tall blue banner with a white rampant lion into the earth and it streams in the wind against "
+        "a glowing sky; behind him a line of soldiers in the same blue-and-white tabards raise their swords and shields in triumph, "
+        "smoke drifting across the field. Triumphant, epic, photoreal, 35mm film. Sound: a cheer, wind in the cloth.", "BLUE", "V"),
+    "b_mason": (141, 10801,
+        "[Shot 18] Medium shot at a medieval building site. Masons in linen shirts guide a large squared stone block as a wooden crane "
+        "with a treadwheel lowers it onto a rising castle wall; scaffolding of lashed poles, dust in the air. Industrious, photoreal, "
+        "35mm film, slow push in. Sound: creaking ropes, chisels on stone.", "CIVIL", "V"),
+})
+
 TEMPLATE = """generator:
   model_path: /home/nathanaelguitar/Downloads/FastH3-local
   engine:
@@ -139,10 +240,10 @@ request:
 only = sys.argv[2].split(",") if len(sys.argv) > 2 else list(TAKES)
 for name in only:
     frames, seed, body, world, orient = TAKES[name]
-    world = {"RED": WORLD_RED, "CIVIL": WORLD_CIVIL, "LION": WORLD_LION}.get(world, WORLD)
+    world = {"RED": WORLD_RED, "CIVIL": WORLD_CIVIL, "LION": WORLD_LION, "HUNT": WORLD_HUNT, "THREAT": WORLD_THREAT, "KING": WORLD_KING, "BLUE": WORLD_BLUE}.get(world, WORLD)
     assert (frames - 5) % 17 == 0 and frames <= 345, name
     h, w = (1344, 768) if orient == "V" else (768, 1344)
-    prompt = "integrated_multimodal_description: " + (VERT if orient == "V" else "") + body + GOLD + " " + world
+    prompt = "integrated_multimodal_description: " + (VERT if orient == "V" else "") + body + ("" if name in NOGOLD else GOLD) + " " + world
     prompt = " ".join(prompt.split())
     with open(os.path.join(OUT, name + ".yaml"), "w") as f:
         f.write(TEMPLATE.format(prompt=prompt, seed=seed, frames=frames, name=name, h=h, w=w, out=os.path.abspath(OUT)))

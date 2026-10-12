@@ -1,0 +1,80 @@
+{
+ "amb_db": -14,
+ "crf": 18,
+ "music": {
+  "path": "../music/village_at_dusk_a.m4a",
+  "start": 105.567,
+  "db": 0,
+  "fade_in": 0.05,
+  "fade_out": 2.8,
+  "tail": 0.3
+ },
+ "shots": [
+  {
+   "src": "../../out/promo/game_b2/timelapse.mp4",
+   "in": 0.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 11.8818
+  },
+  {
+   "src": "../../out/promo/game_b2/gate.mp4",
+   "in": 3.0,
+   "grade": "game",
+   "amb": -90,
+   "dur": 2.6404
+  },
+  {
+   "title": {
+    "bg": "text/title_bg.jpg",
+    "text": "text/b2/title_text_b2.png",
+    "soon": "text/b2/title_soon_b2.png",
+    "dur": 4.4606
+   },
+   "xf": 0.5,
+   "xfk": "fadeblack"
+  }
+ ],
+ "overlays": [
+  {
+   "png": "text/b2/cap_v15.png",
+   "at": 0.0,
+   "dur": 3.961,
+   "fade": 0
+  },
+  {
+   "png": "text/b2/tag_timelapse.png",
+   "at": 0.0,
+   "dur": 11.882,
+   "fade": 0.12
+  },
+  {
+   "png": "text/b2/cap_defend.png",
+   "at": 11.948,
+   "dur": 2.074,
+   "fade": 0.12
+  }
+ ],
+ "sfx": [
+  {
+   "path": "../../out/sfx/game/hammer_hit_1.wav",
+   "at": 1.32,
+   "db": -16
+  },
+  {
+   "path": "../../out/sfx/game/hammer_hit_2.wav",
+   "at": 3.961,
+   "db": -16
+  },
+  {
+   "path": "../../out/sfx/game/hammer_hit_3.wav",
+   "at": 6.601,
+   "db": -16
+  },
+  {
+   "path": "../../out/sfx/game/sword_hit_1.wav",
+   "at": 12.542,
+   "db": -12
+  }
+ ]
+}

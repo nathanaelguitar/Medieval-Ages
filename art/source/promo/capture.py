@@ -6,7 +6,8 @@ The game's requestAnimationFrame is replaced by a manual clock, so each recorded
 (canvas + any visible HUD) at a portrait 540x960 viewport with devicePixelRatio 2 = 1080x1920.
 
 Usage: capture.py SCENE OUTDIR [--game DIR] [--fps 30] [--frames N] [--still]
-Scenes live in scenes.py (setup JS, warm-up seconds, per-frame camera JS, timed events).
+Scenes live in scenes.py (setup JS, warm-up seconds, per-frame camera JS, timed events, and
+`speed`: game steps per recorded frame, >1 for a time-lapse).
 """
 import argparse, os, subprocess, sys, time, json
 from playwright.sync_api import sync_playwright
@@ -15,7 +16,7 @@ from scenes import SCENES, COMMON_JS
 
 ap = argparse.ArgumentParser()
 ap.add_argument("scene"); ap.add_argument("out")
-ap.add_argument("--game", default=os.path.expanduser("~/ma_promo/WebGame"))
+ap.add_argument("--game", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "WebGame"))
 ap.add_argument("--fps", type=int, default=30)
 ap.add_argument("--frames", type=int, default=0)
 ap.add_argument("--still", action="store_true", help="only write a few stills, no video")
@@ -67,7 +68,7 @@ with sync_playwright() as p:
     for f in range(nframes):
         if f in events: pg.evaluate(events[f])
         if cam: pg.evaluate(f"(f=>{{ {cam} }})({f / a.fps})")
-        pg.evaluate(f"window.__step(1, {dtms})")
+        pg.evaluate(f"window.__step({S.get('speed', 1)}, {dtms})")
         if picks is None or f in picks:
             pg.screenshot(path=os.path.join(fdir, f"{f:05d}.jpg"), type="jpeg", quality=94)
         if f % 60 == 0: print(f"frame {f}/{nframes} {time.time()-t0:.0f}s", flush=True)

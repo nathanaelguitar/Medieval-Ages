@@ -2,11 +2,11 @@
 """Render the promo's text as 1080x1920 RGBA overlays (Palatino, the game's title gold) and the
 end-card background. Everything sits inside TikTok/Reels' safe zone: x 70..900 (the right rail of
 buttons starts near x 930) and y 220..1500 (the caption/username block covers the bottom ~20%).
-Usage: make_text.py OUTDIR"""
+Usage: make_text.py OUTDIR      (importable: text_layer/caption/font are reused by make_text_b2.py)"""
 import os, sys
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-OUT = sys.argv[1]; os.makedirs(OUT, exist_ok=True)
+OUT = None
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
 W, H = 1080, 1920
 CX = 485                     # optical centre, nudged left of 540 to clear the right-hand button rail
@@ -41,36 +41,43 @@ def caption(name, text, size=86, y=300):
     lines = text.split("|")
     text_layer([(t, size, BOLD, GOLD, y + i * int(size * 1.12), 2) for i, t in enumerate(lines)], scrim=120).save(os.path.join(OUT, f"cap_{name}.png"))
 
-# one-word beats for the hook cut
-for w in ["BUILD.", "GATHER.", "MARCH.", "CONQUER."]:
-    caption("w_" + w.strip(".").lower(), w, 112, 290)
-# how-it-plays captions
-for n, t in [("village", "Build your|village"), ("army", "Raise an army"), ("thumb", "Command it|with a thumb"), ("realm", "Hold the realm")]:
-    caption(n, t, 88, 290)
-# a small "real gameplay" tag for gameplay beats that follow AI-film shots
-text_layer([("GAMEPLAY", 34, REG, CREAM, 236, 9)], scrim=90).save(os.path.join(OUT, "tag_gameplay.png"))
+def main():
+  global OUT
+  OUT = sys.argv[1]; os.makedirs(OUT, exist_ok=True)
 
-# end card text
-title = text_layer([
-    ("MEDIEVAL", 132, BOLD, GOLD, 1010, 6),
-    ("AGES", 132, BOLD, GOLD_D, 1150, 40),
-    ("Build a village. Raise an army.", 46, ITAL, CREAM, 1318, 1),
-    ("Hold the realm.", 46, ITAL, CREAM, 1374, 1),
-])
-dl = ImageDraw.Draw(title); dl.line([(CX - 150, 1300), (CX + 150, 1300)], fill=GOLD_D + (200,), width=2)
-title.save(os.path.join(OUT, "title_text.png"))
-text_layer([("FREE ON MOBILE  ·  SOON", 38, REG, GOLD, 1458, 5)]).save(os.path.join(OUT, "title_soon.png"))
+  # one-word beats for the hook cut
+  for w in ["BUILD.", "GATHER.", "MARCH.", "CONQUER."]:
+      caption("w_" + w.strip(".").lower(), w, 112, 290)
+  # how-it-plays captions
+  for n, t in [("village", "Build your|village"), ("army", "Raise an army"), ("thumb", "Command it|with a thumb"), ("realm", "Hold the realm")]:
+      caption(n, t, 88, 290)
+  # a small "real gameplay" tag for gameplay beats that follow AI-film shots
+  text_layer([("GAMEPLAY", 34, REG, CREAM, 236, 9)], scrim=90).save(os.path.join(OUT, "tag_gameplay.png"))
 
-# end card background: the crowned king flanked by a man-at-arms and an archer, fading into dark
-bg = Image.new("RGB", (W, H), (9, 9, 7))
-king = Image.open(os.path.join(ROOT, "art/source/icon/icon_b_king.png")).convert("RGB").resize((1240, 1240), Image.LANCZOS)
-top = 40; bg.paste(king, ((W - 1240) // 2 - 40, top))
-grad = Image.new("L", (W, H), 0); gd = ImageDraw.Draw(grad)
-for y in range(H):
-    t = (y - (top + 560)) / 560.0          # fade from mid-portrait to fully dark by ~y 1160
-    gd.line([(0, y), (W, y)], fill=int(255 * max(0.0, min(1.0, t))))
-dark = Image.new("RGB", (W, H), (9, 9, 7)); bg = Image.composite(dark, bg, grad)
-vig = Image.new("L", (W, H), 0); ImageDraw.Draw(vig).rectangle([0, 0, W, 140], fill=150); vig = vig.filter(ImageFilter.GaussianBlur(80))
-bg = Image.composite(dark, bg, vig)
-bg.save(os.path.join(OUT, "title_bg.jpg"), quality=92)
-print("ok")
+  # end card text
+  title = text_layer([
+      ("MEDIEVAL", 132, BOLD, GOLD, 1010, 6),
+      ("AGES", 132, BOLD, GOLD_D, 1150, 40),
+      ("Build a village. Raise an army.", 46, ITAL, CREAM, 1318, 1),
+      ("Hold the realm.", 46, ITAL, CREAM, 1374, 1),
+  ])
+  dl = ImageDraw.Draw(title); dl.line([(CX - 150, 1300), (CX + 150, 1300)], fill=GOLD_D + (200,), width=2)
+  title.save(os.path.join(OUT, "title_text.png"))
+  text_layer([("FREE ON MOBILE  ·  SOON", 38, REG, GOLD, 1458, 5)]).save(os.path.join(OUT, "title_soon.png"))
+
+  # end card background: the crowned king flanked by a man-at-arms and an archer, fading into dark
+  bg = Image.new("RGB", (W, H), (9, 9, 7))
+  king = Image.open(os.path.join(ROOT, "art/source/icon/icon_b_king.png")).convert("RGB").resize((1240, 1240), Image.LANCZOS)
+  top = 40; bg.paste(king, ((W - 1240) // 2 - 40, top))
+  grad = Image.new("L", (W, H), 0); gd = ImageDraw.Draw(grad)
+  for y in range(H):
+      t = (y - (top + 560)) / 560.0          # fade from mid-portrait to fully dark by ~y 1160
+      gd.line([(0, y), (W, y)], fill=int(255 * max(0.0, min(1.0, t))))
+  dark = Image.new("RGB", (W, H), (9, 9, 7)); bg = Image.composite(dark, bg, grad)
+  vig = Image.new("L", (W, H), 0); ImageDraw.Draw(vig).rectangle([0, 0, W, 140], fill=150); vig = vig.filter(ImageFilter.GaussianBlur(80))
+  bg = Image.composite(dark, bg, vig)
+  bg.save(os.path.join(OUT, "title_bg.jpg"), quality=92)
+  print("ok")
+
+if __name__ == "__main__":
+    main()
