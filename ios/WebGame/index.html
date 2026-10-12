@@ -1177,7 +1177,7 @@ function gatherStep(u,dt){
    u.path=null;
    const amt=Math.floor(u.carry);u.carry=0;
    if(amt>0){res[u.team][o.ctype]+=amt;
-    if(u.team===0){texts.push({x:d.cx,y:d.cy-1,str:'+'+amt,ic:CTI[o.ctype],t:0})}}
+    if(u.team===0){texts.push({x:d.cx,y:d.cy-1,str:String(amt),ic:CTI[o.ctype],t:0})   /* the label adds the + itself */}}
    if(r&&!r.dead&&r.amt>0){o.phase='go';u.path=null}
    else{const nr=o.kind==='farm'?null:findResByKind(o.kind,u.x,u.y,12);
     if(nr){o.res=nr;o.phase='go';u.path=null}else u.order={type:'idle'}}
