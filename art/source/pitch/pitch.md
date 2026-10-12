@@ -34,7 +34,7 @@ Medieval Ages is a compact, classic-style RTS that runs in one HTML5 canvas page
 ## Genre and tags
 
 - **Genre:** strategy, real-time strategy (RTS)
-- **Tags:** strategy, RTS, medieval, base building, army, war, kingdom, castle, knights, archers, tower defense, simulation, mobile, touch
+- **Tags:** strategy, RTS, medieval, base building, army, war, kingdom, castle, knights, archers, simulation, mobile, touch
 
 ## Media in this kit
 
