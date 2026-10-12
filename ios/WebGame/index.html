@@ -242,6 +242,37 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
  .lvBtn{min-width:36px;height:30px;font-size:13.5px;border-radius:8px}
  #lvName{margin-top:3px;font-size:11px}
 }
+/* Desktop (a fine pointer, set as body.desk by the script): mouse and keys replace the stick and
+   the Select button, so those go, the command button shrinks, and the bar takes the freed width.
+   Touch layouts never get this class. */
+.abtn kbd,#keyQ{display:none}
+body.desk .abtn{position:relative}
+body.desk #joyZone,body.desk #selBtn{display:none}
+body.desk #sword{width:48px;height:48px;left:calc(12px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom))}
+body.desk #sword svg{width:24px;height:24px}
+body.desk #panel{left:calc(70px + env(safe-area-inset-left));right:calc(10px + env(safe-area-inset-right));max-width:900px}
+body.desk .abtn{min-width:50px;padding:4px 7px 3px;cursor:pointer}
+body.desk .abtn svg{width:19px;height:19px}
+body.desk .abtn .albl{font-size:9.5px}
+body.desk .abtn span{font-size:9.5px}
+body.desk .abtn span svg{width:8px;height:8px}
+body.desk .abtn:hover{border-color:rgba(255,215,122,.7);background:rgba(255,255,255,.16)}
+body.desk .abtn kbd{display:block;position:absolute;top:1px;right:2px;font:800 8px/1 -apple-system,system-ui,sans-serif;color:#1c1608;background:#d9b36a;border-radius:3px;padding:1px 2px;pointer-events:none}
+body.desk #pli,body.desk #ppause{cursor:pointer}
+/* "?" pill beside the gear, and the key card it opens (shown once on the first desktop game). */
+body.desk #keyQ{display:flex;pointer-events:auto;cursor:pointer;font-weight:800;color:#e3c27a;padding:4px 10px}
+#keyCard{position:absolute;right:calc(12px + env(safe-area-inset-right));top:calc(148px + env(safe-area-inset-top));width:300px;max-height:calc(100% - 230px);overflow-y:auto;padding:10px 12px 8px;border-radius:14px;background:rgba(14,18,11,.92);border:1px solid rgba(227,194,122,.45);box-shadow:0 10px 30px rgba(0,0,0,.5);color:#efe8d6;font-size:11.5px;line-height:1.35;pointer-events:auto;z-index:8}
+#keyCard[hidden]{display:none}
+#keyCard h3{font:700 12px Palatino,Georgia,serif;letter-spacing:.14em;text-transform:uppercase;color:#e3c27a;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
+#keyCard h3 button{background:none;border:0;color:#d9cfb4;font-size:15px;cursor:pointer;line-height:1}
+#keyCard div{display:flex;gap:8px;padding:2px 0;border-top:1px solid rgba(255,255,255,.06)}
+#keyCard div b{flex:0 0 96px;color:#d9b36a;font-weight:700}
+#keyCard kbd,#tipBox kbd{font:700 10px -apple-system,system-ui,sans-serif;color:#1c1608;background:#d9b36a;border-radius:3px;padding:0 3px;margin:0 1px}
+/* Hover tooltip for the bar buttons: name, cost and hotkey, styled like the toasts. */
+#tipBox{position:absolute;display:none;padding:5px 9px;border-radius:9px;background:rgba(12,16,10,.94);border:1px solid rgba(217,179,106,.5);color:#f0e9d7;font-size:11.5px;font-weight:600;white-space:nowrap;pointer-events:none;z-index:12;transform:translate(-50%,-100%)}
+#tipBox span{display:inline-flex;gap:4px;margin:0 6px;color:#d9b36a}
+#tipBox span em{font-style:normal;display:inline-flex;align-items:center;gap:1px}
+#tipBox span svg{width:10px;height:10px}
 </style>
 </head>
 <body>
@@ -249,8 +280,9 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
 <div id="vig"></div>
 <div id="hud">
  <div id="resbar">
-  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="plv"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Settings"></div>
+  <div class="pill" id="plw"></div><div class="pill" id="plf"></div><div class="pill" id="plg"></div><div class="pill" id="pls"></div><div class="pill" id="plp"></div><div class="pill" id="plv"></div><div class="pill" id="pli" title="Idle villagers"></div><div class="pill" id="ppause" title="Settings"></div><div class="pill" id="keyQ" title="Keys and mouse">?</div>
  </div>
+ <div id="keyCard" hidden></div><div id="tipBox"></div>
  <div id="mmWrap" class="ui"><canvas id="mm" width="150" height="84"></canvas></div>
  <div id="panel" class="ui"></div>
  <div id="selBtn" class="ui" aria-label="Select: tap, then drag a box"><svg viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="14" height="12" rx="1" fill="none" stroke="#f2e4c6" stroke-width="1.8" stroke-dasharray="3 2.2"/><path d="M11 9.5v11l2.9-2.8 2 4.2 2.1-1-2-4.1h4z" fill="#f2f2ee" stroke="#1b140d" stroke-width=".8" stroke-linejoin="round"/></svg></div>
@@ -390,6 +422,19 @@ const tileCol=new Array(MAP*MAP);
 const joy={id:null,vx:0,vy:0};
 const ptrs=new Map();
 const lastTap={t:0,x:0,y:0,ty:null};
+/* Desktop controls (web build): a fine pointer at load, or a real mouse pointer event later --
+   never the user agent. A device with touch points starts as touch, and a touch hands the layout
+   back, so a phone or tablet never gets it. Input itself branches on e.pointerType, so a touch
+   behaves exactly as on the phone whatever the layout. */
+let DESK=false,selAdd=false;   /* selAdd: Shift held on the click or box being resolved */
+const mouse={x:0,y:0,in:false,focus:true,mid:null};
+const keys=new Set();
+/* One table for the hotkeys: the dispatcher, the button badges, the tooltips and the key card all
+   read it. Letters avoid WASD (pan), P (pause) and Q/R/U (training, unload, gate turn). */
+const HK={house:'H',farm:'F',barracks:'B',woodyard:'E',mill:'M',mine:'N',market:'K',palisade:'L',stonewall:'O',gate:'G',tower:'T',vill:'Q',swords:'Q',archer:'R',ungarrison:'U'};
+function setDesk(on){if(DESK===on)return;DESK=on;document.body.classList.toggle('desk',on);
+ if(on){if(started)keyHintOnce()}else $('keyCard').hidden=true;
+ tipHide();refreshPanel(true)}
 const cv=$('game'),mainCtx=cv.getContext('2d');let ctx=mainCtx;   /* `ctx` is swapped to an offscreen canvas while silhouettes are drawn */
 const mm=$('mm'),mctx=mm.getContext('2d');
 let cw=0,ch=0,dpr=1;
@@ -1278,7 +1323,7 @@ function startPlace(type){
  if(!canAfford(0,DEFS[type].cost)){toast('Not enough resources');sfx('no');return}
  /* a wall line still pending when Gate is tapped is kept only to aim the gate along it */
  const wl=placing&&placing.line&&WALL_LINE[placing.type]?wallLine(placing.line[0],placing.line[1]):null;
- placing={type,ghost:scr2w(cw/2,ch*0.42),wl};
+ placing={type,ghost:DESK&&mouse.in?scr2w(mouse.x,mouse.y):scr2w(cw/2,ch*0.42),wl};   /* on desktop the ghost starts under the cursor */
  $('wallRot').hidden=type!=='gate';$('wallRedo').hidden=type==='gate';
  refreshPanel(true)}
 /* Gates are positioned, then confirmed: a tap or drag moves the ghost and shows Build / Rotate. The
@@ -1380,28 +1425,34 @@ function entityAt(wx,wy){
  let br=null;let brd=0.55;
  for(const r of resources){if(r.dead)continue;const d=dist2(wx,wy,r.gx,r.gy);if(d<brd){brd=d;br=r}}
  return br}
-function tap(px,py){
+const garrisonInto=g=>{const gv=selUnits(0).filter(canGarrison);garrisonVillagers(gv,g);ping(g.cx,g.cy,'#7fd4ff');if(gv[0])voice('ack',gv[0])};
+/* mode: undefined for touch, where one tap both selects and orders, as it always has. The mouse
+   splits it: 'sel' (left click) only selects, 'cmd' (right click) only gives the context order.
+   Both run through the same branches below rather than copies of them. */
+function tap(px,py,mode){
  const[wx,wy]=scr2w(px,py);
- const now=performance.now();
+ const now=performance.now(),sel=mode==='sel',cmd=mode==='cmd';
  /* armed by the Garrison button: the next tap picks the shelter, anything else calls it off */
  if(garrisonPick){garrisonPick=false;const g=unitAtScreen(px,py)||entityAt(wx,wy);
-  if(g&&g.kind==='bld'&&g.team===0&&(g.type==='tc'||g.type==='tower')&&g.done){const gv=selUnits(0).filter(canGarrison);garrisonVillagers(gv,g);ping(g.cx,g.cy,'#7fd4ff');if(gv[0])voice('ack',gv[0])}
+  if(g&&g.kind==='bld'&&g.team===0&&(g.type==='tc'||g.type==='tower')&&g.done)garrisonInto(g);
   else{toast('Garrison cancelled');sfx('no')}
   refreshPanel(true);return}
  if(placing&&WALL_LINE[placing.type]){const t=wTile([wx,wy]);placing.line=[t,t];placing.pend=true;return}
- if(placing&&placing.type==='gate'){placing.ghost=[wx,wy];placing.pend=true;return}
+ /* a mouse gate follows the cursor and turns with R, so a click places it outright */
+ if(placing&&placing.type==='gate'&&!sel){placing.ghost=[wx,wy];placing.pend=true;return}
  if(placing){tryPlace(wx,wy);return}
- {const h=standardHits.find(h=>Math.abs(px-h.x)<h.w&&Math.abs(py-h.y)<h.h);
-  if(h&&!selUnits(0).some(u=>u.type==='vill')){selection=h.g.filter(u=>!u.dead);sheepSel=[];refreshPanel(true);sfx('sel');return}}
- const e=unitAtScreen(px,py)||entityAt(wx,wy);
+ {const h=!cmd&&standardHits.find(h=>Math.abs(px-h.x)<h.w&&Math.abs(py-h.y)<h.h);
+  if(h&&(sel||!selUnits(0).some(u=>u.type==='vill'))){selection=h.g.filter(u=>!u.dead);sheepSel=[];refreshPanel(true);sfx('sel');return}}
+ let e=unitAtScreen(px,py)||entityAt(wx,wy);
  /* Livestock: with no villagers selected, tapping one of your sheep selects it and the flock
     around it; with sheep selected, another of yours adds to the flock, a building of yours or open
     ground leads them there, and tapping a unit drops the flock and selects as usual. */
- if(!selUnits(0).some(u=>u.type==='vill')&&e&&e.kind==='sheep'&&e.owner===0&&!e.slain){
+ if(!cmd&&(sel||!selUnits(0).some(u=>u.type==='vill'))&&e&&e.kind==='sheep'&&e.owner===0&&!e.slain){
   if(sheepSel.length&&!sheepSel.includes(e))sheepSel.push(e);
   else sheepSel=resources.filter(q=>q.kind==='sheep'&&q.owner===0&&!q.dead&&!q.slain&&dist2(q.gx,q.gy,e.gx,e.gy)<9);
-  selection=[];refreshPanel(true);sfx('sel');toast(sheepSel.length+' sheep · tap where to lead them');return}
- if(sheepSel.length){sheepSel=sheepSel.filter(q=>!q.dead&&!q.slain);
+  selection=[];refreshPanel(true);sfx('sel');toast(sheepSel.length+' sheep · '+(DESK?'right-click':'tap')+' where to lead them');return}
+ if(sel)sheepSel=[];
+ else if(sheepSel.length){sheepSel=sheepSel.filter(q=>!q.dead&&!q.slain);
   if(e&&e.kind==='bld'&&e.team===0){leadSheep(0,0,e);return}
   if(!e||(e.animal&&e.kind!=='sheep')||(!e.kind)){leadSheep(wx,wy);return}
   if(e.kind!=='unit'){leadSheep(wx,wy);return}
@@ -1410,51 +1461,62 @@ function tap(px,py){
     rally flag on it, so villagers trained there walk straight out to work instead of just being
     told how much wood is left. */
  const rb=selection.length===1&&selection[0].kind==='bld'&&selection[0].team===0&&(selection[0].type==='tc'||selection[0].type==='barracks'||selection[0].type==='tower')&&selection[0].done?selection[0]:null;
- if(rb&&e&&(KCT[e.kind]||(e.kind==='bld'&&e.team===0&&e.type==='farm'&&e.done))){
+ /* Right click: a target the selection cannot act on (your own unit or finished building, a tree
+    with no villagers) is just the ground under the cursor, so it moves or plants the flag there.
+    Your Town Center or a tower takes villagers and archers in -- no Garrison button needed. */
+ if(cmd&&e){const v=selUnits(0).some(u=>u.type==='vill');
+  if(e.kind==='bld'&&e.team===0&&e.done&&e.gcap&&selUnits(0).some(canGarrison)){garrisonInto(e);refreshPanel(true);return}
+  const own=e.kind==='bld'&&e.team===0,farm=own&&e.type==='farm'&&e.done&&e.amt>0;
+  const act=e.team===1?selUnits(0).length||selection.some(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done)
+   :KCT[e.kind]&&!own||farm?v||rb:own&&!e.done?v:false;
+  if(!act)e=null}
+ if(!sel&&rb&&e&&(KCT[e.kind]||(e.kind==='bld'&&e.team===0&&e.type==='farm'&&e.done))){
   lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
   rb.rally={x:e.gx,y:e.gy};rb.rallyRes=e;ping(e.gx,e.gy,'#7fd4ff');sfx('ok');
   toast(rb.type==='tc'?'New villagers will gather here':rb.type==='tower'?'Unloaded units will go here':'Rally point set');
   refreshPanel(true);return}
  if(e){
   if(e.kind==='unit'&&e.team===0){
-   const dbl=lastTap.ty===e.type&&now-lastTap.t<350&&Math.hypot(px-lastTap.x,py-lastTap.y)<50;
+   const dbl=lastTap.ty===e.type&&now-lastTap.t<(sel?450:350)&&Math.hypot(px-lastTap.x,py-lastTap.y)<50;
    /* double-tap: a villager selects the villagers on screen, any soldier the whole army */
-   if(dbl){if(e.type==='vill')selectType(e.type);else selectArmy()}else{selection=[e];sfx('sel')}
+   if(dbl){if(e.type==='vill')selectType(e.type);else selectArmy()}
+   else if(sel&&selAdd){selection=selection.includes(e)?selection.filter(s=>s!==e):selection.filter(s=>s.kind==='unit').concat(e);sfx('sel')}   /* Shift-click toggles */
+   else{selection=[e];sfx('sel')}
    voice('select',e);
    lastTap.t=now;lastTap.x=px;lastTap.y=py;lastTap.ty=e.type;return}
   if((e.kind==='unit'&&e.team===1)||(e.kind==='bld'&&e.team===1)){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
-   const f=selUnits(0);
+   const f=sel?[]:selUnits(0);
    if(f.length){f.forEach(u=>{rememberTask(u);u.order={type:'attack',target:e};u.path=null;u.nT=0});
     ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk');
     const sol=f.find(u=>u.type!=='vill');voice(sol?'attack':'ack',sol||f[0])}
-   else if(selection.length&&selection.every(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done)){
+   else if(!sel&&selection.length&&selection.every(s=>s.kind==='bld'&&s.team===0&&(s.type==='tower'||s.type==='tc')&&s.done)){
     /* towers and Town Centers take a target too: they shoot it whenever it is in reach */
     selection.forEach(b=>b.focus=e);ping(e.x!==undefined?e.x:e.cx,e.y!==undefined?e.y:e.cy,'#ff8a7a');sfx('atk');
     toast((selection.length>1?'Towers':DEFS[selection[0].type].name)+' targeting '+(e.kind==='bld'?DEFS[e.type].name:'the enemy'));return}
-   else{selection=[e];sfx('sel')}
+   else if(!cmd){selection=[e];sfx('sel')}
    refreshPanel(true);return}
   if(KCT[e.kind]){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill');
-   if(v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok');voice('ack',v[0])}
-   else toast(RESNAME[e.kind]+': '+Math.ceil(e.amt)+' remaining');
+   if(v.length&&!sel){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok');voice('ack',v[0])}
+   else{toast(RESNAME[e.kind]+': '+Math.ceil(e.amt)+' remaining');if(sel&&!selAdd)selection=[]}
    refreshPanel(true);return}
   if(e.kind==='bld'&&e.team===0){
    lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
    const v=selUnits(0).filter(u=>u.type==='vill'),gv=selUnits(0).filter(canGarrison);
-   if(!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
-   else if(e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
-   else{selection=[e];sfx('sel')}
+   if(!sel&&!e.done&&v.length){v.forEach(u=>assignBuild(u,e));ping(e.cx,e.cy,'#9fe08a');voice('ack',v[0]);toast('Villagers are helping finish the '+DEFS[e.type].name);sfx('ok')}
+   else if(!sel&&e.type==='farm'&&e.done&&e.amt>0&&v.length){v.forEach(u=>setGather(u,e));ping(e.gx,e.gy,'#ffe08a');sfx('ok')}
+   else if(!cmd){selection=[e];sfx('sel')}   /* a left click on your building just selects it */
    refreshPanel(true);return}
  }
  lastTap.ty=null;lastTap.t=now;lastTap.x=px;lastTap.y=py;
  /* a tower's flag is where its garrison walks to when unloaded */
  const one=selection.length===1&&selection[0].kind==='bld'&&selection[0].team===0&&(selection[0].type==='tc'||selection[0].type==='barracks'||selection[0].type==='tower')&&selection[0].done;
- if(one){const b=selection[0];b.rally={x:wx,y:wy};b.rallyRes=resAt(wx,wy);ping(wx,wy,'#7fd4ff');sfx('ok');if(b.type==='tower')toast('Unloaded units will go here')}
+ if(one&&!sel){const b=selection[0];b.rally={x:wx,y:wy};b.rallyRes=resAt(wx,wy);ping(wx,wy,'#7fd4ff');sfx('ok');if(b.type==='tower')toast('Unloaded units will go here')}
  else{const f=selUnits(0);
-  if(f.length){orderMove(f,wx,wy);ping(wx,wy,'#9fe08a');sfx('ok');voice(f[0].type==='vill'?'ack':'select',f[0])}
-  else selection=[]}
+  if(f.length&&!sel){orderMove(f,wx,wy);ping(wx,wy,'#9fe08a');sfx('ok');voice(f[0].type==='vill'?'ack':'select',f[0])}
+  else if(!cmd&&!(sel&&selAdd))selection=[]}
  refreshPanel(true)}
 function doBox(){sheepSel=[];
  const x0=Math.min(box.x0,box.x1),x1=Math.max(box.x0,box.x1);
@@ -1464,12 +1526,13 @@ function doBox(){sheepSel=[];
   const[sx,sy]=w2s(u.x,u.y);
   const px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
   if(px>=x0&&px<=x1&&py>=y0&&py<=y1)found.push(u)}
- if(found.length){selection=found;sfx('sel');voice('select',found[0])}
+ if(found.length){selection=selAdd?[...new Set(selection.filter(s=>s.kind==='unit').concat(found))]:found;sfx('sel');voice('select',found[0])}   /* Shift-drag adds */
  /* no units in the box: your sheep inside it become the flock to lead */
  else{for(const r of resources){if(r.kind!=='sheep'||r.owner!==0||r.dead||r.slain)continue;
    const[sx,sy]=w2s(r.gx,r.gy),px=(sx-camX)*zoom+cw/2,py=(sy-camY)*zoom+ch/2;
    if(px>=x0&&px<=x1&&py>=y0&&py<=y1)sheepSel.push(r)}
-  if(sheepSel.length){selection=[];sfx('sel');toast(sheepSel.length+' sheep · tap where to lead them')}}
+  if(sheepSel.length){selection=[];sfx('sel');toast(sheepSel.length+' sheep · '+(DESK?'right-click':'tap')+' where to lead them')}
+  else if(box.ms&&!selAdd)selection=[]}   /* a mouse box over empty ground deselects, like a click */
  selArm=false;refreshPanel(true)}
 
 /* ============ input ============ */
@@ -1521,11 +1584,18 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)joyRelease(
 cv.addEventListener('pointerdown',e=>{
  e.preventDefault();
  if(!started)return;
+ /* Mouse: a right press gives the context order (or calls off a placement) and a middle press
+    drags the view. Neither enters ptrs, so a second button can never read as a pinch. */
+ const ms=e.pointerType==='mouse';
+ if(ms&&e.button===2){if(placing){placing=null;refreshPanel(true)}else tap(e.clientX,e.clientY,'cmd');return}
+ if(ms&&e.button===1){mouse.mid={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}return}
+ if(ms&&e.button!==0)return;
  try{cv.setPointerCapture(e.pointerId)}catch(_){}
- const p={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now(),moved:false};
+ const p={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now(),moved:false,ms,add:ms&&e.shiftKey};
  /* A one-finger drag pans the map, like the stick with nothing selected. It rubber-bands a
-    selection only while the Select button is armed; two fingers still pinch-zoom. */
- if(ptrs.size===0&&!placing&&selArm)box={x0:e.clientX,y0:e.clientY,x1:e.clientX,y1:e.clientY,active:false};
+    selection only while the Select button is armed; two fingers still pinch-zoom. A left mouse
+    drag always boxes (the keys, edges and middle button pan instead). */
+ if(ptrs.size===0&&!placing&&(selArm||ms))box={x0:e.clientX,y0:e.clientY,x1:e.clientX,y1:e.clientY,active:false,ms};
  if(ptrs.size===1){
   const f=ptrs.values().next().value;
   pinch={d0:Math.max(20,Math.hypot(e.clientX-f.x,e.clientY-f.y)),z0:zoom};
@@ -1543,7 +1613,7 @@ cv.addEventListener('pointermove',e=>{
   camX=pinch.wx-(mx-cw/2)/zoom;camY=pinch.wy-(my-ch/2)/zoom;clampCam();
   followMute=2.5;
   p.moved=true;return}
- if(Math.hypot(p.x-p.sx,p.y-p.sy)>11)p.moved=true;
+ if(Math.hypot(p.x-p.sx,p.y-p.sy)>(p.ms?5:11))p.moved=true;   /* a mouse click barely moves */
  if(p.moved){
   if(placing){placing.ghost=scr2w(p.x,p.y);
    if(WALL_LINE[placing.type]){placing.line=[wTile(scr2w(p.sx,p.sy)),wTile(placing.ghost)];placing.pend=false}}
@@ -1556,11 +1626,12 @@ const ptrUp=e=>{
   if(r){r.sx=r.x;r.sy=r.y;r.t=performance.now();r.moved=false}}return}
  if(p.moved){
   if(placing&&WALL_LINE[placing.type]){if(placing.line)placing.pend=true}
-  else if(placing&&placing.type==='gate')placing.pend=true
+  else if(placing&&placing.type==='gate'&&!p.ms)placing.pend=true
   else if(placing){const g=scr2w(p.x,p.y);tryPlace(g[0],g[1])}
-  else if(box&&box.active){box.x1=p.x;box.y1=p.y;doBox()}}
+  else if(box&&box.active){box.x1=p.x;box.y1=p.y;selAdd=p.add;doBox()}}
+ else if(p.ms){selAdd=p.add;tap(p.x,p.y,'sel')}
  else tap(p.x,p.y);
- box=null};
+ box=null;selAdd=false};
 cv.addEventListener('pointerup',ptrUp);
 const wallBarEl=document.getElementById('wallBar');
 document.getElementById('wallOk').addEventListener('click',e=>{e.stopPropagation();
@@ -1618,6 +1689,20 @@ const mmNav=e=>{
 mm.addEventListener('pointerdown',mmNav);
 mm.addEventListener('pointermove',e=>{if(e.buttons)mmNav(e)});
 addEventListener('contextmenu',e=>e.preventDefault());
+/* Desktop detection at runtime, plus the cursor's position for hover placement and edge scrolling.
+   Middle-drag pans 1:1 with the cursor, like a one-finger drag on the phone. */
+addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')setDesk(true);else if(e.pointerType==='touch')setDesk(false)},true);
+addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;
+ mouse.x=e.clientX;mouse.y=e.clientY;mouse.in=true;setDesk(true);
+ if(mouse.mid){if(!(e.buttons&4)){mouse.mid=null;return}
+  camX-=(e.clientX-mouse.mid.x)/zoom;camY-=(e.clientY-mouse.mid.y)/zoom;mouse.mid.x=e.clientX;mouse.mid.y=e.clientY;clampCam();followMute=2.5}
+ /* the ghost follows the cursor; a wall only until its line is drawn, then the Build bar decides */
+ else if(started&&placing&&!ptrs.size&&!placing.line&&!placing.pend&&e.target===cv)placing.ghost=scr2w(e.clientX,e.clientY)},true);
+addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===1)mouse.mid=null},true);
+cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault()});   /* no autoscroll on Windows */
+addEventListener('mouseout',e=>{if(!e.relatedTarget)mouse.in=false});
+addEventListener('focus',()=>{mouse.focus=true});
+addEventListener('blur',()=>{mouse.focus=false;mouse.mid=null;keys.clear()});
 addEventListener('gesturestart',e=>e.preventDefault());
 
 /* ============ selection panel ============ */
@@ -1656,8 +1741,9 @@ function refreshPanel(force){
   (first.type==='farm'&&first.done?` · ${Math.ceil(first.amt)} food`:'');
  else title=selection.length+' units';
  /* say what the next tap does while a building or a garrison is armed */
- if(placing)title=(WALL_LINE[placing.type]?'Drawing ':'Placing ')+DEFS[placing.type].name+(WALL_LINE[placing.type]?': drag across the map':': tap the map');
- else if(garrisonPick)title='Garrison: tap the Town Center or a tower';
+ const tp=DESK?'click':'tap';
+ if(placing)title=(WALL_LINE[placing.type]?'Drawing ':'Placing ')+DEFS[placing.type].name+(WALL_LINE[placing.type]?': drag across the map':': '+tp+' the map');
+ else if(garrisonPick)title='Garrison: '+tp+' the Town Center or a tower';
  let html='<div class="prow">';
  for(const[k,n]of Object.entries(counts))html+=`<div class="picon">${ICON[k]||''}${n>1?`<i>${n}</i>`:''}</div>`;
  html+=`<div class="pname">${title}</div><button class="pclose" id="pcx">✕</button></div>`;
@@ -1675,9 +1761,9 @@ function refreshPanel(force){
    for(const k of['w','f','s'])acts.push({l:'Buy 100 '+RESLABEL[k]+' for '+mktBuy(k)+' gold',s:'Buy',c:mktBuy(k)+'g',t:'trade',sell:false,k,ic:ICO[k]})}
   if(counts.barracks)acts.push({l:'Man-at-Arms',s:'Man-at-Arms',c:'60f 20g',t:'swords',q:1},{l:'Archer',s:'Archer',c:'40w 30g',t:'archer',q:1})}
  if(acts.length){
-  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn${(placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick)?' on':''}" data-i="${i}" title="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span></button>`).join('')+'</div>';
+  html+='<div class="pacts">'+acts.map((a,i)=>`<button class="abtn${(placing&&placing.type===a.t)||(a.t==='garrison'&&garrisonPick)?' on':''}" data-i="${i}" data-t="${a.l}" aria-label="${a.l}">${a.ic||ICON[a.t]||ICON.house}<b class="albl">${a.s||a.l}</b><span>${a.c?costHTML(a.c):''}</span>${HK[a.t]?`<kbd>${HK[a.t]}</kbd>`:''}</button>`).join('')+'</div>';
   if(acts.some(a=>a.q)&&selection.length===1&&first.kind==='bld')html+='<div class="pq"><div id="pqf"></div><span id="pqt">Idle</span></div>'}
- el.innerHTML=html;
+ el.innerHTML=html;tipHide();
  /* The red X first cancels a building waiting to be placed, then clears the selection. Clearing
     the selection alone left the ghost armed, and the next tap laid a site with no builders. */
  $('pcx').onclick=()=>{if(placing)placing=null;else selection=[];refreshPanel(true)};
@@ -1703,6 +1789,7 @@ let hudC={w:-1,f:-1,g:-1,s:-1,p:'',i:-1};
 const shownOnce=new Set();
 function notice(msg){if(shownOnce.has(msg))return;shownOnce.add(msg);toast(msg)}
 function toast(msg){const box=$('toasts');
+ if(DESK)msg=msg.replace(/\bTap\b/g,'Click').replace(/\btap\b/g,'click');   /* desktop wording */
  if([...box.children].some(d=>d.textContent===msg&&!d.dataset.gone))return;
  while(box.children.length>2)box.firstChild.remove();
  const d=document.createElement('div');d.className='toast';d.textContent=msg;box.appendChild(d);
@@ -1729,6 +1816,89 @@ function selectIdle(){
  if(!(s[0]>L&&s[0]<R&&s[1]>T&&s[1]<B)){camX=s[0];camY=s[1];clampCam()}
  selection=idle;sfx('sel');toast(idle.length+(idle.length===1?' villager idle':' villagers idle'));
  refreshPanel(true)}
+
+/* ============ desktop: keys, tooltips, key card ============ */
+/* Held keys pan like the stick (speed divided by zoom, so the map moves at one rate on screen
+   however far in), Shift doubles it, and the cursor in a 12px band at the window's edge does the
+   same -- only while the window has focus and the cursor is inside it. */
+function applyKeys(dt){
+ const k=c=>keys.has(c);
+ let vx=(k('KeyD')||k('ArrowRight')?1:0)-(k('KeyA')||k('ArrowLeft')?1:0),vy=(k('KeyS')||k('ArrowDown')?1:0)-(k('KeyW')||k('ArrowUp')?1:0);
+ if(DESK&&mouse.in&&mouse.focus&&!mouse.mid){const E=12;
+  if(mouse.x<E)vx=-1;else if(mouse.x>cw-E)vx=1;if(mouse.y<E)vy=-1;else if(mouse.y>ch-E)vy=1}
+ if(!vx&&!vy)return;
+ const l=Math.hypot(vx,vy),sp=(700/zoom)*(k('ShiftLeft')||k('ShiftRight')?2:1);
+ camX+=vx/l*sp*dt;camY+=vy/l*sp*dt;clampCam();followMute=Math.max(followMute,0.35)}
+function centreOn(list){const l=list.filter(s=>s&&!s.dead&&!s.garrisoned);if(!l.length)return false;let x=0,y=0;
+ for(const s of l){const p=s.kind==='bld'?w2s(s.cx,s.cy):s.x!==undefined?w2s(s.x,s.y):w2s(s.gx,s.gy);x+=p[0];y+=p[1]}
+ camX=x/l.length;camY=y/l.length;clampCam();followMute=1.5;return true}
+/* A letter presses the bar button it is printed on, so it does exactly what a click does, and only
+   when that button is on offer for the current selection. */
+function pressAct(K){const i=pActs.findIndex(a=>HK[a.t]===K);if(i<0)return false;
+ const b=$('panel').querySelector('.abtn[data-i="'+i+'"]');if(!b)return false;b.onclick();return true}
+let idleI=0;
+function cycleIdle(){T.idle=true;
+ const idle=units.filter(u=>u.team===0&&!u.dead&&!u.garrisoned&&u.type==='vill'&&u.order.type==='idle');
+ if(!idle.length){toast('No idle villagers');sfx('no');return}
+ const u=idle[idleI++%idle.length];selection=[u];sheepSel=[];placing=null;garrisonPick=false;refreshPanel(true);centreOn([u]);sfx('sel');voice('select',u)}
+const groups=[],grpT={n:0,t:0};
+const PAN_KEYS=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight']);
+addEventListener('keydown',e=>{
+ const tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;
+ if(!started||over)return;
+ const c=e.code,K=e.key.length===1?e.key.toUpperCase():e.key,mod=e.ctrlKey||e.metaKey;
+ /* a focused button (Begin, a bar button) must not also take Space or Enter as a click */
+ if(document.activeElement&&document.activeElement.tagName==='BUTTON')document.activeElement.blur();
+ /* P pauses; Esc calls off a placement or Garrison, then clears the selection, then pauses */
+ if(K==='Escape'||(c==='KeyP'&&!mod)){e.preventDefault();
+  if(paused){setPaused(false);return}
+  if(K==='Escape'&&(placing||garrisonPick)){placing=null;garrisonPick=false;refreshPanel(true);return}
+  if(K==='Escape'&&(selection.length||sheepSel.length)){selection=[];sheepSel=[];refreshPanel(true);return}
+  setPaused(true);return}
+ if(paused)return;
+ /* Cmd/Ctrl+key with no meaning here stays the browser's; a key held under Cmd never gets its keyup on a Mac */
+ if(PAN_KEYS.has(c)){e.preventDefault();if(!mod)keys.add(c);return}
+ const dg=/^(?:Digit|Numpad)([1-9])$/.exec(c);
+ if(dg){e.preventDefault();if(e.repeat)return;const n=+dg[1];
+  /* Ctrl/Cmd+digit sets a group; Shift+digit too, since browsers keep Cmd+1-9 for their tabs */
+  if(mod||e.shiftKey){groups[n]=selection.filter(s=>s.team===0&&!s.dead);toast(groups[n].length?'Group '+n+' · '+groups[n].length+' set':'Group '+n+' cleared');sfx('sel');return}
+  const g=(groups[n]||[]).filter(s=>!s.dead&&!s.garrisoned);if(!g.length)return;
+  selection=g;sheepSel=[];placing=null;garrisonPick=false;refreshPanel(true);sfx('sel');
+  const now=performance.now();if(grpT.n===n&&now-grpT.t<450)centreOn(g);grpT.n=n;grpT.t=now;return}
+ if(mod||e.altKey||e.repeat)return;
+ if(K===' '){e.preventDefault();centreOn(selection.length?selection:sheepSel.length?sheepSel:[homeTC()]);return}
+ if(K==='Enter'){if(placing&&placing.pend){e.preventDefault();$('wallOk').click()}return}
+ if(K==='.'||K==='>'){e.preventDefault();cycleIdle();return}
+ if(K==='?'||K==='/'){e.preventDefault();keyCard();return}
+ if(K==='Delete'||K==='Backspace'){e.preventDefault();return}   /* never destructive */
+ if(K==='R'&&placing&&placing.type==='gate'){e.preventDefault();rotGate();return}
+ if(/^[A-Z]$/.test(K)&&pressAct(K))e.preventDefault()});
+addEventListener('keyup',e=>{keys.delete(e.code);if(e.key==='Meta'||e.key==='Control')keys.clear()});
+/* Hover tooltip on the bar buttons: name, cost, hotkey. */
+function tipHide(){const t=$('tipBox');if(t)t.style.display='none'}
+$('panel').addEventListener('pointerover',e=>{if(e.pointerType!=='mouse')return;
+ const b=e.target.closest&&e.target.closest('.abtn'),a=b&&pActs[+b.dataset.i];if(!a){tipHide();return}
+ const t=$('tipBox');t.innerHTML='<b>'+a.l+'</b>'+(a.c?'<span>'+costHTML(a.c)+'</span>':'')+(HK[a.t]?'<kbd>'+HK[a.t]+'</kbd>':'');
+ t.style.display='block';const r=b.getBoundingClientRect(),w=t.offsetWidth;
+ t.style.left=clamp(r.left+r.width/2,w/2+6,cw-w/2-6)+'px';t.style.top=(r.top-6)+'px'});
+$('panel').addEventListener('pointerout',e=>{const r=e.relatedTarget;if(!r||!r.closest||!r.closest('.abtn'))tipHide()});
+/* The key card: opened by "?" (pill or key), shown once on the first desktop game. */
+const KEYMAP=()=>[
+ ['Look around','<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>, arrows or the screen edge · <kbd>Shift</kbd> faster'],
+ ['Zoom · drag view','Mouse wheel · middle-drag'],
+ ['Select','Click · drag a box · <kbd>Shift</kbd> adds · double-click selects that type (a soldier: the army)'],
+ ['Orders','Right-click: move, gather, attack, build, farm, garrison in a Town Center or tower, rally flag'],
+ ['Build','With villagers: '+Object.keys(HK).filter(t=>DEFS[t]&&DEFS[t].size).map(t=>'<kbd>'+HK[t]+'</kbd> '+DEFS[t].name).join(', ')],
+ ['Place','Click · drag a wall, then <kbd>Enter</kbd> · <kbd>R</kbd> turns a gate · right-click or <kbd>Esc</kbd> cancels'],
+ ['Train','<kbd>Q</kbd> Villager (Town Center), Man-at-Arms (Barracks) · <kbd>R</kbd> Archer · <kbd>U</kbd> Unload'],
+ ['Groups','<kbd>Ctrl</kbd>/<kbd>⌘</kbd>/<kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>9</kbd> set · <kbd>1</kbd>–<kbd>9</kbd> select, twice to look'],
+ ['More','<kbd>.</kbd> next idle villager · <kbd>Space</kbd> look at selection · <kbd>Esc</kbd> cancel, deselect · <kbd>P</kbd> pause · <kbd>?</kbd> this card']];
+function keyCard(show){const k=$('keyCard');if(show===undefined)show=k.hidden;
+ if(show&&!k.innerHTML)k.innerHTML='<h3>Keys &amp; mouse<button id="keyX" aria-label="Close">✕</button></h3>'+KEYMAP().map(([a,b])=>`<div><b>${a}</b><span>${b}</span></div>`).join('');
+ k.hidden=!show;if(!show)try{localStorage.setItem('pe_keys_seen','1')}catch(_){}}
+function keyHintOnce(){try{if(localStorage.getItem('pe_keys_seen')==='1')return}catch(_){return}keyCard(true)}
+$('keyCard').addEventListener('click',e=>{if(e.target.id==='keyX')keyCard(false)});
+$('keyQ').addEventListener('click',e=>{e.stopPropagation();keyCard()});
 
 /* ============ artwork ============ */
 /* Units, animals, buildings, trees and ore are pre-rendered sprites made with the project's own
@@ -2778,7 +2948,7 @@ function followCamera(dt){
  if(Math.abs(tx-camX)<0.5&&Math.abs(ty-camY)<0.5)return;
  camX+=(tx-camX)*k;camY+=(ty-camY)*k;clampCam()}
 function update(dt){
- applyJoy(dt);
+ applyJoy(dt);applyKeys(dt);
  followCamera(dt);
  updAnimals(dt);
  if(shake>0)shake=Math.max(0,shake-dt*16);
@@ -2907,6 +3077,8 @@ function applyLevel(n){
   if(r)setGather(u,r)}
  $('plv').textContent='Lv '+n}
 applyLevel(level);
+/* fine primary pointer and no touch points: start with the desktop layout (see setDesk) */
+try{if(matchMedia('(pointer:fine)').matches&&!navigator.maxTouchPoints)setDesk(true)}catch(_){}
 selection=units.filter(u=>u.team===0);
 refreshPanel(true);
 {const c=w2s(11,43);camX=c[0];camY=c[1];clampCam()}
@@ -2930,11 +3102,8 @@ refreshPanel(true);
  $('pmResignNo').addEventListener('click',()=>{$('pmMain').style.display='';$('pmConfirm').style.display='none'});
  $('pmResignYes').addEventListener('click',()=>{setPaused(false);end(false,true)});
  $('ppause').innerHTML=ICO_GEAR;
- /* Space toggles pause on the web build, the way every RTS does it. */
- addEventListener('keydown',e=>{
-  if(e.key!==' '&&e.key!=='Space')return;
-  const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
-  e.preventDefault();if(!started||over)return;setPaused(!paused)});
+ /* Keys live in the desktop block (applyKeys and its keydown): Space looks at the selection there,
+    and P or Esc pauses. */
  /* Tutorial on the title screen: start a match with the lesson running, whether or not it was
     done before. It always teaches on level 1. */
  let wantTut=false;
@@ -2942,7 +3111,7 @@ refreshPanel(true);
  $('startBtn').addEventListener('click',()=>{
   initAudio();if(AC&&AC.resume)AC.resume();initMusic();loadBank('sfx');loadBank('voice');
   if(picked!==level)applyLevel(picked);
-  $('startOv').style.display='none';started=true;sfx('horn');if(wantTut||tutDue())tutStart()});
+  $('startOv').style.display='none';started=true;sfx('horn');if(wantTut||tutDue())tutStart();if(DESK)keyHintOnce()});
  /* Level buttons: locked ones are inert. `picked` is applied when Begin is pressed. */
  let picked=level;
  const ICO_LOCK='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z"/></svg>';
@@ -2973,66 +3142,75 @@ const busy=f=>units.some(u=>u.team===0&&!u.dead&&u.order.type==='gather'&&f(u.or
 const nB=t=>buildings.filter(b=>b.team===0&&b.type===t&&!b.dead).length;
 const homeTC=()=>buildings.find(b=>b.team===0&&b.type==='tc'&&!b.dead);
 const myRax=()=>buildings.filter(b=>b.team===0&&b.type==='barracks'&&!b.dead).pop();
-const abtn=t=>document.querySelector('#panel .abtn[title'+t+']');
+const abtn=t=>document.querySelector('#panel .abtn[data-t'+t+']');
 const nearR=k=>{const tc=homeTC();return tc?findResByKind(k,tc.cx,tc.cy,40):null};
 const selIs=t=>selection.length===1&&selection[0].kind==='bld'&&selection[0].team===0&&selection[0].type===t;
 /* "Select a villager first" -- ring the villagers until one is selected, then the real target. */
 const vOr=g=>selV().length?g:{grp:myVills()};
 /* Tapping the Town Center with villagers selected garrisons them, so TC steps clear that first. */
-const viaTC=(say,tg)=>({t:()=>selV().length?'Clear the selection with the red ✕ first.':selIs('tc')?say:'Tap your Town Center.',
+const viaTC=(say,tg,dsay)=>({t:()=>selV().length?'Clear the selection with the red ✕ first.':selIs('tc')?(DESK&&dsay||say):'Tap your Town Center.',
  tg:()=>selV().length?{el:$('pcx')}:selIs('tc')?tg():{b:homeTC()}});
 const army=()=>units.filter(u=>u.team===0&&!u.dead&&!u.garrisoned&&u.type!=='vill');
 function tutHome(){const tc=homeTC();if(!tc)return;const c=w2s(tc.cx+2,tc.cy+2);camX=c[0];camY=c[1];clampCam();followMute=1.5}
+/* Desktop captions: a step's `dt` (and ring `dtg`) replace `t`/`tg` when playing with mouse and keys;
+   any other caption has its tap/Tap read as click. The narration clips stay as recorded. */
 /* Frame the Town Center and the resource to tap together, a little low so the caption never hides it. */
 function tutLook(k){const tc=homeTC(),r=nearR(k);if(!tc||!r)return;const a=w2s(tc.cx,tc.cy),b=w2s(r.gx,r.gy);
  camX=(a[0]+b[0])/2;camY=(a[1]+b[1])/2-40;clampCam();followMute=2}
 const TUT=[
  {t:'Welcome, my lord! Each lesson moves on once you have done it. Tap Next whenever you are ready.',next:1,hold:1},
  {t:'Your villagers are selected. Push the stick to walk them.',tg:()=>({el:$('joyZone')}),ok:()=>T.drive>0.8,
+  dt:'Your villagers are selected. Right-click the ground to walk them there.',dtg:()=>null,
   in:()=>{if(!selV().length){selection=myVills();refreshPanel(true)}}},
- {t:'Tap the red ✕ to clear the selection.',tg:()=>({el:$('pcx')}),ok:()=>!selection.length},
+ {t:'Tap the red ✕ to clear the selection.',tg:()=>({el:$('pcx')}),ok:()=>!selection.length,dt:'Click the red ✕, or press Esc, to clear the selection.'},
  {t:'With nothing selected, the stick or a finger dragged across the map moves the view. Look around.',tg:()=>({el:$('joyZone')}),ok:()=>T.pan>450,
+  dt:'Use WASD, the arrow keys or the screen edge to look around.',dtg:()=>null,
   in:()=>{if(selection.length){selection=[];refreshPanel(true)}}},
- {t:'The minimap shows the whole realm: tap it to jump anywhere. Pinch to zoom.',tg:()=>({el:$('mmWrap')}),next:1,ok:()=>T.mm},
- {t:'Tap the Select button, then drag a box around your villagers, or tap just one.',tg:()=>selArm||selV().length?{grp:myVills()}:{el:$('selBtn')},ok:()=>selV().length>0,in:tutHome},
+ {t:'The minimap shows the whole realm: tap it to jump anywhere. Pinch to zoom.',tg:()=>({el:$('mmWrap')}),next:1,ok:()=>T.mm,
+  dt:'The minimap shows the whole realm: click it to jump anywhere. The mouse wheel zooms.'},
+ {t:'Tap the Select button, then drag a box around your villagers, or tap just one.',tg:()=>selArm||selV().length?{grp:myVills()}:{el:$('selBtn')},ok:()=>selV().length>0,in:tutHome,
+  dt:'Drag a box around your villagers, or click just one.',dtg:()=>({grp:myVills()})},
  /* the home berries sit behind the Town Center's roof, so point at the boars beside it instead */
- {t:'Now tap a boar to hunt it for food. Berries and sheep work too.',tg:()=>vOr({r:nearR('boar')||nearR('berry')}),ok:()=>busy(o=>o.ctype==='f'),in:()=>tutLook('boar')},
- {t:'Wood builds everything. Select a villager, then tap a tree.',tg:()=>vOr({r:nearR('tree')}),ok:()=>busy(o=>o.kind==='tree'),in:()=>tutLook('tree')},
- {t:'Gold pays for soldiers, stone for walls. Send a villager to either.',tg:()=>vOr({r:nearR('gold')}),ok:()=>busy(o=>o.kind==='gold'||o.kind==='stone'),in:()=>tutLook('gold')},
+ {t:'Now tap a boar to hunt it for food. Berries and sheep work too.',dt:'Now right-click a boar to hunt it for food. Berries and sheep work too.',tg:()=>vOr({r:nearR('boar')||nearR('berry')}),ok:()=>busy(o=>o.ctype==='f'),in:()=>tutLook('boar')},
+ {t:'Wood builds everything. Select a villager, then tap a tree.',dt:'Wood builds everything. Select a villager, then right-click a tree.',tg:()=>vOr({r:nearR('tree')}),ok:()=>busy(o=>o.kind==='tree'),in:()=>tutLook('tree')},
+ {t:'Gold pays for soldiers, stone for walls. Send a villager to either.',dt:'Gold pays for soldiers, stone for walls. Right-click either with a villager selected.',tg:()=>vOr({r:nearR('gold')}),ok:()=>busy(o=>o.kind==='gold'||o.kind==='stone'),in:()=>tutLook('gold')},
  {t:'Your stores: wood, food, gold and stone, then population.',tg:()=>({el:$('resbar')}),next:1},
- {t:'A House holds 5 more people. Select a villager, tap House, then tap open ground to place it.',tg:()=>vOr({el:abtn('="House"')}),
+ {t:'A House holds 5 more people. Select a villager, tap House, then tap open ground to place it.',dt:'A House holds 5 more people. Select a villager, press H (or click House), then click open ground.',tg:()=>vOr({el:abtn('="House"')}),
   quick:1,in:()=>{T.h0=nB('house')},ok:()=>placing&&placing.type==='house'||nB('house')>T.h0},
- {t:'Tap open ground to set it down. Green fits; the red ✕ cancels.',nodim:1,tg:()=>placing&&placing.ghost?{w:placing.ghost}:null,
+ {t:'Tap open ground to set it down. Green fits; the red ✕ cancels.',dt:'Click open ground to set it down. Green fits; right-click or Esc cancels.',nodim:1,tg:()=>placing&&placing.ghost?{w:placing.ghost}:null,
   /* back to the House step only if a placement was started here and then cancelled */
   ok:()=>nB('house')>T.h0,back:()=>{if(placing)T.armed=true;return T.armed&&!placing&&nB('house')<=T.h0}},
- {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',tg:()=>vOr({el:abtn('="Wood Yard"')}),next:1,
+ {t:'Drop-offs save long walks. Build a Wood Yard by the trees.',dt:'Drop-offs save long walks. Build a Wood Yard (E) by the trees.',tg:()=>vOr({el:abtn('="Wood Yard"')}),next:1,
   ok:()=>nB('woodyard')+nB('mill')+nB('mine')>T.base.drop},
- {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',tg:()=>vOr({el:abtn('="Farm"')}),ok:()=>nB('farm')>T.base.farm},
+ {t:'Farms never run dry. Tap Farm, then the ground: one farm per villager.',dt:'Farms never run dry. Press F (or click Farm), then click the ground: one farm per villager.',tg:()=>vOr({el:abtn('="Farm"')}),ok:()=>nB('farm')>T.base.farm},
  {t:'With villagers selected, the hammer sends them back to work or to help build.',tg:()=>({el:$('sword')}),next:1,ok:()=>T.sword},
- {...viaTC('Tap Villager to train one (50 food).',()=>({el:abtn('="Villager"')})),
+ {...viaTC('Tap Villager to train one (50 food).',()=>({el:abtn('="Villager"')}),'Click Villager, or press Q, to train one (50 food).'),
   ok:()=>{const tc=homeTC();return tc&&tc.queue.length>0||popOf(0)>T.base.pop}},
- {...viaTC('Now tap a tree or berries: new villagers walk straight to work.',()=>({r:nearR('berry')||nearR('tree')})),
+ {...viaTC('Now tap a tree or berries: new villagers walk straight to work.',()=>({r:nearR('berry')||nearR('tree')}),'Now right-click a tree or berries: new villagers walk straight to work.'),
   ok:()=>{const tc=homeTC();return tc&&tc.rallyRes&&tc.rallyRes!==T.base.rally}},
  {t:()=>garrisonPick?'Now tap the Town Center.':'Raiders? Select villagers, tap Garrison, then the Town Center. Each one inside adds an arrow.',
-  tg:()=>garrisonPick?{b:homeTC()}:selV().length?{el:abtn('="Garrison"')}:{grp:myVills()},next:1,ok:()=>T.garr},
+  tg:()=>garrisonPick?{b:homeTC()}:selV().length?{el:abtn('="Garrison"')}:{grp:myVills()},next:1,ok:()=>T.garr,
+  dt:'Raiders? Select villagers, then right-click the Town Center. Each one inside adds an arrow.',dtg:()=>selV().length?{b:homeTC()}:{grp:myVills()}},
  /* unloading gets its own step (v: its own narration clip, added after the first 25) */
  {v:'s25',t:()=>{const tc=homeTC();return tc&&!tc.garrison.length?'Everyone is out again.':selIs('tc')?'Tap Unload to bring them out. They walk to its flag.':'To bring them out, tap the Town Center, then Unload.'},
   tg:()=>{const tc=homeTC();return tc&&tc.garrison.length&&selIs('tc')?{el:abtn('^="Unload"')}:{b:homeTC()}},next:1,
   ok:()=>{const tc=homeTC();return T.garr&&tc&&!tc.garrison.length},
   out:()=>{const tc=homeTC();if(tc&&tc.garrison.length)releaseGarrison(tc)}},
- {t:'The Idle button finds villagers with nothing to do.',tg:()=>({el:$('pli')}),next:1,ok:()=>T.idle},
+ {t:'The Idle button finds villagers with nothing to do.',tg:()=>({el:$('pli')}),next:1,ok:()=>T.idle,dt:'The Idle button, or the . key, finds villagers with nothing to do.'},
  {t:()=>res[0].w<125&&!placing?'A Barracks needs 125 wood: put villagers on trees first.':'Now an army. Select a villager and build a Barracks.',
+  dt:()=>res[0].w<125&&!placing?'A Barracks needs 125 wood: put villagers on trees first.':'Now an army. Select a villager and press B to build a Barracks.',
   tg:()=>vOr({el:abtn('="Barracks"')}),ok:()=>nB('barracks')>T.base.rax},
  {t:()=>{const b=myRax();return !b?'Build a Barracks first.':!b.done?'Your builders are raising the Barracks…':selIs('barracks')?'Train Men-at-Arms (food, gold) or Archers (wood, gold).':'Tap the Barracks to train soldiers.'},
   tg:()=>{const b=myRax();return !b?null:b.done&&selIs('barracks')?{el:abtn('="Man-at-Arms"')}:{b}},
   ok:()=>buildings.some(b=>b.team===0&&b.type==='barracks'&&b.queue.length)||army().length>0},
  /* the rally flag: where fresh soldiers gather (with none they join the army's banner) */
  {v:'s26',t:()=>selIs('barracks')?'Now tap open ground: the flag marks where new soldiers gather.':'Tap the Barracks, then tap the ground to plant its rally flag.',
+  dt:()=>selIs('barracks')?'Now right-click open ground: the flag marks where new soldiers gather.':'Click the Barracks, then right-click the ground to plant its rally flag.',
   nodim:1,tg:()=>{const b=myRax();return b&&!selIs('barracks')?{b}:null},next:1,
   in:()=>{const b=myRax();T.r0=b&&b.rally},ok:()=>{const b=myRax();return !!(b&&b.rally&&b.rally!==T.r0)}},
- {t:'Double-tap a soldier to select your whole army, then press the sword to charge.',tg:()=>!selMil().length&&army().length?{grp:army()}:{el:$('sword')},next:1},
+ {t:'Double-tap a soldier to select your whole army, then press the sword to charge.',dt:'Double-click a soldier to select your whole army, then right-click an enemy or press the sword to charge.',tg:()=>!selMil().length&&army().length?{grp:army()}:{el:$('sword')},next:1},
  {t:'Soldiers hold their ground: they fight what comes near, but never chase far.',tg:()=>army().length?{grp:army()}:null,next:1},
- {t:'The gear pauses the game: sound, music, and this lesson again.',tg:()=>({el:$('ppause')}),next:1},
+ {t:'The gear pauses the game: sound, music, and this lesson again.',dt:'The gear (or P) pauses the game: sound, music, and this lesson again. Press ? for the keys.',tg:()=>({el:$('ppause')}),next:1},
  {t:'Destroy the enemy’s Town Center, far to the east. The enemy wakes now. Godspeed, my liege.',tg:()=>({el:$('mmWrap')}),next:1}];
 {let k=0;for(const s of TUT)if(!s.v)s.v='s'+String(k++).padStart(2,'0')}
 function tutSnap(){const tc=homeTC();
@@ -3050,13 +3228,14 @@ function tutEnd(){if(!T.on)return;T.on=false;narrStop();try{localStorage.setItem
 const scrOf=(wx,wy,lift)=>{const[sx,sy]=w2s(wx,wy);return[(sx-camX)*zoom+cw/2,(sy-camY)*zoom+ch/2-lift*zoom]};
 function tutDraw(){
  const s=TUT[T.i];if(!s)return;
- const txt=typeof s.t==='function'?s.t():s.t;
+ const st=DESK&&s.dt?s.dt:s.t;let txt=typeof st==='function'?st():st;
+ if(DESK)txt=txt.replace(/\bTap\b/g,'Click').replace(/\btap\b/g,'click');
  const lbl='LESSON '+(T.i+1)+' / '+TUT.length+(T.doneT?'  \u2713 DONE':'');
  if(txt!==T.txt||lbl!==T.lbl){T.txt=txt;T.lbl=lbl;$('tutS').textContent=txt;$('tutN').textContent=lbl}
  /* Next is always offered; it lights up once the step is done (or is just information) */
  const nx=$('tutNext'),late=!s.next&&!T.doneT;
  nx.style.display='';nx.classList.toggle('late',late);nx.textContent=T.i===TUT.length-1?'Begin':'Next';
- const g=s.tg?s.tg():null,ring=$('tutRing');let r=null;
+ const tgf=DESK&&s.dtg||s.tg,g=tgf?tgf():null,ring=$('tutRing');let r=null;
  if(g&&g.el){const b=g.el.getBoundingClientRect();if(b.width)r=[b.left-5,b.top-5,b.width+10,b.height+10,false]}
  else if(g){let pts=[],pad=24*zoom+6;
   if(g.grp&&g.grp.length)pts=g.grp.map(u=>scrOf(u.x,u.y,16));
@@ -3079,7 +3258,8 @@ function tutStep(dt){
  if(!T.on||!started||over)return;
  const s=TUT[T.i];if(!s)return;
  if(T.cx!==undefined&&!selection.length)T.pan+=Math.hypot(camX-T.cx,camY-T.cy);T.cx=camX;T.cy=camY;
- if(!paused&&units.some(u=>u.team===0&&u.order.type==='drive'&&u.moving))T.drive+=dt;
+ /* on desktop a right-click march counts as driving them */
+ if(!paused&&units.some(u=>u.team===0&&(u.order.type==='drive'||DESK&&u.order.type==='move')&&u.moving))T.drive+=dt;
  const tc=homeTC();if(tc&&tc.garrison.length)T.garr=true;
  /* the window to start a step's line opens only once its clip has decoded (the bank is large) */
  const ne=BANK['narrator_'+s.v];if(!T.said&&!(ne&&ne.bufs.length))T.sayT=time;
