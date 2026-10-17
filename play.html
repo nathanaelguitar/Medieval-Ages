@@ -217,7 +217,7 @@ body.tutOn #toasts{top:calc(118px + env(safe-area-inset-top))}
 #startOv .title span{display:block;font-size:1em;letter-spacing:.32em;color:#c99c4f;margin:0}
 #startOv .tag{margin:12px 0 4px;font-size:clamp(13px,2.6vh,17px);font-style:italic;color:#e4dcc6;text-shadow:0 2px 10px rgba(0,0,0,.8)}
 #startOv #lvRow{justify-content:flex-start;margin-top:14px}
-#startOv .heroBtns{display:flex;align-items:center;gap:16px}
+#startOv .heroBtns{display:flex;align-items:center;gap:16px;flex-wrap:wrap;column-gap:12px}
 #startOv .bigbtn{padding:12px 42px}
 .howLink{margin-top:20px;background:none;border:0;color:#d9cfb4;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-family:inherit}
 /* Level select: a compact row of numbered buttons; locked ones are greyed with a padlock. */
@@ -292,9 +292,107 @@ body.desk #keyQ{display:flex;pointer-events:auto;cursor:pointer;font-weight:800;
 #tipBox span{display:inline-flex;gap:4px;margin:0 6px;color:#d9b36a}
 #tipBox span em{font-style:normal;display:inline-flex;align-items:center;gap:1px}
 #tipBox span svg{width:10px;height:10px}
+/* ============ historical campaign ============ */
+/* A campaign mission boots straight from a reload (pe_camp_next): the title screen never shows. */
+.campBoot #startOv{display:none!important}
+/* Campaign button: the title's gold Begin, inverted, so it reads as the second way in */
+#startOv .campBtn{margin-top:20px;font-size:15px;font-weight:800;letter-spacing:.04em;color:#ecd29a;background:rgba(10,14,9,.78);border:1px solid #c9a253;border-radius:14px;padding:12px 18px 12px 12px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(0,0,0,.5);font-family:Palatino,'Palatino Linotype',Georgia,serif;cursor:pointer}
+#startOv .campBtn img{height:24px;width:auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+#startOv .campBtn:active{transform:scale(.96)}
+#campOv{background:linear-gradient(90deg,rgba(7,9,5,.95) 0%,rgba(7,9,5,.80) 45%,rgba(7,9,5,.55) 100%),url(img/keyart.jpg) 62% center/cover no-repeat,radial-gradient(ellipse at 50% 30%,rgba(34,48,26,.94),rgba(8,12,6,.97))}
+.cmWrap{width:min(560px,94vw);display:flex;flex-direction:column;align-items:center}
+.cmCrests{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.cmCrests img{height:58px;width:auto;filter:drop-shadow(0 3px 5px rgba(0,0,0,.7))}
+.cmCrests span{font:italic 700 15px Palatino,Georgia,serif;color:#b98f47}
+.cmTitle{font-family:Palatino,'Palatino Linotype',Georgia,serif;font-weight:800;color:#e3c27a;font-size:clamp(22px,4.6vw,34px);letter-spacing:.05em;line-height:1.05;text-shadow:0 2px 0 #3e2e0e,0 6px 18px rgba(0,0,0,.7)}
+.cmYears{font:700 11px Palatino,Georgia,serif;letter-spacing:.42em;color:#c99c4f;margin:5px 0 4px}
+.cmIntro{font-size:13px;font-style:italic;color:#d9d1bd;margin:4px 0 12px;max-width:470px;line-height:1.35}
+.cmSides{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.cmSide{display:flex;align-items:center;gap:10px;padding:8px 18px 8px 10px;text-align:left;font-family:Palatino,'Palatino Linotype',Georgia,serif;color:#e4dcc6;background:rgba(10,14,9,.82);border:1px solid rgba(255,255,255,.22);border-radius:14px;cursor:pointer;min-width:200px}
+.cmSide img{height:50px;width:auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.cmSide b{display:block;font-size:16px;letter-spacing:.03em}
+.cmSide small{display:block;font-size:11.5px;font-style:italic;color:#b9b29c;margin-top:2px}
+.cmSide[data-s="sco"] b{color:#8fb4f0}.cmSide[data-s="eng"] b{color:#f09a93}
+.cmSide:active,.cmRow:active{transform:scale(.97)}
+.cmList{display:flex;flex-direction:column;gap:7px;width:100%}
+.cmRow{display:flex;align-items:center;gap:12px;width:100%;padding:8px 12px;text-align:left;background:rgba(10,14,9,.82);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#efe8d6;font-family:inherit;cursor:pointer}
+.cmRow .n{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 16px Palatino,Georgia,serif;color:#241a08;background:linear-gradient(#ecd29a,#c9a253);border:1px solid #8a6a2c}
+.cmRow .t{flex:1;min-width:0}
+.cmRow .t b{display:block;font:700 15px Palatino,Georgia,serif;color:#efe8d6;letter-spacing:.02em}
+.cmRow .t small{display:block;font-size:11px;color:#b9b29c;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmRow .st{flex:none;font-size:18px;color:#9fe08a;width:20px;text-align:center}
+.cmRow .st svg{width:16px;height:16px;color:#b9b29c}
+.cmRow.lock{opacity:.45;cursor:default}
+.cmRow.lock .n{background:rgba(255,255,255,.12);color:#b9b29c;border-color:rgba(255,255,255,.2)}
+.cmBack{margin-top:12px;background:none;border:0;color:#d9cfb4;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-family:inherit}
+.cmHead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cmHead img{height:40px;width:auto}
+.cmHead div{text-align:left}
+.cmHead b{display:block;font:800 18px Palatino,Georgia,serif;color:#e3c27a;letter-spacing:.03em}
+.cmHead small{display:block;font-size:11.5px;color:#b9b29c;font-style:italic}
+/* Briefing: the narrator reads it; the text is always there as the fallback */
+#briefOv{background:radial-gradient(ellipse at 50% 30%,rgba(30,36,22,.96),rgba(6,8,5,.98))}
+.bfCard{width:min(760px,96vw);display:flex;gap:18px;align-items:flex-start;text-align:left}
+.bfMain{flex:1.5;min-width:0}
+.bfSide{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch}
+.bfKick{display:flex;align-items:center;gap:10px}
+.bfKick img{height:46px;width:auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.bfKick small{display:block;font:700 10.5px -apple-system,system-ui,sans-serif;letter-spacing:.16em;color:#b98f47;text-transform:uppercase}
+.bfKick b{display:block;font:800 clamp(20px,4vw,28px) Palatino,'Palatino Linotype',Georgia,serif;color:#e3c27a;letter-spacing:.03em;line-height:1.05}
+.bfDate{font:italic 12.5px Palatino,Georgia,serif;color:#c9bfa6;margin:5px 0 8px}
+.bfText{font:14px/1.42 Palatino,'Palatino Linotype',Georgia,serif;color:#efe8d6}
+.bfText p{margin:0 0 6px}
+.bfObj{background:rgba(255,255,255,.05);border:1px solid rgba(227,194,122,.35);border-radius:12px;padding:9px 11px;margin-top:4px}
+.bfObj h4{font:700 10px -apple-system,system-ui,sans-serif;letter-spacing:.16em;color:#b98f47;margin-bottom:5px}
+.bfObj li{list-style:none;font-size:12.5px;color:#e4dcc6;margin:3px 0;padding-left:14px;position:relative;line-height:1.3}
+.bfObj li::before{content:"";position:absolute;left:1px;top:5px;width:6px;height:6px;border:1px solid #e3c27a;transform:rotate(45deg)}
+.bfBtns{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:10px}
+#bfGo{margin-top:0}
+#bfVoice{padding:6px 10px}#bfSkip{display:inline-flex;align-items:center}
+#bfHint{font-size:11px;color:#8d8874;margin-top:6px;text-align:right;min-height:1em}
+/* Epilogue on the end card when the player has beaten history */
+#endEpi{max-width:min(560px,90vw);font:italic 13.5px/1.42 Palatino,'Palatino Linotype',Georgia,serif;color:#e4dcc6;margin:2px 0 4px;display:none}
+#endEpi b{font-style:normal;color:#e3c27a;letter-spacing:.06em}
+#endOv .endBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+#endOv .endBtns .bigbtn{margin-top:14px}
+#campBackBtn{margin-top:14px}
+/* Objectives tracker: under the status strip, left. Tapping a hero line finds him. */
+body.camp #plw,body.camp #plf,body.camp #plg,body.camp #pls,body.camp #plp,body.camp #pli{display:none}
+#objBox{position:absolute;left:calc(10px + env(safe-area-inset-left));top:calc(46px + env(safe-area-inset-top));max-width:min(250px,40vw);padding:6px 10px 6px 9px;border-radius:12px;background:rgba(10,14,9,.80);border:1px solid rgba(227,194,122,.45);backdrop-filter:blur(6px);color:#efe8d6;pointer-events:auto;display:none}
+body.camp #objBox{display:block}
+#objBox h4{font:700 9px -apple-system,system-ui,sans-serif;letter-spacing:.16em;color:#b98f47;margin-bottom:2px;display:flex;justify-content:space-between;gap:8px}
+#objBox h4 span{color:#e3c27a;letter-spacing:.04em}
+#objBox div{font-size:11px;line-height:1.3;margin:2px 0;padding-left:15px;position:relative}
+#objBox div i{position:absolute;left:0;top:0;font-style:normal;width:12px;text-align:center;color:#e3c27a}
+#objBox div.ok{color:#9fe08a}#objBox div.ok i{color:#9fe08a}
+#objBox div.bad{color:#ff9a8a}#objBox div.bad i{color:#ff9a8a}
+#objBox div.hero{cursor:pointer;text-decoration:underline dotted rgba(227,194,122,.6);text-underline-offset:2px}
+#objBox div.sub{color:#c9bfa6;font-style:italic}
+@media (max-height:520px){
+ .bfCard{gap:14px}.bfText{font-size:12.5px;line-height:1.36}.bfKick img{height:38px}.bfDate{margin:3px 0 5px}
+ .bfObj li{font-size:11.5px}.cmCrests img{height:42px}.cmIntro{margin:2px 0 8px;font-size:12px}
+ .cmRow{padding:5px 10px}.cmRow .n{width:28px;height:28px;font-size:14px}.cmSide{padding:5px 14px 5px 8px}.cmSide img{height:40px}
+ #objBox{top:calc(40px + env(safe-area-inset-top))}
+ #startOv .campBtn{margin-top:11px;padding:8px 14px 8px 10px;font-size:14px}
+}
+@media (max-width:620px){.bfCard{flex-direction:column}.bfSide{width:100%}}
+/* Campaign coach marks: the tutorial's ring and caption, driven by their own short list */
+#hint{position:absolute;inset:0;pointer-events:none;z-index:10}
+#hint[hidden]{display:none}
+#hintRing{position:absolute;display:none;border-radius:50%;pointer-events:none}
+#hintRing::after{content:"";position:absolute;inset:0;border:3px solid #e3c27a;border-radius:inherit;box-shadow:0 0 16px 2px rgba(227,194,122,.75);animation:tutPulse 1.1s ease-in-out infinite}
+#hintCap{position:absolute;left:calc(min(250px,40vw) + 24px + env(safe-area-inset-left));right:calc(178px + env(safe-area-inset-right));top:calc(46px + env(safe-area-inset-top));max-width:460px;display:flex;align-items:center;gap:10px;padding:7px 8px 7px 14px;border-radius:14px;background:rgba(10,13,8,.92);border:1px solid rgba(227,194,122,.6);box-shadow:0 6px 18px rgba(0,0,0,.5);color:#f0e9d7;pointer-events:auto}
+#hintTxt{flex:1;font:600 13px/1.3 Palatino,'Palatino Linotype',Georgia,serif}
+#hintTxt small{display:block;font:700 9.5px -apple-system,system-ui,sans-serif;letter-spacing:.12em;color:#b98f47;margin-bottom:1px}
+#hintNext{flex:none;background:linear-gradient(#ecd29a,#c9a253);color:#241a08;border-color:#8a6a2c;font-weight:700}
+body.camp.hintOn #toasts{top:calc(112px + env(safe-area-inset-top))}
 </style>
 </head>
 <body>
+<script>
+/* A campaign mission starts from a reload carrying #camp=<mission><side>: hide the title before first paint. */
+if(/^#camp=/.test(location.hash))document.documentElement.classList.add('campBoot');
+</script>
 <canvas id="game"></canvas>
 <div id="vig"></div>
 <div id="hud">
@@ -308,7 +406,10 @@ body.desk #keyQ{display:flex;pointer-events:auto;cursor:pointer;font-weight:800;
 <div id="sword" class="ui"><svg viewBox="0 0 24 24"><path d="M20.2 3.8 10 14" stroke="#f2f2ee" stroke-width="2.4" stroke-linecap="round"/><path d="M19 3 21 5" stroke="#f2f2ee" stroke-width="2.4" stroke-linecap="round"/><path d="M7.6 12.2l4.2 4.2" stroke="#c8c8c2" stroke-width="2.2" stroke-linecap="round"/><path d="M8.6 15.4 6 18" stroke="#c98b4e" stroke-width="2.6" stroke-linecap="round"/><circle cx="5.2" cy="18.8" r="1.5" fill="#c98b4e"/></svg></div>
  <div id="joyZone" class="ui"><div id="joyBase"><div id="joyNub"></div></div></div>
  <div id="toasts"></div>
+ <div id="objBox"></div>
 </div>
+<div id="hint" hidden><div id="hintRing"></div>
+ <div id="hintCap"><div id="hintTxt"><small id="hintN"></small><span id="hintS"></span></div><button class="tutBtn" id="hintNext">Next</button></div></div>
 <div id="tut" hidden><div id="tutRing"></div>
  <div id="tutCap"><div id="tutTxt" aria-live="polite"><small id="tutN"></small><span id="tutS"></span></div><button class="tutBtn" id="tutNext">Next</button></div>
  <div id="tutBar"><button class="tutBtn" id="tutVoice" aria-label="Narration on or off"></button><button class="tutBtn" id="tutSkip">Skip<svg viewBox="0 0 12 12" width="10" height="10" style="margin-left:7px;vertical-align:-1px"><path d="M2.5 2.2 6.3 6l-3.8 3.8M6.2 2.2 10 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
@@ -343,14 +444,27 @@ body.desk #keyQ{display:flex;pointer-events:auto;cursor:pointer;font-weight:800;
   <div id="sideBox"><div class="sideLbl">Choose your banner</div><div id="sideRow">
    <button class="sideBtn" data-c="0" aria-label="Scotland, blue team, Lion Rampant"><img src="img/herald_scotland.png" alt=""><span><b>Scotland</b><small>Blue &middot; Lion Rampant</small></span></button>
    <button class="sideBtn" data-c="1" aria-label="England, red team, Three Lions"><img src="img/herald_lions3.png" alt=""><span><b>England</b><small>Red &middot; Three Lions</small></span></button></div></div>
-  <div class="heroBtns"><button class="bigbtn" id="startBtn">Begin</button><button class="howLink" id="tutBtn">Tutorial</button></div>
+  <div class="heroBtns"><button class="bigbtn" id="startBtn">Begin</button><button class="campBtn" id="campBtn" aria-label="Campaign: The Wars of Scottish Independence"><img src="img/herald_scotland.png" alt=""><img src="img/herald_lions3.png" alt="">Campaign</button><button class="howLink" id="tutBtn">Tutorial</button></div>
  </div>
 </div>
 <div id="endOv" class="ov ui" style="display:none">
  <h1 id="endTitle">Victory</h1>
  <p class="sub" id="endSub"></p>
+ <p id="endEpi"></p>
+ <div class="endBtns">
  <button class="bigbtn" id="nextBtn" style="display:none">Next Level</button>
  <button class="bigbtn" id="againBtn">Play Again</button>
+ <button class="howLink" id="campBackBtn" style="display:none">Campaign</button>
+ </div>
+</div>
+<div id="campOv" class="ov ui" style="display:none"><div class="cmWrap" id="cmWrap"></div></div>
+<div id="briefOv" class="ov ui" style="display:none">
+ <div class="bfCard">
+  <div class="bfMain"><div class="bfKick"><img id="bfCrest" src="img/herald_scotland.png" alt=""><div><small id="bfNum"></small><b id="bfName"></b></div></div>
+   <div class="bfDate" id="bfDate"></div><div class="bfText" id="bfText"></div></div>
+  <div class="bfSide"><div class="bfObj"><h4>OBJECTIVES</h4><ul id="bfObj"></ul></div>
+   <div class="bfBtns"><button class="tutBtn" id="bfVoice" aria-label="Narration on or off"></button><button class="tutBtn" id="bfSkip">Skip<svg viewBox="0 0 12 12" width="10" height="10" style="margin-left:7px;vertical-align:-1px"><path d="M2.5 2.2 6.3 6l-3.8 3.8M6.2 2.2 10 6l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="bigbtn" id="bfGo">To Battle</button></div><div id="bfHint"></div></div>
+ </div>
 </div>
 
 <script src="sprites/manifest_man_at_arms.js"></script>
@@ -503,6 +617,7 @@ level=unlocked;
 try{const n=parseInt(localStorage.getItem('pe_level_next'),10);localStorage.removeItem('pe_level_next');
  if(n>=1&&n<=unlocked)level=n}catch(_){}
 const ai={t:0,wave:5,next:240};
+let CAMP=null,campMM=null;   /* the running campaign mission (see the campaign block) and its minimap base */
 /* First-play tutorial state (driven by the tutorial block near init). While it runs the enemy AI
    does not think at all, so a new player is never raided mid-lesson. */
 const T={on:false,i:0};
@@ -551,7 +666,7 @@ function loadTrack(k,cb){
  const sc=document.createElement('script');sc.src='audio/'+(k==='march'?'music_march.js':'music_'+k+'.js');
  sc.onload=()=>{sc.remove();go()};sc.onerror=()=>{sc.remove();cb(null)};document.head.appendChild(sc)}
 function initMusic(){if(!AC||musicG)return;musicG=AC.createGain();musicG.gain.value=0;musicG.connect(AC.destination)}
-function musicWant(){if(!started)return titleMusic?'noble':null;return time-lastFight<25?'march':calmNext}
+function musicWant(){if(!started)return CAMP||!titleMusic?null:'noble';return time-lastFight<25?'march':calmNext}
 function musicFade(sec,rest){
  if(!musicSrc)return;const src=musicSrc,t=AC.currentTime;musicSrc=null;musicCur=null;
  musicG.gain.cancelScheduledValues(t);musicG.gain.setValueAtTime(musicG.gain.value,t);musicG.gain.linearRampToValueAtTime(0,t+sec);
@@ -870,7 +985,7 @@ function steerMove(u,ax,ay,step){
  return tryMove(u,u.x+ax*step,u.y+ay*step)}
 function stepMove(u,tx,ty,dt){const dx=tx-u.x,dy=ty-u.y;const d=Math.hypot(dx,dy);
  if(d<1e-4)return true;
- const sp=DEFS[u.type].spd;u.moving=true;u.anim+=dt*7;
+ const sp=(u.spd||DEFS[u.type].spd)*slowAt(u.x,u.y);u.moving=true;u.anim+=dt*7;
  if(Math.abs(dx-dy)>0.05)u.face=(dx-dy)>=0?1:-1;
  tryMove(u,u.x+dx/d*sp*dt,u.y+dy/d*sp*dt);
  return d<sp*dt}
@@ -951,7 +1066,7 @@ function updArrow(a,dt){
  else{a.x+=dx/d*st;a.y+=dy/d*st}
  a.life-=dt;if(a.life<=0)a.dead=true}
 /* How far a unit fighting on its own initiative may stray from its post. */
-const leash=u=>u.team===0?4.5:9;
+const leash=u=>u.leash||(u.team===0?4.5:9);
 function damage(t,amt,fromTeam,src){
  if(t.dead||t.hp<=0)return;
  if(t.animal){hurtGame(t,amt,src);return}
@@ -966,6 +1081,7 @@ function damage(t,amt,fromTeam,src){
   const reach=leash(t)+DEFS[t.type].rng;
   if(o.type==='idle'&&dist2(t.x,t.y,src.x,src.y)<=reach*reach){t.order={type:'attack',target:src,auto:true,ax:t.x,ay:t.y};t.path=null;t.nT=0}
   else if(o.type==='amove'&&(!o.tgt||o.tgt.dead||o.tgt.kind==='bld'))o.tgt=src}
+ if(t.brace&&src&&src.kind==='unit'&&!DEFS[src.type].ranged&&braced(t))amt*=0.35;
  t.hp-=amt;t.flash=0.15;if(fromTeam===0)t.myHitT=time;
  /* the last notification Space/Home jumps to; on desktop an attack out of view also says so */
  if(t.team===0&&fromTeam===1){const[nx,ny]=entPos(t),[sx,sy]=w2s(nx,ny);lastNote={x:nx,y:ny,t:time};
@@ -982,7 +1098,7 @@ function damage(t,amt,fromTeam,src){
   const d=findDrop(t);if(d){t.order={type:'move'};setPath(t,d.cx,d.cy);t.fleeT=time+8}}
  if(t.team===1&&fromTeam===0&&time>t.alertT){
   t.alertT=time+5;
-  units.forEach(u=>{if(u.team===1&&u.type!=='vill'&&!u.dead&&u.order.type==='idle'){u.order={type:'amove',x:t.x!==undefined?t.x:t.cx,y:t.y!==undefined?t.y:t.cy,tgt:null};u.path=null;u.nT=0;setPath(u,u.order.x,u.order.y)}})}
+  units.forEach(u=>{if(CAMP&&(u.hold||dist2(u.x,u.y,t.x!==undefined?t.x:t.cx,t.y!==undefined?t.y:t.cy)>100))return;if(u.team===1&&u.type!=='vill'&&!u.dead&&u.order.type==='idle'){u.order={type:'amove',x:t.x!==undefined?t.x:t.cx,y:t.y!==undefined?t.y:t.cy,tgt:null};u.path=null;u.nT=0;setPath(u,u.order.x,u.order.y)}})}
  if(t.hp<=0)kill(t)}
 /* A kill lands a beat of slow motion. It is the cheapest way to make a death feel like it mattered
    without adding frames, and it doubles as the moment the eye reads the whole board -- so it is
@@ -990,17 +1106,19 @@ function damage(t,amt,fromTeam,src){
 function hitStop(seconds){hitStopT=Math.max(hitStopT,seconds)}
 function kill(t){
  t.dead=true;t.hp=0;
+ if(CAMP&&t.kind==='unit')campKill(t);
  hitStop(t.kind==='unit'?0.12:0.2);
  if(t.kind==='unit'){burst(t.x,t.y,TEAMC[t.team].m,10,55);shake=Math.max(shake,2.4);hitFx(t.x,t.y);
   bleed(t,14);addStain(t.x,t.y,rnd(7,9.5),1.6);addCorpse(t);playAt('death_grunt',t.x,t.y,0.6)}
  else{playAt('building_collapse',t.cx,t.cy,0.8);if(t.type==='gate')gateBlock(t,false);else gridBlock(t,false);
   if(t.garrison&&t.garrison.length)releaseGarrison(t);recalcPop();burst(t.cx,t.cy,'#9a9a9a',24,80);burst(t.cx,t.cy,'#d9b36a',10,60);
   shake=Math.max(shake,t.type==='tc'?7:5);sfx('crash');if(t.type==='tc')checkEnd()}}
-function checkEnd(){if(over)return;
+function checkEnd(){if(over||CAMP)return;
  if(!buildings.some(b=>!b.dead&&b.team===1&&b.type==='tc'))end(true);
  else if(!buildings.some(b=>!b.dead&&b.team===0&&b.type==='tc'))end(false)}
 /* Winning unlocks the next level; a defeat or resign never does. */
-function end(win,resigned){if(over)return;over=true;sfx(win?'done':'crash');
+function end(win,resigned){if(CAMP){campEnd(win,resigned?'You laid down your arms.':'');return}
+ if(over)return;over=true;sfx(win?'done':'crash');
  if(win&&level<LEVELS.length&&level>=unlocked){unlocked=level+1;try{localStorage.setItem('pe_level_unlocked',unlocked)}catch(_){}}
  const hasNext=win&&level<LEVELS.length;
  /* Rating prompt (native, once per app version): only after a win on level 2 or later, ~1.5 s after the
@@ -1030,8 +1148,8 @@ function combat(u,t,dt){
   /* the swing's whoosh builds for ~150ms, so it starts just before the blade lands on the hit */
   if(!def.ranged&&u.type!=='vill'&&u.cd>0&&u.cd<=0.15&&!u.swung){u.swung=true;playAt('sword_swing',u.x,u.y,0.6)}
   if(u.cd<=0){u.cd=def.cdr;u.anim+=2;u.fire=time;u.swung=false;
-   if(def.ranged){spawnArrow(u,t,def.atk);playAt('bow_release',u.x,u.y,0.8)}
-   else{damage(t,def.atk,u.team,u);hitFx(c[0],c[1]);
+   if(def.ranged){spawnArrow(u,t,u.atk||def.atk);playAt('bow_release',u.x,u.y,0.8)}
+   else{damage(t,u.atk||def.atk,u.team,u);hitFx(c[0],c[1]);
     if(u.type==='vill')playAt('axe_chop',c[0],c[1],0.7);
     else playAt('sword_hit',c[0],c[1],0.8)}}
  }else if(losW(u.x,u.y,c[0],c[1],u.team)){u.path=null;stepMove(u,c[0],c[1],dt)}
@@ -1288,7 +1406,7 @@ function updUnit(u,dt){
  else if(u.oq&&!u.oq.length&&u.order.type==='gather')u.oq=null;   /* gathering never ends: the queue is spent */
  const o=u.order;
  switch(o.type){
-  case 'idle':if(u.type!=='vill'){const e=acquire(u,u.team===1?6.5:4.2);if(e)u.order={type:'attack',target:e,auto:true,ax:u.x,ay:u.y}}break;   /* the AI's idle troops watch a wider radius */
+  case 'idle':if(u.type!=='vill'||u.acq){const e=acquire(u,u.acq||(u.team===1?6.5:4.2));if(e)u.order={type:'attack',target:e,auto:true,ax:u.x,ay:u.y}}break;   /* the AI's idle troops watch a wider radius */
   case 'drive':{const b=u.type==='vill'?nearbyBuild(u):null;if(b)assignBuild(u,b);break}
   case 'move':{
    const reached=followPath(u,dt);
@@ -2236,9 +2354,9 @@ function dirSprite(u){
 /* Directional sprites are baked at a fixed 2x scale; 144px idle cells draw 35.75px tall
    (1.25x the original 28.6, so units read clearly next to the buildings). */
 const DIR_K=35.75/144;
-function drawDirFrame(f,sx,sy){
- const m=SPRM[f.key],cx=m?m[2]:f.img.width/2,cy=m?m[3]:f.img.height;
- ctx.drawImage(f.img,sx-cx*DIR_K,sy-cy*DIR_K,f.img.width*DIR_K,f.img.height*DIR_K)}
+function drawDirFrame(f,sx,sy,s=1){
+ const m=SPRM[f.key],cx=m?m[2]:f.img.width/2,cy=m?m[3]:f.img.height,K=DIR_K*s;
+ ctx.drawImage(f.img,sx-cx*K,sy-cy*K,f.img.width*K,f.img.height*K)}
 /* The fallen: a directional unit that dies leaves a body that plays its death clip on top of its
    blood pool, holds the last frame, then fades out. */
 let corpses=[];
@@ -2327,7 +2445,7 @@ function groundPattern(n){
 function drawTile(x,y,sx,sy){
  const k=y*MAP+x,t=tiles[k];
  dPath(sx,sy);
- if(t===2){
+ if(t===2||t===4){
   // deeper water toward the middle of each pond, plus a moving sun-glint band
   const d=waterD[k]/255,wp=groundPattern('water');
   if(wp){ctx.fillStyle=wp;ctx.fill();
@@ -2341,13 +2459,14 @@ function drawTile(x,y,sx,sy){
   /* grass mixes the lush and the drier lawn in broad meadow patches: each tile draws one of the
      two, and only tiles on a patch edge blend the second on top */
   const gn=t===0?vnoise(x*0.13,y*0.13,7):0;
-  const pat=groundPattern(t===1?'dirt':t===3?'sand':gn>0.56?'grass_b':'grass_a');
+  const pat=groundPattern(t===1||t===5?'dirt':t===3?'sand':gn>0.56?'grass_b':'grass_a');
   if(pat){ctx.fillStyle=pat;ctx.fill();
    if(t===0&&gn>0.46&&gn<=0.56){const gb=groundPattern('grass_b');
     if(gb){ctx.globalAlpha=(gn-0.46)*10;ctx.fillStyle=gb;ctx.fill()}}
    /* a light wash of the old per-tile colour keeps the board's soft tile rhythm and shade */
    ctx.globalAlpha=0.16;ctx.fillStyle=tileCol[k];ctx.fill();ctx.globalAlpha=1}
   else{ctx.fillStyle=tileCol[k];ctx.fill()}
+  if(t===5)drawBog(k,x,y,sx,sy);
   /* the vector tufts, pebbles and flowers were drawn for flat-colour tiles; on the photo ground
      they read as stickers, so they only appear when the textures are absent */
   const d=pat?0:decor[k];
@@ -2571,7 +2690,7 @@ function drawUnit(u){
     frames have decoded the procedural figure below stands in. */
  const ds=dirSprite(u);
  if(ds){
-  drawDirFrame(ds,sx,sy);
+  drawDirFrame(ds,sx,sy,u.big||1);
   if(u.carry>=2){const cc=u.order.ctype==='w'?'#8a5a33':u.order.ctype==='g'?'#e9c352':u.order.ctype==='s'?'#aeb6bd':'#d0544a';
    ctx.fillStyle=cc;ctx.beginPath();ctx.arc(sx-4,sy-18,2.5,0,7);ctx.fill();
    ctx.strokeStyle='#1b140d';ctx.lineWidth=.85;ctx.stroke()}
@@ -2852,8 +2971,8 @@ function renderMM(){
  const mX=wx=>(wx+MAP*TW2)*k,mY=wy=>wy*k+4;
  mctx.setTransform(1,0,0,1,0,0);
  mctx.fillStyle='#0d150c';mctx.fillRect(0,0,W,H);
- mctx.fillStyle='#26421f';
- mctx.beginPath();mctx.moveTo(mX(0),mY(0));mctx.lineTo(mX(1792),mY(896));mctx.lineTo(mX(0),mY(1792));mctx.lineTo(mX(-1792),mY(896));mctx.closePath();mctx.fill();
+ if(CAMP&&campMM)mctx.drawImage(campMM,0,0);else{mctx.fillStyle='#26421f';
+ mctx.beginPath();mctx.moveTo(mX(0),mY(0));mctx.lineTo(mX(1792),mY(896));mctx.lineTo(mX(0),mY(1792));mctx.lineTo(mX(-1792),mY(896));mctx.closePath();mctx.fill()}
  for(const r of resources){if(r.dead)continue;
   mctx.fillStyle=r.kind==='tree'?'#173316':r.kind==='gold'?'#c9a53e':r.kind==='stone'?'#aeb6bd'
    :r.kind==='boar'?'#7d4a33':r.kind==='sheep'?'#ded6c4':'#a33c46';
@@ -2865,7 +2984,8 @@ function renderMM(){
   if(selection.includes(b)){mctx.strokeStyle='#fff';mctx.strokeRect(mX((b.cx-b.cy)*TW2)-sz/2-1,mY((b.cx+b.cy)*TH2)-sz/2-1,sz+2,sz+2)}}
  for(const u of units){if(u.dead||u.garrisoned)continue;
   mctx.fillStyle=TEAMC[u.team].s;
-  mctx.fillRect(mX((u.x-u.y)*TW2)-1,mY((u.x+u.y)*TH2)-1,2.4,2.4)}
+  mctx.fillRect(mX((u.x-u.y)*TW2)-1,mY((u.x+u.y)*TH2)-1,2.4,2.4);
+  if(u.hero){mctx.strokeStyle='#ffd77a';mctx.lineWidth=1.2;mctx.strokeRect(mX((u.x-u.y)*TW2)-2.5,mY((u.x+u.y)*TH2)-2.5,5,5)}}
  mctx.strokeStyle='rgba(255,255,255,.8)';mctx.lineWidth=1;
  mctx.beginPath();
  [[0,0],[cw,0],[cw,ch],[0,ch]].forEach((p,i)=>{
@@ -2916,6 +3036,7 @@ function render(){
   const sx=(x-y)*TW2,sy=(x+y)*TH2;
   if(sx+TW2<L||sx-TW2>R||sy+TH<T||sy>B)continue;
   drawTile(x,y,sx,sy)}
+ if(CAMP)drawBridge();
  drawMotes();
  drawStains();
  // ground marks
@@ -3015,6 +3136,7 @@ function render(){
   ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}
  ctx.globalAlpha=1;
  drawStandards();
+ if(CAMP)drawCampLabels();
  // floating texts
  ctx.font='bold 13px -apple-system,system-ui,sans-serif';ctx.textAlign='center';
  for(const t of texts){const[sx,sy]=w2s(t.x,t.y);const a=1-t.t/1.2;
@@ -3057,7 +3179,7 @@ function applyJoy(dt){
    for(const u of own){
     if(u.order.type!=='drive')rememberTask(u);
     u.order={type:'drive'};
-    const sp=DEFS[u.type].spd*Math.min(1,m*1.4);
+    const sp=(u.spd||DEFS[u.type].spd)*Math.min(1,m*1.4)*slowAt(u.x,u.y);
     /* Steering handles single obstacles; a pocket (a clump of trees, the inside corner of two
        buildings) needs a real path. If steering makes no headway for a quarter second, plan a
        route to a point a few tiles ahead along the stick and follow it for as long as the stick
@@ -3170,7 +3292,7 @@ function update(dt){
  units=units.filter(u=>!u.dead);
  buildings=buildings.filter(b=>!b.dead);
  resources=resources.filter(r=>!r.dead);
- ai.t+=dt;if(ai.t>=1){ai.t-=1;if(!over&&!T.on)aiThink()}
+ ai.t+=dt;if(ai.t>=1){ai.t-=1;if(!over&&!T.on){if(CAMP)campTick();else aiThink()}}
  afT-=dt;
  if(afT<=0){afT=0.4;
   $('panel').querySelectorAll('.abtn').forEach((btn,i)=>{const a=pActs[i];if(!a)return;
@@ -3219,11 +3341,487 @@ function setPaused(on,bare){
  if(paused){if(AC&&AC.suspend)AC.suspend()}else if(AC&&AC.resume)AC.resume();
  lastT=0}
 
+/* ============ historical campaign: The Wars of Scottish Independence ============
+   Three battles, each playable from either side on the same map with the same events; only the
+   objectives, briefing and narration are mirrored. Team 0 is always the player: CAMP.team maps the
+   two nations (sco, eng) onto teams, and setSide() puts Scotland in blue under the Lion Rampant and
+   England in red under the three lions. There is no economy: fixed armies, scripted reinforcements,
+   and a once-a-second script (campTick) that drives the enemy and checks the objectives.
+   A mission starts from a reload carrying #camp=<m><sco|eng> (the skirmish's Again/Next pattern), so
+   the world is built once from a clean page. Progress per side: pe_camp_sco / pe_camp_eng = the
+   highest unlocked mission (4 = all won). Narration is one small AAC bank per mission and side
+   (audio/camp_<m><s>_bank.js, art/source/campaign/make_vo_campaign.py), loaded only when that mission
+   opens. Terrain: 2 = water (now impassable: grid 0), 4 = river under the bridge (passable, drawn as
+   water with a deck over it), 5 = bog (passable at 55% speed). */
+const CAMP_KEY={sco:'pe_camp_sco',eng:'pe_camp_eng'};
+const NAT_NAME={sco:'Scotland',eng:'England'},NAT_ARMS={sco:'img/herald_scotland.png',eng:'img/herald_lions3.png'};
+function campUnlocked(s){try{const n=parseInt(localStorage.getItem(CAMP_KEY[s]),10);return n>=1?Math.min(4,n):1}catch(_){return 1}}
+function campGo(m,s){location.hash='camp='+m+s;location.reload()}
+function campMenuGo(s){location.hash='campmenu='+(s||'card');location.reload()}
+function campBootRead(){
+ const h=location.hash||'';let r=null,mt;
+ if((mt=/^#camp=([1-3])(sco|eng)$/.exec(h)))r={m:+mt[1],s:mt[2]};
+ else if((mt=/^#campmenu=(sco|eng|card)$/.exec(h)))r={menu:mt[1]};
+ if(r){window.PE_SKIP_INTRO=true;try{history.replaceState(null,'',location.pathname+location.search)}catch(_){}}
+ return r}
+const slowAt=(x,y)=>{const i=Math.floor(x),j=Math.floor(y);return i>=0&&j>=0&&i<MAP&&j<MAP&&tiles[j*MAP+i]===5?0.55:1};
+/* screen axes: u = x - y runs left to right, v = x + y top to bottom; P(u,v) is the world point */
+const P=(u,v)=>[(v+u)/2,(v-u)/2];
+function braced(t){const o=t.order;if(t.moving||!(o.type==='idle'||(o.type==='attack'&&o.auto)))return false;let n=0;   /* only men holding their ground: not on an ordered charge */
+ for(const o of units)if(o!==t&&!o.dead&&o.team===t.team&&o.type!=='vill'&&!o.garrisoned&&dist2(o.x,o.y,t.x,t.y)<9&&++n>=3){
+  if(time>(window.brT||0)&&(t.team===0||selection.length)){window.brT=time+4;texts.push({x:t.x,y:t.y,str:'Braced',plain:true,t:0,col:'#cfe3ff'})}
+  return true}
+ return false}
+/* ---- map building ---- */
+function campTerrain(f){
+ for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++){const k=y*MAP+x,r=f(x-y,x+y+1,x+0.5,y+0.5);
+  tiles[k]=r.t;waterD[k]=r.t===2||r.t===4?clamp(Math.round(255*(r.d||0.5)),0,255):(Math.random()*255)|0;
+  grid[k]=r.t===2?0:1;
+  tileCol[k]=r.t===2||r.t===4?'#3c6ea0':r.t===1?dirtPick(x,y):r.t===5?'#4d5236':grassPick(x,y)}
+ /* banks: earth and a little shingle where land meets the river */
+ for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++){const k=y*MAP+x;if(tiles[k]!==0)continue;
+  if([[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const i=x+a,j=y+b;return i>=0&&j>=0&&i<MAP&&j<MAP&&tiles[j*MAP+i]===2})){
+   if(Math.random()<0.35){tiles[k]=3;tileCol[k]=SAND[(Math.random()*SAND.length)|0]}else{tiles[k]=1;tileCol[k]=dirtPick(x,y)}}}
+ for(let k=0;k<MAP*MAP;k++){if(tiles[k]!==0){decor[k]=0;continue}const r=Math.random();decor[k]=r<0.11?1:r<0.16?2:r<0.19?3:r<0.22?4:r<0.242?5:r<0.262?6:0}
+ /* the bridge deck spans the band of bridge tiles, drawn flat across the river */
+ let x0=1e9,x1=-1e9,ys=0,n=0;
+ for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++)if(tiles[y*MAP+x]===4){const[sx,sy]=w2s(x+0.5,y+0.5);x0=Math.min(x0,sx);x1=Math.max(x1,sx);ys+=sy;n++}
+ CAMP.bridge=n?{x0:x0-40,x1:x1+40,y:ys/n}:null;
+ /* minimap base: the land, the water, the bog, drawn once */
+ const c=document.createElement('canvas');c.width=mm.width;c.height=mm.height;const g=c.getContext('2d'),kk=150/(MAP*TW);
+ g.fillStyle='#0d150c';g.fillRect(0,0,c.width,c.height);
+ for(let y=0;y<MAP;y++)for(let x=0;x<MAP;x++){const t=tiles[y*MAP+x];
+  g.fillStyle=t===2||t===4?'#3a6a9a':t===5?'#3b3f27':t===1||t===3?'#3d4a26':'#26421f';
+  g.fillRect(((x-y)*TW2+MAP*TW2)*kk-1.4,(x+y+1)*TH2*kk+4-0.8,2.8,1.6)}
+ if(CAMP.bridge){g.fillStyle='#b08a58';const B=CAMP.bridge;g.fillRect((B.x0+MAP*TW2)*kk,B.y*kk+3,(B.x1-B.x0)*kk,2)}
+ campMM=c}
+function campTree(x,y){x=Math.round(x);y=Math.round(y);if(x<1||y<1||x>MAP-2||y>MAP-2)return;const k=y*MAP+x;
+ if(tiles[k]===2||tiles[k]===4||tiles[k]===5||grid[k]!==1||resMap.has(k)||nearBldRaw(x,y))return;
+ const r={kind:'tree',tx:x,ty:y,gx:x+0.5,gy:y+0.5,amt:100,dead:false};resources.push(r);resMap.set(k,r);grid[k]=0}
+function campWood(u,v,ru,rv,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random());const[x,y]=P(u+Math.cos(a)*ru*r,v+Math.sin(a)*rv*r);campTree(x,y)}}
+function campFree(x,y){
+ const fx=Math.floor(x),fy=Math.floor(y);
+ for(let r=0;r<8;r++)for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++){if(Math.max(Math.abs(i),Math.abs(j))!==r)continue;
+  const a=fx+i,b=fy+j;if(a<1||b<1||a>MAP-2||b>MAP-2||!passable(a,b))continue;
+  if(units.some(u=>!u.dead&&Math.abs(u.x-a-0.5)<0.45&&Math.abs(u.y-b-0.5)<0.45))continue;return[a+0.5,b+0.5]}
+ return[x,y]}
+function campUnit(nat,type,x,y,o){const p=campFree(x,y),u=mkUnit(CAMP.team[nat],type,p[0],p[1]);u.nat=nat;
+ if(o){Object.assign(u,o);if(o.hp)u.maxhp=o.hp}return u}
+/* a block of n units centred on screen point (u,v), rows across the screen */
+function campGroup(nat,type,n,u,v,o){const out=[],cols=Math.ceil(Math.sqrt(n*1.6));
+ for(let i=0;i<n;i++){const cu=(i%cols-(cols-1)/2)*1.6,cv=(Math.floor(i/cols)-(Math.ceil(n/cols)-1)/2)*1.6;const[x,y]=P(u+cu,v+cv);out.push(campUnit(nat,type,x,y,o))}
+ return out}
+/* a schiltron: a ring of spearmen facing out */
+function campRing(nat,n,u,v,o){const c=P(u,v),out=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2;out.push(campUnit(nat,'swords',c[0]+Math.cos(a)*1.55,c[1]+Math.sin(a)*1.55,o))}return out}
+const HERO={type:'swords',hp:420,atk:15,big:1.18,hero:true,spd:2.5};   /* commanders are mounted: a little quicker than their men */
+const LEADER={hp:170,atk:11,big:1.06};
+function campHero(nat,name,u,v){const[x,y]=P(u,v);return campUnit(nat,'swords',x,y,{...HERO,name})}
+function campLeader(nat,name,u,v,extra){const[x,y]=P(u,v);return campUnit(nat,'swords',x,y,{...LEADER,name,...(extra||{})})}
+function campCastle(nat,tx,ty,towers,walls){const t=CAMP.team[nat],b=mkBuilding(t,'tc',tx,ty,true);b.name='Stirling Castle';
+ towers.forEach(([x,y])=>mkBuilding(t,'tower',x,y,true));walls.forEach(([x,y])=>mkBuilding(t,'stonewall',x,y,true));return b}
+/* ---- orders ---- */
+const alive=l=>l.filter(u=>!u.dead);
+function campOrder(list,x,y,attack){alive(list).forEach((u,i)=>{const f=FORM[i%FORM.length];u.oq=null;u.route=null;
+ u.order=attack!==false?{type:'amove',x:x+f[0]*0.8,y:y+f[1]*0.8,tgt:null}:{type:'move'};u.path=null;u.nT=0;setPath(u,x+f[0]*0.8,y+f[1]*0.8)})}
+/* march through waypoints, fighting what they meet; each leg starts when the last one ends */
+function campRoute(list,pts){alive(list).forEach((u,i)=>{u.fi=i;u.route=pts.map(p=>p.slice());u.order={type:'idle'}})}
+function campRoutes(){for(const u of units){if(u.dead||!u.route||u.order.type!=='idle')continue;
+ const p=u.route.shift();if(!p){u.route=null;continue}const f=FORM[(u.fi||0)%FORM.length];
+ u.order={type:'amove',x:p[0]+f[0]*0.7,y:p[1]+f[1]*0.7,tgt:null};u.path=null;u.nT=0;setPath(u,u.order.x,u.order.y)}}
+/* AI defenders: hold their ground (short leash, short sight) until released */
+function campHold(list){alive(list).forEach(u=>{if(u.team!==1)return;u.hold=true;u.leash=u.brace?1.8:3;u.acq=u.type==='archer'?5.8:3.6})}
+function campRelease(list){alive(list).forEach(u=>{u.hold=false;u.leash=u.hero?6:null;u.acq=u.type==='vill'?4.5:null})}
+const tagged=g=>units.filter(u=>!u.dead&&u.tag===g);
+const soldiersOf=nat=>units.filter(u=>!u.dead&&u.nat===nat&&u.type!=='vill');
+const heroOf=nat=>CAMP.heroes[nat];
+const heroDead=nat=>!heroOf(nat)||heroOf(nat).dead;
+const mmss=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const centroid=l=>{l=alive(l);if(!l.length)return null;let x=0,y=0;l.forEach(u=>{x+=u.x;y+=u.y});return[x/l.length,y/l.length]};
+const AI=nat=>CAMP.team[nat]===1;
+function once(k){if(CAMP.done[k])return false;CAMP.done[k]=true;return true}
+function campNote(msg){notice(msg);sfx('horn')}
+function campSpawnWave(nat,list){/* [type,n,u,v,tag] */const out=[];for(const[type,n,u,v,tag]of list)out.push(...campGroup(nat,type,n,u,v,{tag}));
+ out.forEach(u=>{u.flash=0.4});return out}
+
+/* ---- the three missions ---- */
+const MISS=[null,
+/* 1. Stirling Bridge, 11 September 1297 (Scottish victory) */
+{name:'Stirling Bridge',date:'11 September 1297',place:'The River Forth, below Stirling Castle',winner:'sco',
+ hist:'On 11 September 1297 the Scots waited until part of the English army had crossed the narrow bridge, then attacked. The vanguard was cut off and destroyed, Hugh de Cressingham was killed, and Surrey had the bridge destroyed and retreated south.',
+ after:'Andrew Moray was mortally wounded and died later that year. Wallace was named Guardian of Scotland, and King Edward I began planning a new invasion.',
+ sco:{goal:'Destroy the English vanguard at the bridge',
+  brief:['The Earl of Surrey has brought an English army to the River Forth.','To reach you, it must cross a narrow wooden bridge, only two horsemen wide.','You command William Wallace and Andrew Moray, waiting on the high ground beyond.','Let the vanguard cross. Strike when only part of their army is over, and destroy it before the rest can follow.','Wallace must not fall.'],
+  obj:['Let the English vanguard cross the bridge, then destroy it.','Do not let the English army cross: 20 English soldiers on your bank loses the day.','Wallace must survive.','Or: slay Surrey, their commander.']},
+ eng:{goal:'Cross the Forth and hold the far bank',
+  brief:['You are John de Warenne, Earl of Surrey, commanding King Edward’s army in Scotland.','The rebels William Wallace and Andrew Moray hold the high ground across the River Forth.','The only way over is a narrow wooden bridge, only two horsemen wide.','Get your army across and hold the far bank, or bring down Wallace himself.','Surrey must survive.'],
+  obj:['Bring 20 soldiers across the bridge.','Then hold the far bank with 10 soldiers for 90 seconds.','Surrey must survive.','Or: slay Wallace.']},
+ build(){
+  const c=v=>1.5+2.2*Math.sin(v*0.075+0.6);this.c=c;
+  campTerrain((u,v)=>{const d=Math.abs(u-c(v));
+   if(d<=2.6)return{t:v>=55.5&&v<=58.5?4:2,d:1-d/2.6};
+   /* the causeway: marsh on the Scots' bank where the bridge comes ashore */
+   if(u<c(v)-2.6&&u>c(v)-11&&Math.abs(v-57)<10)return{t:Math.abs(v-57)<=1.6?1:5};
+   return{t:0}});
+  this.E=P(c(57)+4.5,57);this.W=P(c(57)-4.5,57);this.S=P(c(57)-6.5,57);this.EB=P(c(57)+10,57);
+  this.safe={eng:P(36,57),sco:P(-36,60)};
+  campCastle('eng',29,5,[[33,6],[28,9]],[[29,3],[30,3],[31,3],[32,3],[33,4]]);
+  campWood(-41,50,4,9,24);campWood(-38,76,4,5,14);campWood(-12,92,6,5,14);campWood(30,74,6,6,16);campWood(14,24,5,4,10);campWood(-20,24,6,4,12);
+  CAMP.heroes.eng=campHero('eng','Surrey',24,57);
+  campLeader('eng','Cressingham',11,57,{tag:'van'});
+  campGroup('eng','swords',12,12.5,57,{tag:'van'});campGroup('eng','archer',4,16.5,57,{tag:'van'});
+  campGroup('eng','swords',6,22,61,{tag:'main'});campGroup('eng','archer',4,24,52,{tag:'main'});
+  CAMP.heroes.sco=campHero('sco','Wallace',-29,55);
+  campGroup('sco','swords',12,-26,55,{tag:'craig'});campGroup('sco','archer',6,-32,55,{tag:'craig'});
+  campLeader('sco','Andrew Moray',-23,73,{tag:'moray'});campGroup('sco','swords',7,-21.5,73,{tag:'moray'});
+  CAMP.vanN=tagged('van').length;
+  if(AI('sco'))campHold([...tagged('craig'),...tagged('moray'),heroOf('sco')]);
+  if(AI('eng'))campHold([heroOf('eng')]);
+  this.crossed=new Set();this.held=0},
+ west(u){return u.x-u.y<this.c(u.x+u.y)},
+ tick(t){
+  const eng=soldiersOf('eng'),acrossN=eng.filter(u=>this.west(u)).length;
+  eng.forEach(u=>{if(this.west(u))this.crossed.add(u.id)});
+  for(const rt of[150,270])if(t>=rt&&once('reinf'+rt)){const w=campSpawnWave('eng',[['swords',5,38,55,'main'],['archer',2,38,60,'main']]);
+   if(AI('eng'))campRoute(w,[this.EB]);campNote(AI('eng')?'More of Surrey’s army reaches the bridge.':'Reinforcements have arrived on the south bank.')}
+  if(AI('eng')){
+   if(t>=10&&once('van')){campRoute(tagged('van'),[this.E,this.W,this.S]);campNote('The English vanguard is crossing the bridge!')}
+   if(t>=170&&once('vanGo')&&tagged('van').length>=4){const h=heroOf('sco');campOrder(tagged('van'),h&&!h.dead?h.x:this.S[0]-8,h&&!h.dead?h.y:this.S[1]);toast('The vanguard advances on the Abbey Craig!')}
+   if(t>=300&&once('main')){campRoute(tagged('main'),[this.EB,this.E,this.W,this.S]);campNote('Surrey’s main army is crossing!')}
+   if(t>300&&t%15===0){const h=heroOf('sco');if(h&&!h.dead)alive([...tagged('main'),...tagged('van')]).forEach(u=>{if(u.order.type==='idle'&&!u.route&&this.west(u)){u.order={type:'amove',x:h.x,y:h.y,tgt:null};u.path=null;u.nT=0;setPath(u,h.x,h.y)}})}}
+  if(AI('sco')&&(acrossN>=8||t>=240)&&once('charge')){const all=[...tagged('craig'),heroOf('sco')];campRelease([...all,...tagged('moray')]);
+   campOrder(all,this.W[0]-1,this.W[1]);const m=P(this.c(59)-3.5,59);campOrder(tagged('moray'),m[0],m[1]);campNote('Wallace and Moray charge the bridgehead!')}
+  /* if the English will not come over, the Scots go to them (Wallace himself stays on his bank) */
+  if(AI('sco')&&t>=330&&acrossN<8&&once('scoCross')){const l=[...tagged('craig'),...tagged('moray')].filter(u=>!u.hero);campRoute(l,[this.W,this.E,this.EB]);
+   const w=heroOf('sco');if(w&&!w.dead){w.leash=4;campOrder([w],this.W[0]-2,this.W[1],false)}campNote('The Scots are crossing the bridge to attack!')}
+  if(AI('eng')===false){if(this.crossed.size>=20)this.phase2=true;if(this.phase2&&acrossN>=10)this.held++}
+  this.acrossN=acrossN},
+ check(t){
+  const S=CAMP.side;
+  if(S==='sco'){if(heroDead('sco'))return[false,'Wallace has fallen.'];if(heroDead('eng'))return[true,'Surrey has fallen, and his army turns back.'];
+   if(CAMP.vanN&&!tagged('van').length)return[true,'The English vanguard is destroyed at the bridge.'];if(this.acrossN>=20)return[false,'The English army is across the Forth.']}
+  else{if(heroDead('eng'))return[false,'Surrey has fallen.'];if(heroDead('sco'))return[true,'Wallace has fallen, and the rebels scatter.'];
+   if(this.held>=90)return[true,'The far bank is held. The rebels fall back.'];if(soldiersOf('eng').length<6)return[false,'Your army is destroyed.']}
+  return null},
+ status(t){const S=CAMP.side;
+  if(S==='sco'){const f=CAMP.vanN-tagged('van').length;return[
+   {s:`Destroy the English vanguard (${f}/${CAMP.vanN})`,ok:f>=CAMP.vanN},
+   {s:'Wallace must survive',hero:'sco'},
+   t<300?{s:'Surrey’s main army crosses in '+mmss(300-t),sub:1}:{s:`English across the Forth: ${this.acrossN||0}/20`,bad:(this.acrossN||0)>=12},
+   {s:'Or: slay Surrey',sub:1}]}
+  return[!this.phase2?{s:`Bring 20 soldiers across the bridge (${Math.min(20,this.crossed.size)}/20)`}:{s:'Bring 20 soldiers across',ok:1},
+   this.phase2?{s:`Hold the far bank with 10 soldiers: ${mmss(90-this.held)} (${this.acrossN||0} there)`,bad:(this.acrossN||0)<10}:{s:'Then hold the far bank for 90 s',sub:1},
+   {s:'Surrey must survive',hero:'eng'},{s:'Or: slay Wallace',sub:1}]},
+ hints:{sco:[{t:'Wait. Let the English vanguard come over the bridge, then strike it while the rest are still across the river.',tg:m=>({w:P(m.c(57),57)})}],
+  eng:[{t:'The bridge is narrow: only a few men can cross at once. Your archers can shoot across the river to cover the crossing.',tg:m=>({w:P(m.c(57),57)})}]}},
+
+/* 2. Falkirk, 22 July 1298 (English victory) */
+{name:'Falkirk',date:'22 July 1298',place:'Near Falkirk, central Scotland',winner:'eng',
+ hist:'On 22 July 1298 the Scottish schiltrons held against Edward’s cavalry, but once his infantry came up, English archers and crossbowmen shot the rings apart, and a final charge broke them.',
+ after:'Wallace escaped the field but soon resigned as Guardian of Scotland. He was captured in 1305 and executed in London.',
+ sco:{goal:'Hold the schiltrons against King Edward',
+  brief:['King Edward the First has marched north himself, after the defeat at Stirling Bridge.','Wallace has drawn up his spearmen in schiltrons, rings of spears that no horseman can break.','But Edward has archers. Stand still too long, and their arrows will thin your ranks.','Hold your ground until the English are spent. Wallace must survive.'],
+  obj:['Hold your ground for six minutes.','Keep at least 12 soldiers standing.','Wallace must survive.','Schiltrons standing still are braced: charges barely hurt them, arrows still do.']},
+ eng:{goal:'Break the schiltrons with your archers',
+  brief:['You are King Edward the First, marching north to crush Wallace’s rebellion.','His spearmen stand in schiltrons, rings of spears that will break any charge.','Do not throw your knights against them. Bring up your archers, shoot the rings apart, then charge.','Break the Scottish line. The king must survive.'],
+  obj:['Break the Scottish line: 30 Scots must fall.','Your archers arrive after one minute.','Your army is short of food: win within ten minutes.','King Edward must survive.','Or: slay Wallace.']},
+ build(){
+  campTerrain((u,v)=>{const n=vnoise(u*0.3,v*0.3,9)*0.5;
+   if(((u+2)/6.5)**2+((v-55)/15)**2<0.85+n)return{t:5};
+   if(Math.abs(u-31)<1.2&&v>40&&v<72)return{t:1};
+   return{t:0}});
+  campWood(-36,52,4,14,34);campWood(-30,82,6,5,12);campWood(30,84,6,6,14);campWood(28,24,6,5,12);campWood(-8,22,5,4,8);
+  const rings=[[-15,41],[-17,50],[-17,60],[-15,69]];
+  rings.forEach(([u,v],i)=>campRing('sco',8,u,v,{tag:'sch',ring:i,brace:true}));
+  [[-16,45.5],[-17.5,55],[-16,64.5]].forEach(([u,v])=>campGroup('sco','archer',3,u-1,v,{tag:'sarch'}));
+  CAMP.heroes.sco=campHero('sco','Wallace',-21,55);heroOf('sco').brace=true;
+  CAMP.heroes.eng=campHero('eng','Edward I',32,55);
+  campGroup('eng','swords',4,30,55,{tag:'guard'});
+  campGroup('eng','swords',20,15,55,{tag:'kn'});campGroup('eng','archer',4,24,55,{tag:'arch'});
+  if(AI('sco'))campHold([...tagged('sch'),...tagged('sarch'),heroOf('sco')]);
+  if(AI('eng'))campHold([heroOf('eng'),...tagged('guard')]);
+  this.safe={eng:P(40,55),sco:P(-30,55)};
+  CAMP.scoN=soldiersOf('sco').length},
+ tick(t){
+  if(t>=60&&once('arch')){const w=campSpawnWave('eng',[['archer',8,37,55,'arch'],['swords',4,40,55,'esc']]);
+   campNote(AI('eng')?'King Edward’s archers come up.':'Your archers have arrived.');
+   if(AI('eng')){const c=centroid(soldiersOf('sco'))||P(-16,55);campOrder(tagged('arch'),c[0],c[1]);campOrder(tagged('esc'),c[0]+3,c[1]-3)}}
+  if(t>=200&&once('kn2')){const w=campSpawnWave('eng',[['swords',8,37,48,'kn2']]);toast(AI('eng')?'More English knights join the field.':'More knights have joined you.')}
+  if(AI('eng')){
+   /* the cavalry tries the spears first, finds them unbreakable and draws off; then the archers come up */
+   if(t>=15&&once('kn')){const r=tagged('sch').filter(u=>u.ring===3),c=centroid(r.length?r:tagged('sch'))||P(-15,69);campOrder(tagged('kn'),c[0],c[1]);campNote('The English knights charge the schiltrons!')}
+   if(t>=42&&once('knBack')){const c=P(10,60);campOrder(tagged('kn'),c[0],c[1],false);toast('The knights draw off from the spears.')}
+   if(t>60&&t<255&&t%10===5){const a=centroid(tagged('arch'));if(a)alive(tagged('kn')).forEach(u=>{if(u.order.type==='idle'&&dist2(u.x,u.y,a[0],a[1])>16){u.order={type:'move'};u.path=null;u.nT=0;setPath(u,a[0]+rnd(-2,2),a[1]+rnd(-2,2))}})}
+   if(t>=205&&once('kn2go')){const h=heroOf('sco');if(h&&!h.dead)campOrder([...tagged('kn2'),...tagged('kn')],h.x,h.y)}
+   if(t>=255&&once('final')){const h=heroOf('sco');campRelease([heroOf('eng')]);if(h&&!h.dead)campOrder(soldiersOf('eng').filter(u=>!u.hero),h.x,h.y);campNote('Edward orders the final charge!')}
+   if(t>60&&t%20===0){const c=centroid(soldiersOf('sco'));if(c)alive(tagged('arch')).forEach(u=>{if(u.order.type==='idle'){u.order={type:'amove',x:c[0],y:c[1],tgt:null};u.path=null;u.nT=0;setPath(u,c[0],c[1])}})}}},
+ check(t){const S=CAMP.side,sco=soldiersOf('sco').length,eng=soldiersOf('eng').length;
+  if(S==='sco'){if(heroDead('sco'))return[false,'Wallace has fallen.'];if(heroDead('eng'))return[true,'King Edward has fallen. The English withdraw.'];
+   if(sco<12)return[false,'The schiltrons are broken.'];if(t>=360)return[true,'The schiltrons have held. The English are spent.'];if(t>200&&!eng)return[true,'The English army is destroyed.']}
+  else{if(heroDead('eng'))return[false,'King Edward has fallen.'];if(heroDead('sco'))return[true,'Wallace has fallen. The Scottish army breaks.'];
+   if(CAMP.scoN-sco>=30)return[true,'The Scottish line is broken.'];if(t>60&&eng<5)return[false,'Your army is spent.'];
+   if(t>=600)return[false,'Your supplies are gone, and the army turns for home.']}
+  return null},
+ status(t){const S=CAMP.side,sco=soldiersOf('sco').length;
+  if(S==='sco')return[{s:'Hold your ground: '+mmss(360-t),ok:t>=360},{s:`Keep 12 soldiers standing (${sco})`,bad:sco<16},{s:'Wallace must survive',hero:'sco'},{s:'Stand still: braced rings blunt charges',sub:1}];
+  const f=CAMP.scoN-sco;return[{s:`Break the Scottish line (${Math.min(30,f)}/30 fallen)`,ok:f>=30},
+   t<60?{s:'Your archers arrive in '+mmss(60-t),sub:1}:{s:'Archers thin the rings; charges cost dear',sub:1},{s:'Supplies last '+mmss(600-t),bad:600-t<120},{s:'King Edward must survive',hero:'eng'},{s:'Or: slay Wallace',sub:1}]},
+ hints:{sco:[{t:'A schiltron standing still is braced: a charge barely hurts it. Arrows still do, so do not stand forever.',tg:()=>({grp:tagged('sch').filter(u=>u.ring===1)})}],
+  eng:[{t:'Charging braced spears is costly. Your archers arrive in a minute: thin the rings first, then charge.',tg:()=>({grp:tagged('kn')})}]}},
+
+/* 3. Bannockburn, 23-24 June 1314 (Scottish victory) */
+{name:'Bannockburn',date:'23–24 June 1314',place:'The Bannock Burn, south of Stirling Castle',winner:'sco',
+ hist:'On 24 June 1314 the Scottish schiltrons advanced and pinned the English against the burns on boggy ground. The Earl of Gloucester was killed, and Edward II fled the field; Stirling Castle refused him entry.',
+ after:'Stirling Castle surrendered to the Scots. The war went on until 1328, when the Treaty of Edinburgh–Northampton recognised Scotland’s independence and Robert the Bruce as its king.',
+ sco:{goal:'Break the larger English army on the boggy carse',
+  brief:['King Edward the Second marches to relieve Stirling Castle, with an army two or three times the size of yours.','If he is not near the castle by midsummer, its garrison has agreed to surrender.','You are Robert the Bruce. Your spearmen hold the woods of the New Park.','Drive the English onto the boggy ground between the burns, and break them there. Bruce must survive.'],
+  obj:['Break the English army: 30 English soldiers must fall.','Keep them from Stirling Castle: 10 English soldiers there loses the day.','Bruce must survive.','Or: slay King Edward.']},
+ eng:{goal:'Relieve Stirling Castle before midsummer',
+  brief:['You are King Edward the Second, at the head of a great English army.','Stirling Castle is besieged. Unless it is relieved by midsummer, its garrison has agreed to surrender.','Robert the Bruce bars the road, and the ground before you is soft and boggy.','Bring the king and your army to the castle. Edward must survive.'],
+  obj:['Bring King Edward and 10 soldiers to Stirling Castle.','Do it before midsummer: 12 minutes.','King Edward must survive.','Or: slay Robert the Bruce.']},
+ build(){
+  campTerrain((u,v,x,y)=>{
+   const yp=9+0.8*Math.sin(x*0.3),xb=46+0.8*Math.sin(y*0.3);
+   if(x>=24&&Math.abs(y-yp)<=1.5)return{t:2,d:1-Math.abs(y-yp)/1.5};
+   if(y>=22&&Math.abs(x-xb)<=1.5)return{t:2,d:1-Math.abs(x-xb)/1.5};
+   if(x>=27&&x<=44.5&&y>10.5&&y<=40&&vnoise(x*0.35,y*0.35,5)>0.3)return{t:5};
+   /* the road from the carse to the castle */
+   const road=[[44,20],[26,17],[16,11],[10,7]];
+   for(let i=0;i<3;i++){const[a,b]=road[i],[c2,d2]=road[i+1],L=Math.hypot(c2-a,d2-b),tt=clamp(((x-a)*(c2-a)+(y-b)*(d2-b))/(L*L),0,1);
+    if(Math.hypot(x-(a+(c2-a)*tt),y-(b+(d2-b)*tt))<0.8)return{t:1}}
+   return{t:0}});
+  this.castle=campCastle('eng',6,3,[[10,3],[4,7]],[[9,7],[10,7],[11,6],[12,5],[3,4],[3,5]]);this.cz=[this.castle.cx,this.castle.cy];
+  for(const[u,v,ru,rv,n]of[[-12,36,4,4,14],[-20,46,4,5,16],[-8,52,3,4,10],[-26,58,5,5,16],[-14,64,4,4,12],[-30,40,3,4,8],[-4,70,4,3,8],[-36,62,4,4,10]])campWood(u,v,ru,rv,n);
+  campWood(30,90,6,8,18);campWood(-28,22,4,4,8);
+  const at=(x,y)=>[x-y,x+y+1];   /* screen (u,v) of a tile's centre */
+  {const[u,v]=at(20,19);CAMP.heroes.sco=campHero('sco','The Bruce',u,v)}
+  {const[u,v]=at(21,20);campGroup('sco','swords',8,u,v,{tag:'div'})}
+  {const[u,v]=at(15,11);campLeader('sco','Randolph',u-2,v,{tag:'div'});campGroup('sco','swords',8,u,v,{tag:'div'})}
+  {const[u,v]=at(22,27);campLeader('sco','Edward Bruce',u-2,v,{tag:'div'});campGroup('sco','swords',8,u,v,{tag:'div'})}
+  {const[u,v]=at(14,23);campLeader('sco','Douglas',u-2,v,{tag:'div'});campGroup('sco','swords',6,u,v,{tag:'div'});campGroup('sco','archer',4,u-4,v+2,{tag:'div'})}
+  {const[u,v]=at(40,22);CAMP.heroes.eng=campHero('eng','Edward II',u,v)}
+  {const[u,v]=at(31,20);campLeader('eng','Henry de Bohun',u,v,{tag:'bohun',hp:190,atk:12})}
+  {const[u,v]=at(33,17);campGroup('eng','swords',10,u,v,{tag:'van'})}
+  {const[u,v]=at(37,26);campGroup('eng','swords',14,u,v,{tag:'main'})}
+  {const[u,v]=at(41,18);campGroup('eng','archer',10,u,v,{tag:'main'})}
+  this.route=[[26,17],[16,11],[9.5,8]];
+  {const[u,v]=at(42,23);campGroup('eng','swords',4,u,v,{tag:'guard'})}
+  this.safe={eng:[51,15],sco:[8,24]};
+  if(AI('sco')){campHold([...tagged('div'),heroOf('sco')]);alive([...tagged('div'),heroOf('sco')]).forEach(u=>{u.leash=4;u.acq=u.type==='archer'?5.8:4.5})}
+  if(AI('eng'))campHold([heroOf('eng'),...tagged('guard')])},
+ inZone(u){return dist2(u.x,u.y,this.cz[0],this.cz[1])<64},
+ tick(t){
+  const h=heroOf('sco'),b=tagged('bohun')[0];
+  if(t>=8&&once('bohun')&&b&&h&&!h.dead){b.order={type:'attack',target:h};b.path=null;b.nT=0;b.leash=null;b.hold=false;campNote('Sir Henry de Bohun rides out to challenge the Bruce!')}
+  if(t>=120&&once('r1')){const w=campSpawnWave('eng',[['swords',8,35,69,'rear']]);if(AI('eng'))campRoute(w,this.route);toast(AI('eng')?'Another English division crosses the burn.':'Another of your divisions has come up.')}
+  if(t>=240&&once('r2')){const w=campSpawnWave('eng',[['swords',6,33,71,'rear'],['archer',4,37,69,'rear']]);if(AI('eng'))campRoute(w,this.route);toast(AI('eng')?'The English rearguard arrives.':'Your rearguard has arrived.')}
+  if(t>=300&&once('folk')){const w=campSpawnWave('sco',[['vill',8,-27,33,'folk']]);w.forEach(u=>{u.atk=4;u.acq=4.5});
+   campNote('The small folk, the Scots’ camp followers, come down from the hill!');
+   if(AI('sco')){const e=heroOf('eng');if(e&&!e.dead)campOrder(w,e.x,e.y)}}
+  if(AI('eng')){
+   if(t>=25&&once('van'))campRoute(tagged('van'),this.route);
+   if(t>=70&&once('main')){campRoute(tagged('main'),this.route);campNote('The English army marches on Stirling Castle!')}
+   if(t>=100&&once('king')){const e=heroOf('eng'),g=tagged('guard');campRelease(g);if(e&&!e.dead){e.hold=false;e.leash=4;campRoute([e,...g],this.route)}}}
+  if(AI('sco')){
+   const near=h&&!h.dead&&soldiersOf('eng').some(u=>dist2(u.x,u.y,h.x,h.y)<81&&u.tag!=='bohun');
+   if((t>=150||near)&&once('adv')){campRelease([...tagged('div'),h]);campNote('The Scots advance out of the New Park!')}
+   if(CAMP.done.adv&&t%12===0){const e=heroOf('eng'),c=e&&!e.dead?[e.x,e.y]:centroid(soldiersOf('eng'));
+    if(c)alive([...tagged('div'),...tagged('folk'),h]).forEach(u=>{if(u.order.type==='idle'){u.order={type:'amove',x:c[0],y:c[1],tgt:null};u.path=null;u.nT=0;setPath(u,c[0],c[1])}})}}
+  this.zoneN=soldiersOf('eng').filter(u=>this.inZone(u)&&!u.hero).length},
+ check(t){const S=CAMP.side,e=heroOf('eng');
+  if(S==='sco'){if(heroDead('sco'))return[false,'Robert the Bruce has fallen.'];if(heroDead('eng'))return[true,'King Edward has fallen. The English army breaks.'];
+   if(CAMP.fallen[CAMP.team.eng]>=30)return[true,'The English army breaks, and King Edward flees the field.'];if(this.zoneN>=10)return[false,'The English have relieved Stirling Castle.']}
+  else{if(heroDead('eng'))return[false,'King Edward has fallen.'];if(heroDead('sco'))return[true,'Robert the Bruce has fallen. The Scots give way.'];
+   if(e&&this.inZone(e)&&this.zoneN>=10)return[true,'Stirling Castle is relieved.'];if(soldiersOf('eng').length<8)return[false,'Your army is broken between the burns.'];
+   if(t>=720)return[false,'Midsummer has passed. Stirling Castle surrenders.']}
+  return null},
+ status(t){const S=CAMP.side,z=this.zoneN||0;
+  if(S==='sco'){const f=CAMP.fallen[CAMP.team.eng];return[{s:`Break the English army (${Math.min(30,f)}/30 fallen)`,ok:f>=30},{s:`Keep them from the castle (${z}/10 there)`,bad:z>=5},{s:'The Bruce must survive',hero:'sco'},{s:'Or: slay King Edward',sub:1}]}
+  const e=heroOf('eng'),ein=e&&!e.dead&&this.inZone(e);
+  return[{s:`Bring Edward and 10 soldiers to the castle (${z}/10${ein?', king there':''})`,ok:ein&&z>=10},{s:'Midsummer in '+mmss(720-t),bad:720-t<120},{s:'King Edward must survive',hero:'eng'},{s:'Or: slay the Bruce',sub:1}]},
+ hints:{sco:[{t:'The carse is bog: men wading through it move slowly. Meet the English there, and keep them from the castle road.',tg:()=>({w:[36,22]})}],
+  eng:[{t:'Stirling Castle lies to the north-west, up the road. The bog slows you, and the Bruce bars the way.',tg:m=>({b:m.castle})}]}}];
+
+/* ---- setup, tick, end ---- */
+function campSetup(m,side){
+ const M=MISS[m];
+ CAMP={m,side,M,t:0,done:{},heroes:{},fallen:[0,0],team:{sco:side==='sco'?0:1,eng:side==='eng'?0:1}};
+ setSide(side==='sco'?0:1);
+ document.body.classList.add('camp');
+ res=[{w:0,f:0,g:0,s:0},{w:0,f:0,g:0,s:0}];
+ LV=LEVELS[5];
+ M.build();recalcPop();
+ for(const n of['sco','eng']){const h=heroOf(n);if(h&&h.team===1){h.hp=h.maxhp=600}}
+ $('plv').textContent=M.name;
+ /* the camera opens on the player's commander */
+ const h=heroOf(side);if(h){const c=w2s(h.x,h.y);camX=c[0];camY=c[1];clampCam()}
+ campStatus(true)}
+function campKill(t){if(t.type!=='vill')CAMP.fallen[t.team]++;if(t.hero&&!over)setTimeout(campCheck,0)}
+function campCheck(){if(!CAMP||over||!started)return;const r=CAMP.M.check(CAMP.t);if(r)campEnd(r[0],r[1])}
+function campTick(){
+ if(!CAMP||!started||over)return;
+ if(!H.on)CAMP.t++;
+ const t=CAMP.t;
+ campRoutes();
+ /* an AI commander falls back to his rear when enemies close in on him and his guard is thin */
+ for(const n of['sco','eng']){const h=heroOf(n);if(!h||h.dead||h.team!==1||!CAMP.M.safe)continue;
+  let foes=0,friends=0;for(const u of units){if(u.dead||u.garrisoned||u.type==='vill'||u===h)continue;const d=dist2(u.x,u.y,h.x,h.y);if(u.team!==h.team&&d<49)foes++;else if(u.team===h.team&&d<16)friends++}
+  const sp=CAMP.M.safe[n];
+  if(foes>=3&&foes>friends+1&&!(h.flee>time)&&dist2(h.x,h.y,sp[0],sp[1])>9){h.flee=time+7;h.route=null;h.order={type:'move'};h.path=null;h.nT=0;setPath(h,sp[0],sp[1]);
+   if(once('flee'+n))toast((h.name||'Their commander')+' falls back to safety.')}
+  else if(h.flee&&h.flee<time&&h.order.type==='idle'){h.flee=0}}
+ /* commanders recover between fights */
+ for(const n of['sco','eng']){const h=heroOf(n);if(h&&!h.dead&&time-h.engaged>5&&h.hp<h.maxhp)h.hp=Math.min(h.maxhp,h.hp+2)}
+ if(!H.on)CAMP.M.tick(t);
+ campStatus();campCheck()}
+let objSig='';
+function campStatus(force){
+ if(!CAMP)return;const rows=CAMP.M.status(CAMP.t);
+ const html=`<h4>OBJECTIVES<span>${CAMP.M.name}</span></h4>`+rows.map((r,i)=>`<div class="${r.ok?'ok':r.bad?'bad':''}${r.hero?' hero':''}${r.sub?' sub':''}" data-h="${r.hero||''}"><i>${r.ok?'✓':r.sub?'·':r.hero?'♔':'◇'}</i>${r.s}</div>`).join('');
+ if(html===objSig&&!force)return;objSig=html;$('objBox').innerHTML=html}
+$('objBox').addEventListener('click',e=>{const d=e.target.closest&&e.target.closest('div[data-h]');if(!d||!d.dataset.h||!CAMP)return;
+ const h=heroOf(d.dataset.h);if(!h||h.dead)return;if(h.team===0){selection=[h];sheepSel=[];refreshPanel(true);sfx('sel')}centreOn([h])});
+function campEnd(win,why){
+ if(over||!CAMP)return;over=true;sfx(win?'done':'crash');hintEnd();campHush();
+ const M=CAMP.M,s=CAMP.side;
+ if(win&&CAMP.m+1>campUnlocked(s))try{localStorage.setItem(CAMP_KEY[s],String(CAMP.m+1))}catch(_){}
+ const asHistory=(M.winner===s)===!!win;
+ setTimeout(()=>{
+  $('endTitle').textContent=win?'Victory':'Defeat';
+  $('endSub').textContent=(why||'')+(win&&CAMP.m===3?' The campaign is won.':'');
+  const ep=$('endEpi');ep.style.display='block';
+  ep.innerHTML=asHistory?'<b>AFTERWARDS</b> · '+M.after:'<b>HISTORY RECORDS</b> · '+M.hist;
+  $('nextBtn').textContent='Next Mission';$('nextBtn').style.display=win&&CAMP.m<3?'':'none';
+  $('againBtn').textContent=win?'Play Again':'Try Again';$('campBackBtn').style.display='';
+  $('endOv').style.display='flex';
+  campSay(`camp_${CAMP.m}${s[0]}_${win?'win':'lose'}`)},900)}
+/* ---- narration ---- */
+let campVoice=true;try{campVoice=localStorage.getItem('pe_tut_voice')!=='off'}catch(_){}
+let campSrc=null;
+function campHush(){if(campSrc){try{campSrc.stop()}catch(_){}campSrc=null}}
+function campSay(key){const e=BANK[key];if(!campVoice||!AC||!sfxG||!e||!e.bufs.length)return false;
+ campHush();const src=AC.createBufferSource(),g=AC.createGain();src.buffer=e.bufs[0];g.gain.value=e.vol;src.connect(g);g.connect(sfxG);src.start();
+ campSrc=src;src.onended=()=>{if(campSrc===src)campSrc=null};voiceT=performance.now()+e.bufs[0].duration*1000;return true}
+/* ---- briefing ---- */
+const BF={open:false,said:false};
+function campBrief(){
+ const M=CAMP.M,S=M[CAMP.side],k=`camp_${CAMP.m}${CAMP.side[0]}_brief`;
+ $('bfCrest').src=NAT_ARMS[CAMP.side];
+ $('bfNum').textContent='Mission '+CAMP.m+' of 3 · '+NAT_NAME[CAMP.side];
+ $('bfName').textContent=M.name;$('bfDate').textContent=M.date+' · '+M.place;
+ $('bfText').innerHTML=S.brief.map(p=>'<p>'+p+'</p>').join('');
+ $('bfObj').innerHTML=S.obj.map(o=>'<li>'+o+'</li>').join('');
+ $('briefOv').style.display='flex';BF.open=true;BF.said=false;bfVoiceBtn();
+ initAudio();loadBank('camp_'+CAMP.m+CAMP.side[0]);
+ const t0=performance.now();
+ const tryPlay=()=>{if(!BF.open||BF.said)return;
+  if(AC&&AC.state==='running'&&campSay(k)){BF.said=true;$('bfHint').textContent='';return}
+  $('bfHint').textContent=campVoice&&AC&&AC.state!=='running'?'Tap anywhere to hear the narrator':'';
+  if(performance.now()-t0<20000)setTimeout(tryPlay,250)};
+ tryPlay()}
+$('briefOv').addEventListener('pointerdown',()=>{if(AC&&AC.state!=='running')try{AC.resume()}catch(_){}});
+function bfVoiceBtn(){$('bfVoice').innerHTML=ICO_SPK+(campVoice
+ ?'<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#e3c27a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'
+ :'<path d="m16 9 5 6m0-6-5 6" stroke="#e3c27a" stroke-width="1.8" stroke-linecap="round"/></svg>')}
+$('bfVoice').addEventListener('click',e=>{e.stopPropagation();campVoice=!campVoice;try{localStorage.setItem('pe_tut_voice',campVoice?'on':'off')}catch(_){}
+ if(!campVoice)campHush();else if(BF.open){BF.said=false;campSay(`camp_${CAMP.m}${CAMP.side[0]}_brief`)&&(BF.said=true)}bfVoiceBtn()});
+function campBegin(){
+ if(!BF.open)return;BF.open=false;campHush();$('briefOv').style.display='none';
+ initAudio();if(AC&&AC.resume)AC.resume();initMusic();loadBank('sfx');loadBank('voice');
+ started=true;sfx('horn');if(DESK)keyHintOnce();
+ const S=CAMP.side,hs=[...(CAMP.M.hints[S]||[]),{t:'Your objectives. Tap the ♔ line to find your commander; lose him and the battle is lost.',tg:()=>({el:$('objBox')})}];
+ hintStart(hs)}
+$('bfGo').addEventListener('click',e=>{e.stopPropagation();campBegin()});
+$('bfSkip').addEventListener('click',e=>{e.stopPropagation();campBegin()});
+/* ---- coach marks ---- */
+const H={on:false,i:0,list:[],t0:0};
+function hintStart(list){H.list=list;H.i=0;H.on=list.length>0;if(!H.on)return;$('hint').hidden=false;document.body.classList.add('hintOn');hintShow()}
+function hintShow(){const h=H.list[H.i];if(!h){hintEnd();return}H.t0=performance.now();
+ {const g=h.tg?h.tg(CAMP.M):null,me=heroOf(CAMP.side),p=g&&(g.w||(g.b&&[g.b.cx,g.b.cy])||(g.grp&&centroid(g.grp)));
+  if(p&&me&&!me.dead){const a=w2s(me.x,me.y),b=w2s(p[0],p[1]);camX=(a[0]+b[0])/2;camY=(a[1]+b[1])/2;clampCam();followMute=3}}
+ $('hintN').textContent='HINT '+(H.i+1)+' / '+H.list.length;$('hintS').textContent=DESK?h.t.replace(/\bTap\b/g,'Click').replace(/\btap\b/g,'click'):h.t;
+ $('hintNext').textContent=H.i===H.list.length-1?'Fight':'Next'}
+function hintEnd(){if(!H.on)return;H.on=false;$('hint').hidden=true;document.body.classList.remove('hintOn')}
+$('hintNext').addEventListener('click',e=>{e.stopPropagation();sfx('sel');H.i++;hintShow()});
+function hintTick(){requestAnimationFrame(hintTick);if(!H.on)return;
+ const h=H.list[H.i];if(!h)return;
+ if(performance.now()-H.t0>16000){H.i++;hintShow();return}
+ const g=h.tg?h.tg(CAMP.M):null,ring=$('hintRing');let r=null;
+ if(g&&g.el){const b=g.el.getBoundingClientRect();if(b.width)r=[b.left-5,b.top-5,b.width+10,b.height+10,false]}
+ else if(g){let pts=[],pad=26*zoom+8;
+  if(g.grp&&g.grp.length)pts=alive(g.grp).map(u=>scrOf(u.x,u.y,16));
+  else if(g.w)pts=[scrOf(g.w[0],g.w[1],0)];
+  else if(g.b){pts=[scrOf(g.b.cx,g.b.cy,g.b.hh*0.4)];pad=g.b.size*26*zoom}
+  if(pts.length){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y]of pts){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
+   const w=Math.min(cw*0.6,Math.max(56,x1-x0+pad*2)),hh=Math.min(ch*0.6,Math.max(56,y1-y0+pad*2));
+   const cx=clamp((x0+x1)/2,w/2+4,cw-w/2-4),cy=clamp((y0+y1)/2,hh/2+4,ch-hh/2-4);r=[cx-w/2,cy-hh/2,w,hh,true]}}
+ if(!r){ring.style.display='none';return}
+ ring.style.display='block';ring.style.borderRadius=r[4]?'50%':'14px';
+ ring.style.left=r[0]+'px';ring.style.top=r[1]+'px';ring.style.width=r[2]+'px';ring.style.height=r[3]+'px'}
+requestAnimationFrame(hintTick);
+/* ---- drawing ---- */
+function drawBog(k,x,y,sx,sy){
+ ctx.globalAlpha=0.42;ctx.fillStyle='#2b331d';ctx.fill();ctx.globalAlpha=1;
+ const r=waterD[k];
+ if(r>150){const ox=(r*7)%13-6,oy=(r*3)%7-3;
+  ctx.fillStyle='rgba(52,78,88,.78)';ctx.beginPath();ctx.ellipse(sx+ox,sy+16+oy,6+r%5,2.6+(r%3)*0.5,0,0,7);ctx.fill();
+  ctx.strokeStyle=`rgba(220,235,230,${(0.10+0.08*Math.sin(time*1.6+x*5+y*3)).toFixed(3)})`;ctx.lineWidth=1;ctx.stroke()}
+ if(r%5===0){ctx.strokeStyle='rgba(140,150,80,.8)';ctx.lineWidth=1.1;ctx.beginPath();
+  ctx.moveTo(sx-6,sy+19);ctx.lineTo(sx-7,sy+12);ctx.moveTo(sx-3,sy+20);ctx.lineTo(sx-2.5,sy+11);ctx.moveTo(sx+1,sy+19);ctx.lineTo(sx+2.5,sy+13);ctx.stroke()}}
+function drawBridge(){const B=CAMP.bridge;if(!B)return;
+ const{x0,x1,y}=B,h=17;
+ ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x0+4,y-h+8,x1-x0,2*h);
+ ctx.fillStyle='#4a331d';for(let x=x0+14;x<x1-6;x+=28){ctx.fillRect(x-2.5,y+h-2,5,12)}
+ ctx.fillStyle='#8a6640';ctx.fillRect(x0,y-h,x1-x0,2*h);
+ ctx.strokeStyle='rgba(50,32,16,.5)';ctx.lineWidth=1;ctx.beginPath();for(let x=x0+5;x<x1;x+=5.5){ctx.moveTo(x,y-h);ctx.lineTo(x,y+h)}ctx.stroke();
+ ctx.fillStyle='rgba(255,230,180,.08)';ctx.fillRect(x0,y-h,x1-x0,h*0.6);
+ ctx.fillStyle='#5a3d22';ctx.fillRect(x0,y-h-3,x1-x0,3);ctx.fillRect(x0,y+h,x1-x0,3);
+ for(let x=x0+2;x<x1;x+=14){ctx.fillRect(x,y-h-9,2.4,9);ctx.fillRect(x,y+h-6,2.4,9)}
+ ctx.fillRect(x0,y-h-9,x1-x0,2)}
+function drawCampLabels(){
+ const k=Math.max(1,0.95/zoom);ctx.textAlign='center';ctx.lineJoin='round';
+ const L=camX-cw/(2*zoom)-60,R=camX+cw/(2*zoom)+60,T=camY-ch/(2*zoom)-60,Bt=camY+ch/(2*zoom)+60;
+ for(const u of units){if(u.dead||u.garrisoned||!u.name)continue;const[sx,sy]=w2s(u.x,u.y);if(sx<L||sx>R||sy<T||sy>Bt)continue;
+  ctx.font=`${u.hero?'800':'700'} ${Math.round((u.hero?9:7.5)*k)}px Palatino,Georgia,serif`;
+  ctx.strokeStyle='rgba(10,8,4,.85)';ctx.lineWidth=3*k;ctx.strokeText(u.name,sx,sy+13*k);
+  ctx.fillStyle=u.hero?'#ffd77a':'#efe3c4';ctx.fillText(u.name,sx,sy+13*k);
+  if(u.hero){ctx.strokeStyle='rgba(255,215,122,.85)';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(sx,sy+1.5,10,4.6,0,0,7);ctx.stroke()}}
+ for(const b of buildings){if(b.dead||!b.name)continue;const[sx,sy]=w2s(b.cx,b.cy);if(sx<L||sx>R||sy<T||sy>Bt)continue;
+  ctx.font=`800 ${Math.round(10*k)}px Palatino,Georgia,serif`;const yy=sy-b.hh-26;
+  ctx.strokeStyle='rgba(10,8,4,.85)';ctx.lineWidth=3.2*k;ctx.strokeText(b.name,sx,yy);ctx.fillStyle='#f2e4c6';ctx.fillText(b.name,sx,yy)}}
+/* ---- menu ---- */
+function campMenu(view,side){
+ const w=$('cmWrap'),lock='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z"/></svg>';
+ if(view==='list'){const un=campUnlocked(side);
+  w.innerHTML=`<div class="cmHead"><img src="${NAT_ARMS[side]}" alt=""><div><b>Play as ${NAT_NAME[side]}</b><small>The Wars of Scottish Independence</small></div></div><div class="cmList">`+
+   [1,2,3].map(m=>{const M=MISS[m],lk=m>un,done=m<un;return `<button class="cmRow${lk?' lock':''}" data-m="${m}" aria-label="Mission ${m}: ${M.name}${lk?' (locked)':''}"><span class="n">${m}</span><span class="t"><b>${M.name}</b><small>${M.date} · ${M[side].goal}</small></span><span class="st">${lk?lock:done?'✓':''}</span></button>`}).join('')+
+   `</div><button class="cmBack" id="cmBack">‹ Back</button>`;
+  w.querySelectorAll('.cmRow').forEach(b=>b.addEventListener('click',()=>{if(b.classList.contains('lock')){sfx('no');return}sfx('sel');campGo(+b.dataset.m,side)}));
+  $('cmBack').onclick=()=>{sfx('sel');campMenu('card')}}
+ else{w.innerHTML=`<div class="cmCrests"><img src="${NAT_ARMS.sco}" alt=""><span>against</span><img src="${NAT_ARMS.eng}" alt=""></div>
+  <div class="cmTitle">The Wars of Scottish Independence</div><div class="cmYears">1297 – 1314</div>
+  <p class="cmIntro">Three battles that decided a kingdom: Stirling Bridge, Falkirk and Bannockburn. Lead either side, and see whether you can change history.</p>
+  <div class="cmSides"><button class="cmSide" data-s="sco"><img src="${NAT_ARMS.sco}" alt=""><span><b>Play as Scotland</b><small>Wallace and the Bruce · ${campUnlocked('sco')-1}/3 won</small></span></button>
+  <button class="cmSide" data-s="eng"><img src="${NAT_ARMS.eng}" alt=""><span><b>Play as England</b><small>Surrey and the Edwards · ${campUnlocked('eng')-1}/3 won</small></span></button></div>
+  <button class="cmBack" id="cmBack">‹ Back to the title</button>`;
+  w.querySelectorAll('.cmSide').forEach(b=>b.addEventListener('click',()=>{sfx('sel');campMenu('list',b.dataset.s)}));
+  $('cmBack').onclick=()=>{sfx('sel');$('campOv').style.display='none';$('startOv').style.display=''}}
+ $('campOv').style.display='flex';$('startOv').style.display='none'}
+/* debug hooks for the test harness: force the result, read the state */
+window.PE_CAMP={win:()=>campEnd(true,'(debug) forced win'),lose:()=>campEnd(false,'(debug) forced loss'),
+ state:()=>CAMP&&{m:CAMP.m,side:CAMP.side,t:CAMP.t,started,over,units:units.length,mine:units.filter(u=>u.team===0).length,theirs:units.filter(u=>u.team===1).length,
+  heroes:Object.fromEntries(Object.entries(CAMP.heroes).map(([k,h])=>[k,h&&{name:h.name,team:h.team,hp:h.hp,dead:!!h.dead}])),fallen:CAMP.fallen.slice(),
+  obj:$('objBox').innerText,unlocked:{sco:campUnlocked('sco'),eng:campUnlocked('eng')}},
+ skip:s=>{if(CAMP)CAMP.t+=s},begin:()=>campBegin()};
+
 /* ============ init ============ */
 function resize(){dpr=Math.min(2,devicePixelRatio||1);cw=innerWidth;ch=innerHeight;
  cv.width=cw*dpr;cv.height=ch*dpr;cv.style.width=cw+'px';cv.style.height=ch+'px'}
 addEventListener('resize',resize);resize();
 loadArt();   /* started before the first frame; sprite sites fall back until each image decodes */
+const CAMP_BOOT=campBootRead();   /* #camp=<m><side> boots a campaign mission; #campmenu=<side> opens its menu */
+let ptc=null,etc=null;
+if(CAMP_BOOT&&CAMP_BOOT.m)campSetup(CAMP_BOOT.m,CAMP_BOOT.s);
+else{
 genTerrain();
 mkBuilding(0,'tc',9,41,true);
 mkBuilding(1,'tc',44,12,true);
@@ -3232,9 +3830,10 @@ mkBuilding(1,'house',47,13,true);
 genResources();
 /* The outer ring of tiles used to be walled off (blockBorders), so nothing could be built at the
    map's edge. Units are kept on the map by passableAt's bounds instead. */
-const ptc=buildings.find(b=>b.team===0&&b.type==='tc');
-const etc=buildings.find(b=>b.team===1&&b.type==='tc');
+ptc=buildings.find(b=>b.team===0&&b.type==='tc');
+etc=buildings.find(b=>b.team===1&&b.type==='tc');
 for(let i=0;i<3;i++){const s=freeTileAround(ptc);mkUnit(0,'vill',s[0]+0.5,s[1]+0.5)}
+}
 /* Arms the enemy for level n: AI timers, starting stock and starting villagers. Runs at load and
    again on Begin (the player may have picked another level); nothing has ticked before then. */
 function applyLevel(n){
@@ -3247,12 +3846,12 @@ function applyLevel(n){
   const r=findResByKind(['tree','tree','berry','berry','gold','boar','tree','berry','stone'][i],s[0],s[1],16);
   if(r)setGather(u,r)}
  $('plv').textContent='Lv '+n}
-applyLevel(level);
+if(!CAMP)applyLevel(level);
 /* fine primary pointer and no touch points: start with the desktop layout (see setDesk) */
 try{if(matchMedia('(pointer:fine)').matches&&!navigator.maxTouchPoints)setDesk(true)}catch(_){}
-selection=units.filter(u=>u.team===0);
+selection=CAMP?[]:units.filter(u=>u.team===0);
 refreshPanel(true);
-{const c=w2s(11,43);camX=c[0];camY=c[1];clampCam()}
+if(!CAMP){const c=w2s(11,43);camX=c[0];camY=c[1];clampCam()}
  $('pli').addEventListener('click',e=>{e.stopPropagation();selectIdle()});
  $('ppause').addEventListener('click',e=>{e.stopPropagation();if(!started||over)return;setPaused(!paused)});
  $('pauseOv').addEventListener('click',()=>{if(paused)setPaused(false)});   /* tap outside the card */
@@ -3303,8 +3902,10 @@ refreshPanel(true);
   $('lvName').textContent='Level '+picked+' · '+LEVELS[picked-1].name}
  drawLevels();
  const again=n=>{try{localStorage.setItem('pe_level_next',n)}catch(_){}location.reload()};
- $('againBtn').addEventListener('click',()=>again(level));
- $('nextBtn').addEventListener('click',()=>again(Math.min(LEVELS.length,level+1)));
+ $('againBtn').addEventListener('click',()=>CAMP?campGo(CAMP.m,CAMP.side):again(level));
+ $('nextBtn').addEventListener('click',()=>CAMP?campGo(Math.min(3,CAMP.m+1),CAMP.side):again(Math.min(LEVELS.length,level+1)));
+ $('campBackBtn').addEventListener('click',()=>campMenuGo(CAMP?CAMP.side:'card'));
+ $('campBtn').addEventListener('click',e=>{e.stopPropagation();sfx('sel');campMenu('card')});
 /* ============ first-play tutorial ============
    Runs once, the first time Begin is pressed (pe_tutorial_done), or again from the gear menu. Each
    step rings the real control or map object and advances when the game state shows the player did
@@ -3494,6 +4095,8 @@ $('pmTut').addEventListener('click',()=>{const b=$('pmTut');
 $('ppause').addEventListener('click',()=>{const b=$('pmTut');delete b.dataset.ask;b.textContent='Replay tutorial'});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.resume)AC.resume();lastT=0});
 requestAnimationFrame(frame);
+if(CAMP)campBrief();
+else if(CAMP_BOOT&&CAMP_BOOT.menu)campMenu(CAMP_BOOT.menu==='card'?'card':'list',CAMP_BOOT.menu);
 </script>
 <script>
 /* Intro film. Watching it through once is required; every later launch offers Skip. If the web
@@ -3501,6 +4104,7 @@ requestAnimationFrame(frame);
 (()=>{const ov=document.getElementById('introOv'),v=document.getElementById('introVid'),
   skip=document.getElementById('introSkip');
  if(window.OE_NATIVE_INTRO){ov.remove();return}   /* the iOS app plays it with AVPlayer */
+ if(window.PE_SKIP_INTRO){ov.remove();return}      /* a reload into the campaign: the film was just seen */
  let seen=false;try{seen=localStorage.getItem('pe_intro_seen')==='1'}catch(e){}
  const L=m=>{try{window.webkit.messageHandlers.oelog.postMessage('intro: '+m)}catch(e){}};
  L('load hidden='+document.hidden+' seen='+seen+' state='+document.visibilityState);
